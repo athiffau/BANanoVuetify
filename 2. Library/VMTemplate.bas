@@ -10,8 +10,8 @@ Sub Class_Globals
 	Public ID As String
 	Private vue As BANanoVue
 	Private BANano As BANano  'ignore
-	Private DesignMode As Boolean
-	Private Module As Object
+	Private DesignMode As Boolean   'ignore
+	Private Module As Object     'ignore
 	Public HasContent As Boolean
 	Private bStatic As Boolean
 End Sub
@@ -29,12 +29,23 @@ Public Sub Initialize(v As BANanoVue, sid As String, eventHandler As Object) As 
 	Return Me
 End Sub
 
+'add an element to the page content
+Sub AddElement(elm As VMElement)
+	Template.SetText(elm.ToString)
+End Sub
 
 Sub SetStatic(b As Boolean) As VMTemplate
 	bStatic = b
 	Template.SetStatic(b)
 	Return Me
 End Sub
+
+Sub SetData(xprop As String, xValue As Object) As VMTemplate
+	vue.SetData(xprop, xValue)
+	Return Me
+End Sub
+
+
 
 'set the row and column position
 Sub SetRC(sRow As String, sCol As String) As VMTemplate
@@ -73,6 +84,12 @@ Sub AddComponent(scomp As String) As VMTemplate
 	Return Me
 End Sub
 
+'set a prepend slot value
+Sub SetSlotPrepend(pValue As String) As VMTemplate
+	SetAttrSingle("v-slot:prepend", pValue)
+	Return Me
+End Sub
+
 Sub SetSlotAppend As VMTemplate
 	Template.SetAttrLoose("v-slot:append")
 	Return Me
@@ -82,6 +99,17 @@ Sub SetSlotProgress As VMTemplate
 	Template.SetAttrLoose("v-slot:progress")
 	Return Me
 End Sub
+
+Sub SetSlotIcon As VMTemplate
+	Template.SetAttrLoose("v-slot:icon")
+	Return Me
+End Sub
+
+Sub SetSlotOpposite As VMTemplate
+	Template.SetAttrLoose("v-slot:opposite")
+	Return Me
+End Sub
+
 
 Sub SetSlotExtension As VMTemplate
 	Template.SetAttrLoose("v-slot:extension")
@@ -94,9 +122,15 @@ Sub SetSlotActions As VMTemplate
 End Sub
 
 Sub SetSlotActivator As VMTemplate
-	SetAttrLoose("v-slot:activator")
+	Template.SetAttrLoose("v-slot:activator")
 	Return Me
 End Sub
+
+Sub SetSlotActivator1(act As String) As VMTemplate
+	SetAttrSingle("v-slot:activator", $"{ ${act} }"$)
+	Return Me
+End Sub
+
 
 Sub SetAttrLoose(loose As String) As VMTemplate
 	Template.SetAttrLoose(loose)
@@ -144,12 +178,12 @@ Sub SetVModel(k As String) As VMTemplate
 	Return Me
 End Sub
 
-Sub SetVIf(vif As Object) As VMTemplate
+Sub SetVIf(vif As String) As VMTemplate
 	Template.SetVIf(vif)
 	Return Me
 End Sub
 
-Sub SetVShow(vif As Object) As VMTemplate
+Sub SetVShow(vif As String) As VMTemplate
 	Template.SetVShow(vif)
 	Return Me
 End Sub

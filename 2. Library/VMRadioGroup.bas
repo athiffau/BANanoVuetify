@@ -4,7 +4,7 @@ ModulesStructureVersion=1
 Type=Class
 Version=8.1
 @EndOfDesignText@
-#IgnoreWarnings:12
+#IgnoreWarnings:12, 9
 Sub Class_Globals
 	Public RadioGroup As VMElement
 	Public ID As String
@@ -26,12 +26,32 @@ Public Sub Initialize(v As BANanoVue, sid As String, eventHandler As Object) As 
 	Module = eventHandler
 	vue = v	
 	RadioGroup.typeOf = "radiogroup"
+	RadioGroup.fieldType = "string"
 	items.Initialize 
 	bStatic = False
 	xmodel = ""
+	SetOnChange(Module, $"${ID}_change"$)
 	Return Me
 End Sub
 
+
+
+'add an element to the page content
+Sub AddElement(elm As VMElement)
+	RadioGroup.SetText(elm.ToString)
+End Sub
+
+Sub SetData(xprop As String, xValue As Object) As VMRadioGroup
+	vue.SetData(xprop, xValue)
+	Return Me
+End Sub
+
+
+
+Sub SetFieldType(ft As String) As VMRadioGroup
+	RadioGroup.fieldType = ft
+	Return Me
+End Sub
 
 'set for
 Sub SetVFor(item As String, dataSource As String, keyField As String, valueField As String, labelField As String) As VMRadioGroup
@@ -125,7 +145,7 @@ Sub SetDataSource(sourceName As String, sourceField As String, displayField As S
 	
 	Radio.Pop(RadioGroup)
 	If vue.StateExists(sourceName) = False Then
-		vue.SetData(sourceName, Array())
+		vue.SetData(sourceName, vue.newlist)
 	End If
 	
 	Return Me
@@ -192,6 +212,12 @@ End Sub
 
 'get component
 Sub ToString As String
+	If vue.ShowWarnings Then
+	Dim eName As String = $"${ID}_change"$
+	If SubExists(Module, eName) = False Then
+		Log($"VMRadioGroup.${eName} event has not been defined!"$)
+	End If
+	End If
 	RemoveAttr("required")
 	RemoveAttr(":required")
 	If items.Size > 0 Then
@@ -209,12 +235,12 @@ Sub SetVModel(k As String) As VMRadioGroup
 	Return Me
 End Sub
 
-Sub SetVIf(vif As Object) As VMRadioGroup
+Sub SetVIf(vif As String) As VMRadioGroup
 	RadioGroup.SetVIf(vif)
 	Return Me
 End Sub
 
-Sub SetVShow(vif As Object) As VMRadioGroup
+Sub SetVShow(vif As String) As VMRadioGroup
 	RadioGroup.SetVShow(vif)
 	Return Me
 End Sub
@@ -342,37 +368,36 @@ End Sub
 Sub SetError(varError As Boolean) As VMRadioGroup
 	If bStatic Then
 		SetAttrSingle("error", varError)
-	Else
-	Dim pp As String = $"${ID}Error"$
+		Return Me
+	End If
+	Dim pp As String = $"${xmodel}Error"$
 	vue.SetStateSingle(pp, varError)
 	RadioGroup.Bind(":error", pp)
-	End If
 	Return Me
 End Sub
 
 'set error-count
-Sub SetErrorCount(varErrorCount As Object) As VMRadioGroup
+Sub SetErrorCount(varErrorCount As String) As VMRadioGroup
 	If bStatic Then
 		SetAttrSingle("error-count", varErrorCount)
-	Else
-	Dim pp As String = $"${ID}ErrorCount"$
+		Return Me
+	End If
+	Dim pp As String = $"${xmodel}ErrorCount"$
 	vue.SetStateSingle(pp, varErrorCount)
 	RadioGroup.Bind(":error-count", pp)
-	End If
 	Return Me
 End Sub
 
 'set error-messages
-Sub SetErrorMessages(varErrorMessages As Object) As VMRadioGroup
-	If bStatic Then
-		SetAttrSingle("error-messages", varErrorMessages)
-	Else
-	Dim pp As String = $"${ID}ErrorMessages"$
-	vue.SetStateSingle(pp, varErrorMessages)
+Sub SetErrorMessages(b As Boolean) As VMRadioGroup
+	If b = False Then Return Me
+	Dim nl As List = vue.NewList
+	Dim pp As String = $"${xmodel}ErrorMessages"$
+	vue.SetData(pp, nl)
 	RadioGroup.Bind(":error-messages", pp)
-	End If
 	Return Me
 End Sub
+
 
 'set hide-details
 Sub SetHideDetails(varHideDetails As Boolean) As VMRadioGroup
@@ -555,14 +580,13 @@ Sub SetColumn(varColumn As Boolean) As VMRadioGroup
 End Sub
 
 'set rules
-Sub SetRules(varRules As Object) As VMRadioGroup
-	If bStatic Then
-		SetAttrSingle("rules", varRules)
-	Else
-		Dim pp As String = $"${ID}Rules"$
-		vue.SetStateSingle(pp, varRules)
-		RadioGroup.Bind(":rules", pp)
-	End If
+Sub SetRules(varRules As Boolean) As VMRadioGroup
+	If varRules = False Then Return Me
+	If bStatic Then Return Me
+	If DesignMode Then Return Me
+	Dim pp As String = $"${xmodel}Rules"$
+	RadioGroup.Bind(":rules", pp)
+	vue.SetData(pp, vue.NewList)
 	Return Me
 End Sub
 
@@ -604,9 +628,24 @@ Sub SetValidateOnBlur(varValidateOnBlur As Boolean) As VMRadioGroup
 End Sub
 
 'set value
-Sub SetValue(varValue As Object) As VMRadioGroup
-	SetAttrSingle("value", varValue)
+Sub SetValue(varValue As String) As VMRadioGroup
+	If bStatic Then
+		SetAttrSingle("value", varValue)
+		Return Me
+	End If
+	If xmodel = "" Then
+		xmodel = $"${ID}value"$
+		SetVModel(xmodel)
+	End If
+	RadioGroup.SetValue(varValue)
+	vue.SetData(xmodel, varValue)
 	Return Me
+End Sub
+
+'get the data
+Sub GetValue As String
+	Dim svalue As String = vue.GetData(xmodel)
+	Return svalue
 End Sub
 
 'set value-comparator
@@ -643,9 +682,9 @@ End Sub
 Sub SetOnChange(eventHandler As Object, methodName As String) As VMRadioGroup
 	methodName = methodName.tolowercase
 	If SubExists(eventHandler, methodName) = False Then Return Me
-	Dim e As Object
-	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, Array(e))
-	SetAttr(CreateMap("v-on:change": methodName))
+	Dim value As Object
+	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, Array(value))
+	SetAttr(CreateMap("@change": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -656,8 +695,8 @@ Sub SetOnClickAppend(methodName As String) As VMRadioGroup
 	methodName = methodName.tolowercase
 	If SubExists(Module, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, e)
-	SetAttr(CreateMap("v-on:click:append": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
+	SetAttr(CreateMap("@click:append": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -668,8 +707,8 @@ Sub SetOnClickPrepend(methodName As String) As VMRadioGroup
 	methodName = methodName.tolowercase
 	If SubExists(Module, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, e)
-	SetAttr(CreateMap("v-on:click:prepend": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
+	SetAttr(CreateMap("@click:prepend": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -680,8 +719,8 @@ Sub SetOnMousedown(methodName As String) As VMRadioGroup
 	methodName = methodName.tolowercase
 	If SubExists(Module, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, e)
-	SetAttr(CreateMap("v-on:mousedown": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
+	SetAttr(CreateMap("@mousedown": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -692,8 +731,8 @@ Sub SetOnMouseup(methodName As String) As VMRadioGroup
 	methodName = methodName.tolowercase
 	If SubExists(Module, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, e)
-	SetAttr(CreateMap("v-on:mouseup": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
+	SetAttr(CreateMap("@mouseup": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -704,8 +743,8 @@ Sub SetOnUpdateError(methodName As String) As VMRadioGroup
 	methodName = methodName.tolowercase
 	If SubExists(Module, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, e)
-	SetAttr(CreateMap("v-on:update:error": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
+	SetAttr(CreateMap("@update:error": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me

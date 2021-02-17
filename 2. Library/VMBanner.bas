@@ -4,7 +4,7 @@ ModulesStructureVersion=1
 Type=Class
 Version=8.1
 @EndOfDesignText@
-#IgnoreWarnings:12
+#IgnoreWarnings:12, 9
 Sub Class_Globals
 	Public Banner As VMElement
 	Public ID As String
@@ -23,7 +23,12 @@ Public Sub Initialize(v As BANanoVue, sid As String, eventHandler As Object) As 
 	DesignMode = False
 	Module = eventHandler
 	vue = v
-	Actions.Initialize(vue, $"${ID}actions"$, Module).SetSlotActions
+	If ID = "" Then
+		Actions.Initialize(vue, "", Module).SetSlotActions
+	Else
+		Actions.Initialize(vue, $"${ID}actions"$, Module).SetSlotActions
+	End If
+	Banner.typeOf = "banner"
 	Return Me
 End Sub
 
@@ -31,10 +36,15 @@ Sub SetOnClickIcon(methodName As String) As VMBanner
 	methodName = methodName.tolowercase
 	If SubExists(Module, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, e)
+	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
 	SetAttr(CreateMap("@click:icon": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
+	Return Me
+End Sub
+
+Sub SetData(prop As String, value As Object) As VMBanner
+	vue.SetData(prop, value)
 	Return Me
 End Sub
 
@@ -83,12 +93,12 @@ Sub SetVModel(k As String) As VMBanner
 	Return Me
 End Sub
 
-Sub SetVIf(vif As Object) As VMBanner
+Sub SetVIf(vif As String) As VMBanner
 	Banner.SetVIf(vif)
 	Return Me
 End Sub
 
-Sub SetVShow(vif As Object) As VMBanner
+Sub SetVShow(vif As String) As VMBanner
 	Banner.SetVShow(vif)
 	Return Me
 End Sub
@@ -97,6 +107,13 @@ End Sub
 Sub Render
 	vue.SetTemplate(ToString)
 End Sub
+
+
+'add an element to the page content
+Sub AddElement(elm As VMElement)
+	Banner.SetText(elm.ToString)
+End Sub
+
 
 'add a child
 Sub AddChild(child As VMElement) As VMBanner
@@ -142,10 +159,9 @@ Sub AddChildren(children As List)
 End Sub
 
 'set app
-Sub SetApp(varApp As Object) As VMBanner
-	Dim pp As String = $"${ID}App"$
-	vue.SetStateSingle(pp, varApp)
-	Banner.Bind(":app", pp)
+Sub SetApp(varApp As Boolean) As VMBanner
+	If varApp = False Then Return Me
+	Banner.SetAttrLoose("app")
 	Return Me
 End Sub
 
@@ -320,7 +336,7 @@ Sub Enable As VMBanner
 End Sub
 
 Sub Disable As VMBanner
-	Banner.Disable(True)
+	Banner.Enable(false)
 	Return Me
 End Sub
 

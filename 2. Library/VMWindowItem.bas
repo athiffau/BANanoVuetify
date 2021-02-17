@@ -10,8 +10,9 @@ Sub Class_Globals
 	Public ID As String
 	Private vue As BANanoVue
 	Private BANano As BANano  'ignore
-	Private DesignMode As Boolean
-	Private Module As Object
+	Private DesignMode As Boolean   'ignore
+	Private Module As Object    'ignore
+	Public Container As VMContainer
 End Sub
 
 'initialize the WindowItem
@@ -22,11 +23,19 @@ Public Sub Initialize(v As BANanoVue, sid As String, eventHandler As Object) As 
 	DesignMode = False
 	Module = eventHandler
 	vue = v
+	Container.Initialize(vue, $"${ID}container"$, eventHandler)
 	Return Me
 End Sub
 
+
+'add an element to the page content
+Sub AddElement(elm As VMElement)
+	WindowItem.SetText(elm.ToString)
+End Sub
+
 'get component
-Sub ToString As String
+	Sub ToString As String
+	If Container.HasContent Then SetText(Container.ToString)
 	Return WindowItem.ToString
 End Sub
 
@@ -35,12 +44,34 @@ Sub SetVModel(k As String) As VMWindowItem
 	Return Me
 End Sub
 
-Sub SetVIf(vif As Object) As VMWindowItem
+
+Sub AddComponent(comp As String) As VMWindowItem
+	SetText(comp)
+	Return Me
+End Sub
+
+Sub SetData(xprop As String, xValue As Object) As VMWindowItem
+	vue.SetData(xprop, xValue)
+	Return Me
+End Sub
+
+Sub AddElement1(elID As String, elTag As String, elText As String, mprops As Map, mstyles As Map, lclasses As List) As VMWindowItem
+	Dim d As VMElement
+	d.Initialize(vue,elID).SetDesignMode(DesignMode).SetTag(elTag)
+	d.SetText(elText)
+	d.BuildModel(mprops, mstyles, lclasses, Null)
+	SetText(d.ToString)
+	Return Me
+End Sub
+
+
+
+Sub SetVIf(vif As String) As VMWindowItem
 	WindowItem.SetVIf(vif)
 	Return Me
 End Sub
 
-Sub SetVShow(vif As Object) As VMWindowItem
+Sub SetVShow(vif As String) As VMWindowItem
 	WindowItem.SetVShow(vif)
 	Return Me
 End Sub
@@ -102,10 +133,8 @@ Sub SetActiveClass(varActiveClass As Object) As VMWindowItem
 End Sub
 
 'set disabled
-Sub SetDisabled(varDisabled As Object) As VMWindowItem
-	Dim pp As String = $"${ID}Disabled"$
-	vue.SetStateSingle(pp, varDisabled)
-	WindowItem.Bind(":disabled", pp)
+Sub SetDisabled(varDisabled As Boolean) As VMWindowItem
+	WindowItem.SetDisabled(varDisabled)
 	Return Me
 End Sub
 
@@ -135,7 +164,7 @@ End Sub
 
 'set value
 Sub SetValue(varValue As Object) As VMWindowItem
-	SetAttrSingle("value", varValue)
+	WindowItem.SetValue(varValue)
 	Return Me
 End Sub
 

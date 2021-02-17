@@ -4,7 +4,7 @@ ModulesStructureVersion=1
 Type=Class
 Version=8.1
 @EndOfDesignText@
-#IgnoreWarnings:12
+#IgnoreWarnings:12, 9
 Sub Class_Globals
 	Public CardSubTitle As VMElement
 	Public ID As String
@@ -12,6 +12,8 @@ Sub Class_Globals
 	Private BANano As BANano  'ignore
 	Private DesignMode As Boolean
 	Private Module As Object
+	Private bStatic As Boolean
+	Public HasContent As Boolean
 End Sub
 
 'initialize the CardSubTitle
@@ -22,9 +24,44 @@ Public Sub Initialize(v As BANanoVue, sid As String, eventHandler As Object) As 
 	DesignMode = False
 	Module = eventHandler
 	vue = v
+	HasContent = False
 	Return Me
 End Sub
 
+
+
+'add an element to the page content
+Sub AddElement(elm As VMElement)
+	CardSubTitle.SetText(elm.ToString)
+End Sub
+
+
+Sub SetData(prop As String, value As Object) As VMCardSubTitle
+	vue.SetData(prop, value)
+	Return Me
+End Sub
+
+
+Sub AddElement1(elID As String, elTag As String, elText As String, mprops As Map, mstyles As Map, lclasses As List) As VMCardSubTitle
+	Dim d As VMElement
+	d.Initialize(vue,elID).SetDesignMode(DesignMode).SetTag(elTag)
+	d.SetText(elText)
+	d.BuildModel(mprops, mstyles, lclasses, Null)
+	SetText(d.ToString)
+	HasContent = True
+	Return Me
+End Sub
+
+Sub Clear
+	CardSubTitle.Clear
+End Sub
+
+
+Sub SetStatic(b As Boolean) As VMCardSubTitle
+	bStatic = b
+	CardSubTitle.SetStatic(b)
+	Return Me
+End Sub
 
 Sub SetAttrLoose(loose As String) As VMCardSubTitle
 	CardSubTitle.SetAttrLoose(loose)
@@ -53,21 +90,12 @@ End Sub
 
 Sub AddSpacer As VMCardSubTitle
 	CardSubTitle.AddSpacer
-	Return Me
-End Sub
-
-'set color intensity
-Sub SetColorIntensity(varColor As String, varIntensity As String) As VMCardSubTitle
-	Dim pp As String = $"${ID}Color"$
-	Dim scolor As String = $"${varColor} ${varIntensity}"$
-	vue.SetStateSingle(pp, scolor)
-	CardSubTitle.Bind(":color", pp)
+	HasContent = True
 	Return Me
 End Sub
 
 'get component
-Sub ToString As String
-	
+Sub ToString As String	
 	Return CardSubTitle.ToString
 End Sub
 
@@ -76,12 +104,12 @@ Sub SetVModel(k As String) As VMCardSubTitle
 	Return Me
 End Sub
 
-Sub SetVIf(vif As Object) As VMCardSubTitle
+Sub SetVIf(vif As String) As VMCardSubTitle
 	CardSubTitle.SetVIf(vif)
 	Return Me
 End Sub
 
-Sub SetVShow(vif As Object) As VMCardSubTitle
+Sub SetVShow(vif As String) As VMCardSubTitle
 	CardSubTitle.SetVShow(vif)
 	Return Me
 End Sub
@@ -95,12 +123,15 @@ End Sub
 Sub AddChild(child As VMElement) As VMCardSubTitle
 	Dim childHTML As String = child.ToString
 	CardSubTitle.SetText(childHTML)
+	HasContent = True
 	Return Me
 End Sub
 
 'set text
-Sub SetText(t As Object) As VMCardSubTitle
+Sub SetText(t As String) As VMCardSubTitle
+	If t = "" Then Return Me
 	CardSubTitle.SetText(t)
+	HasContent = True
 	Return Me
 End Sub
 
@@ -212,6 +243,7 @@ Sub BuildModel(mprops As Map, mstyles As Map, lclasses As List, loose As List) A
 CardSubTitle.BuildModel(mprops, mstyles, lclasses, loose)
 Return Me
 End Sub
+
 Sub SetVisible(b As Boolean) As VMCardSubTitle
 CardSubTitle.SetVisible(b)
 Return Me
@@ -224,11 +256,27 @@ Sub SetTextColor(varColor As String) As VMCardSubTitle
 	Return Me
 End Sub
 
-'set color intensity
-Sub SetTextColorIntensity(varColor As String, varIntensity As String) As VMCardSubTitle
-	Dim sColor As String = $"${varColor}--text"$
-	Dim sIntensity As String = $"text--${varIntensity}"$
+
+'set color intensity - built in
+Sub SetTextColorIntensity(textcolor As String, textintensity As String) As VMCardSubTitle
+	If textcolor = "" Then Return Me
+	Dim sColor As String = $"${textcolor}--text"$
+	Dim sIntensity As String = $"text--${textintensity}"$
 	Dim mcolor As String = $"${sColor} ${sIntensity}"$
 	AddClass(mcolor)
+	Return Me
+End Sub
+
+'set color intensity
+Sub SetColorIntensity(color As String, intensity As String) As VMCardSubTitle
+	If color = "" Then Return Me
+	Dim scolor As String = $"${color} ${intensity}"$
+	If bStatic Then
+		SetAttrSingle("color", scolor)
+		Return Me
+	End If
+	Dim pp As String = $"${ID}Color"$
+	vue.SetStateSingle(pp, scolor)
+	CardSubTitle.Bind(":color", pp)
 	Return Me
 End Sub

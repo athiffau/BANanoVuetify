@@ -10,8 +10,8 @@ Sub Class_Globals
 	Public ID As String
 	Private vue As BANanoVue
 	Private BANano As BANano  'ignore
-	Private DesignMode As Boolean
-	Private Module As Object
+	Private DesignMode As Boolean   'ignore
+	Private Module As Object    'ignore
 End Sub
 
 'initialize the TabsSlider
@@ -23,6 +23,13 @@ Public Sub Initialize(v As BANanoVue, sid As String, eventHandler As Object) As 
 	Module = eventHandler
 	vue = v
 	Return Me
+End Sub
+
+
+
+'add an element to the page content
+Sub AddElement(elm As VMElement)
+	TabsSlider.SetText(elm.ToString)
 End Sub
 
 Sub AddComponent(comp As String) As VMTabsSlider
@@ -42,6 +49,13 @@ Sub SetAttributes(attrs As List) As VMTabsSlider
 	Return Me
 End Sub
 
+Sub SetData(xprop As String, xValue As Object) As VMTabsSlider
+	vue.SetData(xprop, xValue)
+	Return Me
+End Sub
+
+
+
 'get component
 Sub ToString As String
 	
@@ -53,12 +67,12 @@ Sub SetVModel(k As String) As VMTabsSlider
 	Return Me
 End Sub
 
-Sub SetVIf(vif As Object) As VMTabsSlider
+Sub SetVIf(vif As String) As VMTabsSlider
 	TabsSlider.SetVIf(vif)
 	Return Me
 End Sub
 
-Sub SetVShow(vif As Object) As VMTabsSlider
+Sub SetVShow(vif As String) As VMTabsSlider
 	TabsSlider.SetVShow(vif)
 	Return Me
 End Sub

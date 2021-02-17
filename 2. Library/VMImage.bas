@@ -10,7 +10,7 @@ Sub Class_Globals
 	Public ID As String
 	Private vue As BANanoVue
 	Private BANano As BANano  'ignore
-	Private DesignMode As Boolean
+	Private DesignMode As Boolean   'ignore
 	Private Module As Object
 	Private imgLink As String
 	Private hasTooltip As Boolean
@@ -18,6 +18,10 @@ Sub Class_Globals
 	Private tmpl As VMTemplate
 	Private span As VMLabel
 	Private bStatic As Boolean
+	Public HasContent As Boolean
+	Public Hover As VMHover
+	Private hasHover As Boolean
+	Private vmodel As String
 End Sub
 
 'initialize the Image
@@ -28,7 +32,6 @@ Public Sub Initialize(v As BANanoVue, sid As String, eventHandler As Object) As 
 	DesignMode = False
 	Module = eventHandler
 	vue = v
-	Image.SetVShow($"${ID}show"$)
 	imgLink = $"${ID}url"$
 	hasTooltip = False
 	tooltip.Initialize(vue, "", Module)
@@ -36,6 +39,60 @@ Public Sub Initialize(v As BANanoVue, sid As String, eventHandler As Object) As 
 	tmpl.SetAttrSingle("v-slot:activator", "{ on }")
 	span.Initialize(vue, "").SetSpan
 	bStatic = False
+	HasContent = False
+	Hover.Initialize(vue, $"${ID}hover"$, Module)
+	hasHover = False
+	SetVShow(Image.showKey)
+	Show 
+	SetOnClick(Module, $"${ID}_click"$)
+	Return Me
+End Sub
+
+Sub RemoveVShow As VMImage
+	Image.RemoveVShow
+	vue.RemoveData(Image.showKey)
+	Return Me
+End Sub
+
+'add an element to the page content
+Sub AddElement(elm As VMElement)
+	Image.SetText(elm.ToString)
+End Sub
+
+Sub SetData(xprop As String, xValue As Object) As VMImage
+	vue.SetData(xprop, xValue)
+	Return Me
+End Sub
+
+Sub SetHover(b As Boolean) As VMImage
+	hasHover = b
+	Return Me
+End Sub
+
+Sub SetVOnce(t As Boolean) As VMImage
+	Image.setvonce(t)
+	Return Me
+End Sub
+
+Sub SetOnClick(EventHandler As Object, methodName As String) As VMImage
+	methodName = methodName.tolowercase
+	If SubExists(EventHandler, methodName) = False Then Return Me
+	Dim e As BANanoEvent
+	Dim cb As BANanoObject = BANano.CallBack(EventHandler, methodName, Array(e))
+	SetAttr(CreateMap("@click": methodName))
+	'add to methods
+	vue.SetCallBack(methodName, cb)
+	Return Me
+End Sub
+
+
+Sub SetStatic(b As Boolean) As VMImage
+	bStatic = b
+	Image.SetStatic(b)
+	tooltip.SetStatic(b)
+	tmpl.SetStatic(b)
+	span.SetStatic(b)
+	Hover.SetStatic(b)
 	Return Me
 End Sub
 
@@ -46,11 +103,6 @@ Sub SetCenterOnParent(b As Boolean) As VMImage
 	Return Me	
 End Sub
 
-Sub SetStatic(b As Boolean) As VMImage
-	bStatic = b
-	Image.SetStatic(b)
-	Return Me
-End Sub
 
 Sub SetTooltip(tt As String) As VMImage
 	If tt = "" Then Return Me
@@ -244,38 +296,53 @@ End Sub
 
 'get component
 Sub ToString As String
+	Dim sout As String = ""
 	If hasTooltip Then
 		Image.Pop(tmpl.Template)
 		tmpl.Pop(tooltip.tooltip)
 		span.Pop(tooltip.ToolTip)
-		Return tooltip.ToString
+		sout = tooltip.ToString
 	Else	
-		Return Image.ToString
+		sout = Image.ToString
 	End If
+	If hasHover Then
+		Hover.AddComponent(sout)
+		Return Hover.tostring
+	Else
+		Return sout
+	End If
+End Sub
+
+Sub GetValue As String
+	Dim sdata As String = vue.GetData(vmodel)
+	Return sdata
 End Sub
 
 Sub SetValue(url As String) As VMImage
 	SetVModel(imgLink, url)
+	HasContent = True
 	Return Me
 End Sub
 
 Sub SetVModel(k As String, value As String) As VMImage
+	Image.Value = value
+	vmodel = k
 	If bStatic Then
-		SetSrc(value)
+		SetSRC(value)
 		Return Me
 	End If
 	k = k.tolowercase
 	vue.SetData(k, value)
-	SetSrc(k)	
+	SetSRC(k)
 	Return Me
 End Sub
 
-Sub SetVIf(vif As Object) As VMImage
+Sub SetVIf(vif As String) As VMImage
 	Image.SetVIf(vif)
 	Return Me
 End Sub
 
-Sub SetVShow(vif As Object) As VMImage
+Sub SetVShow(vif As String) As VMImage
 	Image.SetVShow(vif)
 	Return Me
 End Sub
@@ -416,6 +483,7 @@ Sub SetLazySrc(varLazySrc As String) As VMImage
 	Dim pp As String = $"${ID}LazySrc"$
 	vue.SetStateSingle(pp, varLazySrc)
 	Image.Bind(":lazy-src", pp)
+	HasContent = True
 	Return Me
 End Sub
 
@@ -506,19 +574,27 @@ Sub SetSizes(varSizes As String) As VMImage
 End Sub
 
 'set src via vmodel
-private Sub SetSrc(varSrc As String) As VMImage
+Sub SetSRC(varSrc As String) As VMImage
 	If varSrc = "" Then Return Me
+	vmodel = varSrc
 	If bStatic Then
 		SetAttrSingle("src", varSrc)
 		Return Me
 	End If
 	Image.Bind(":src", varSrc)
+	HasContent = True
 	Return Me
+End Sub
+
+Sub GetSRC As String
+	Dim svalue As String = vue.GetData(vmodel)
+	Return svalue
 End Sub
 
 'set srcset
 Sub SetSrcSet(varSrcset As String) As VMImage
 	If varSrcset = "" Then Return Me
+	vmodel = varSrcset
 	If bStatic Then
 		SetAttrSingle("srcset", varSrcset)
 		Return Me
@@ -526,6 +602,7 @@ Sub SetSrcSet(varSrcset As String) As VMImage
 	Dim pp As String = $"${ID}Srcset"$
 	vue.SetStateSingle(pp, varSrcset)
 	Image.Bind(":srcset", pp)
+	HasContent = True
 	Return Me
 End Sub
 
@@ -566,8 +643,8 @@ Sub SetOnError(methodName As String) As VMImage
 	methodName = methodName.tolowercase
 	If SubExists(Module, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, e)
-	SetAttr(CreateMap("v-on:error": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
+	SetAttr(CreateMap("@error": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -578,8 +655,8 @@ Sub SetOnLoad(methodName As String) As VMImage
 	methodName = methodName.tolowercase
 	If SubExists(Module, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, e)
-	SetAttr(CreateMap("v-on:load": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
+	SetAttr(CreateMap("@load": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -634,6 +711,11 @@ End Sub
 Sub SetDesignMode(b As Boolean) As VMImage
 	Image.SetDesignMode(b)
 	DesignMode = b
+	Image.SetDesignMode(b)
+	tooltip.SetDesignMode(b)
+	tmpl.SetDesignMode(b)
+	span.SetDesignMode(b)
+	Hover.SetDesignMode(b)
 	Return Me
 End Sub
 
@@ -643,7 +725,7 @@ Sub SetTabIndex(ti As String) As VMImage
 End Sub
 
 'The Select name. Similar To HTML5 name attribute.
-Sub SetName(varName As Object, bbind As Boolean) As VMImage
+Sub SetName(varName As String, bbind As Boolean) As VMImage
 	Image.SetName(varName, bbind)
 	Return Me
 End Sub

@@ -4,7 +4,7 @@ ModulesStructureVersion=1
 Type=Class
 Version=8.1
 @EndOfDesignText@
-#IgnoreWarnings:12
+#IgnoreWarnings:12,9
 Sub Class_Globals
 	Public CardActions As VMElement
 	Public ID As String
@@ -12,6 +12,8 @@ Sub Class_Globals
 	Private BANano As BANano  'ignore
 	Private DesignMode As Boolean
 	Private Module As Object
+	Private bStatic As Boolean
+	Public HasContent As Boolean
 End Sub
 
 'initialize the CardActions
@@ -22,9 +24,43 @@ Public Sub Initialize(v As BANanoVue, sid As String, eventHandler As Object) As 
 	DesignMode = False
 	Module = eventHandler
 	vue = v
+	HasContent = False
 	Return Me
 End Sub
 
+
+
+'add an element to the page content
+Sub AddElement(elm As VMElement)
+	CardActions.SetText(elm.ToString)
+End Sub
+
+
+Sub SetData(prop As String, value As Object) As VMCardActions
+	vue.SetData(prop, value)
+	Return Me
+End Sub
+
+Sub SetSpaceBetween As VMCardActions
+	AddClass("justify-space-between")
+	Return Me
+End Sub
+
+Sub AddElement1(elID As String, elTag As String, elText As String, mprops As Map, mstyles As Map, lclasses As List) As VMCardActions
+	Dim d As VMElement
+	d.Initialize(vue,elID).SetDesignMode(DesignMode).SetTag(elTag)
+	d.SetText(elText)
+	d.BuildModel(mprops, mstyles, lclasses, Null)
+	SetText(d.ToString)
+	HasContent = True
+	Return Me
+End Sub
+
+Sub SetStatic(b As Boolean) As VMCardActions
+	bStatic = b
+	CardActions.SetStatic(b)
+	Return Me
+End Sub
 
 Sub SetAttrLoose(loose As String) As VMCardActions
 	CardActions.SetAttrLoose(loose)
@@ -51,20 +87,183 @@ End Sub
 
 Sub AddButton(btn As VMButton) As VMCardActions
 	btn.Pop(CardActions)
+	HasContent = True
+	Return Me
+End Sub
+
+
+Sub AddButton1(key As String, iconName As String, iconColor As String, text As String, toolTip As String, badge As String) As VMCardActions
+	Dim btn As VMButton
+	btn.Initialize(vue, key, Module).SetStatic(bStatic).SetDesignMode(DesignMode)
+	btn.SetToolTip(toolTip)
+	If iconName <> "" Then btn.AddIcon(iconName,"left","")
+	btn.SetLabel(text)
+	btn.SetColor(iconColor)
+	btn.SetTransparent(True)
+	If badge <> "" Then
+		btn.SetHasBadge(True)
+		btn.SetBadge(badge)
+	End If
+	CardActions.SetText(btn.tostring)
+	HasContent = True
+	Return Me
+End Sub
+
+Sub AddIcon(key As String, iconName As String, iconColor As String, iconSize As String, toolTip As String, badge As String) As VMCardActions
+	key = key.tolowercase
+	Dim btn As VMButton
+	btn.Initialize(vue, key, Module)
+	btn.SetStatic(bStatic)
+	btn.SetDesignMode(DesignMode)
+	btn.SetIconButton(iconName).SetTooltip(toolTip)
+	btn.SetColor(iconColor)
+	btn.SetSize(iconSize)
+	If badge <> "" Then
+		btn.SetHasBadge(True)
+		btn.SetBadge(badge)
+	End If
+	CardActions.SetText(btn.tostring)
+	HasContent = True
+	Return Me
+End Sub
+
+'Sub AddIconWeb(key As String, iconColor As String, iconSize As String, toolTip As String) As VMCardActions
+'	key = key.tolowercase
+'	Dim btn As VMButton
+'	btn.Initialize(vue, key, Module)
+'	btn.SetStatic(bStatic)
+'	btn.SetDesignMode(DesignMode)
+'	btn.SetIconButton("mdi-web").SetTooltip(toolTip)
+'	btn.SetColor(iconColor)
+'	btn.SetSize(iconSize)
+'	CardActions.SetText(btn.tostring)
+'	HasContent = True
+'	Return Me
+'End Sub
+'
+'Sub AddIconTwitter(key As String, iconColor As String, iconSize As String, toolTip As String) As VMCardActions
+'	key = key.tolowercase
+'	Dim btn As VMButton
+'	btn.Initialize(vue, key, Module)
+'	btn.SetStatic(bStatic)
+'	btn.SetDesignMode(DesignMode)
+'	btn.SetIconButton("mdi-twitter").SetTooltip(toolTip)
+'	btn.SetColor(iconColor)
+'	btn.SetSize(iconSize)
+'	CardActions.SetText(btn.tostring)
+'	HasContent = True
+'	Return Me
+'End Sub
+'
+'Sub AddIconLinkedIn(key As String, iconColor As String, iconSize As String, toolTip As String) As VMCardActions
+'	key = key.tolowercase
+'	Dim btn As VMButton
+'	btn.Initialize(vue, key, Module)
+'	btn.SetStatic(bStatic)
+'	btn.SetDesignMode(DesignMode)
+'	btn.SetIconButton("mdi-linkedin").SetTooltip(toolTip)
+'	btn.SetColor(iconColor)
+'	btn.SetSize(iconSize)
+'	CardActions.SetText(btn.tostring)
+'	HasContent = True
+'	Return Me
+'End Sub
+'
+'Sub AddIconFacebook(key As String, iconColor As String, iconSize As String, toolTip As String) As VMCardActions
+'	key = key.tolowercase
+'	Dim btn As VMButton
+'	btn.Initialize(vue, key, Module)
+'	btn.SetStatic(bStatic)
+'	btn.SetDesignMode(DesignMode)
+'	btn.SetIconButton("mdi-facebook").SetTooltip(toolTip)
+'	btn.SetColor(iconColor)
+'	btn.SetSize(iconSize)
+'	CardActions.SetText(btn.tostring)
+'	HasContent = True
+'	Return Me
+'End Sub
+'
+'Sub AddIconInstagram(key As String, iconColor As String, iconSize As String, toolTip As String) As VMCardActions
+'	key = key.tolowercase
+'	Dim btn As VMButton
+'	btn.Initialize(vue, key, Module)
+'	btn.SetStatic(bStatic)
+'	btn.SetDesignMode(DesignMode)
+'	btn.SetIconButton("mdi-instagram").SetTooltip(toolTip)
+'	btn.SetColor(iconColor)
+'	btn.SetSize(iconSize)
+'	CardActions.SetText(btn.tostring)
+'	HasContent = True
+'	Return Me
+'End Sub
+'
+'Sub AddIconShare(key As String, iconColor As String, iconSize As String, toolTip As String) As VMCardActions
+'	key = key.tolowercase
+'	Dim btn As VMButton
+'	btn.Initialize(vue, key, Module)
+'	btn.SetStatic(bStatic)
+'	btn.SetDesignMode(DesignMode)
+'	btn.SetIconButton("mdi-share").SetTooltip(toolTip)
+'	btn.SetColor(iconColor)
+'	btn.SetSize(iconSize)
+'	CardActions.SetText(btn.tostring)
+'	HasContent = True
+'	Return Me
+'End Sub
+'
+'
+'Sub AddIconWeChat(key As String, iconColor As String, iconSize As String, toolTip As String) As VMCardActions
+'	key = key.tolowercase
+'	Dim btn As VMButton
+'	btn.Initialize(vue, key, Module)
+'	btn.SetStatic(bStatic)
+'	btn.SetDesignMode(DesignMode)
+'	btn.SetIconButton("mdi-wechat").SetTooltip(toolTip)
+'	btn.SetColor(iconColor)
+'	btn.SetSize(iconSize)
+'	CardActions.SetText(btn.tostring)
+'	HasContent = True
+'	Return Me
+'End Sub
+'
+'Sub AddIconDotsVertical(key As String, iconColor As String, iconSize As String, toolTip As String) As VMCardActions
+'	key = key.tolowercase
+'	Dim btn As VMButton
+'	btn.Initialize(vue, key, Module)
+'	btn.SetStatic(bStatic)
+'	btn.SetDesignMode(DesignMode)
+'	btn.SetIconButton("mdi-dots-vertical").SetTooltip(toolTip)
+'	btn.SetColor(iconColor)
+'	btn.SetSize(iconSize)
+'	CardActions.SetText(btn.tostring)
+'	HasContent = True
+'	Return Me
+'End Sub
+'
+'Sub AddIconWhatsApp(key As String, iconColor As String, iconSize As String, toolTip As String) As VMCardActions
+'	key = key.tolowercase
+'	Dim btn As VMButton
+'	btn.Initialize(vue, key, Module)
+'	btn.SetStatic(bStatic)
+'	btn.SetDesignMode(DesignMode)
+'	btn.SetIconButton("mdi-whatsapp").SetTooltip(toolTip)
+'	btn.SetColor(iconColor)
+'	btn.SetSize(iconSize)
+'	CardActions.SetText(btn.tostring)
+'	HasContent = True
+'	Return Me
+'End Sub
+
+
+Sub AddMenu(menu As VMMenu) As VMCardActions
+	menu.Pop(CardActions)
+	HasContent = True
 	Return Me
 End Sub
 
 Sub AddSpacer As VMCardActions
 	CardActions.AddSpacer
-	Return Me
-End Sub
-
-'set color intensity
-Sub SetColorIntensity(varColor As String, varIntensity As String) As VMCardActions
-	Dim pp As String = $"${ID}Color"$
-	Dim scolor As String = $"${varColor} ${varIntensity}"$
-	vue.SetStateSingle(pp, scolor)
-	CardActions.Bind(":color", pp)
+	HasContent = True
 	Return Me
 End Sub
 
@@ -79,12 +278,12 @@ Sub SetVModel(k As String) As VMCardActions
 	Return Me
 End Sub
 
-Sub SetVIf(vif As Object) As VMCardActions
+Sub SetVIf(vif As String) As VMCardActions
 	CardActions.SetVIf(vif)
 	Return Me
 End Sub
 
-Sub SetVShow(vif As Object) As VMCardActions
+Sub SetVShow(vif As String) As VMCardActions
 	CardActions.SetVShow(vif)
 	Return Me
 End Sub
@@ -98,12 +297,15 @@ End Sub
 Sub AddChild(child As VMElement) As VMCardActions
 	Dim childHTML As String = child.ToString
 	CardActions.SetText(childHTML)
+	HasContent = True
 	Return Me
 End Sub
 
 'set text
-Sub SetText(t As Object) As VMCardActions
+Sub SetText(t As String) As VMCardActions
+	If t = "" Then Return Me
 	CardActions.SetText(t)
+	HasContent = True
 	Return Me
 End Sub
 
@@ -215,6 +417,7 @@ Sub BuildModel(mprops As Map, mstyles As Map, lclasses As List, loose As List) A
 CardActions.BuildModel(mprops, mstyles, lclasses, loose)
 Return Me
 End Sub
+
 Sub SetVisible(b As Boolean) As VMCardActions
 CardActions.SetVisible(b)
 Return Me
@@ -227,11 +430,27 @@ Sub SetTextColor(varColor As String) As VMCardActions
 	Return Me
 End Sub
 
-'set color intensity
-Sub SetTextColorIntensity(varColor As String, varIntensity As String) As VMCardActions
-	Dim sColor As String = $"${varColor}--text"$
-	Dim sIntensity As String = $"text--${varIntensity}"$
+
+'set color intensity - built in
+Sub SetTextColorIntensity(textcolor As String, textintensity As String) As VMCardActions
+	If textcolor = "" Then Return Me
+	Dim sColor As String = $"${textcolor}--text"$
+	Dim sIntensity As String = $"text--${textintensity}"$
 	Dim mcolor As String = $"${sColor} ${sIntensity}"$
 	AddClass(mcolor)
+	Return Me
+End Sub
+
+'set color intensity
+Sub SetColorIntensity(color As String, intensity As String) As VMCardActions
+	If color = "" Then Return Me
+	Dim scolor As String = $"${color} ${intensity}"$
+	If bStatic Then
+		SetAttrSingle("color", scolor)
+		Return Me
+	End If
+	Dim pp As String = $"${ID}Color"$
+	vue.SetStateSingle(pp, scolor)
+	CardActions.Bind(":color", pp)
 	Return Me
 End Sub

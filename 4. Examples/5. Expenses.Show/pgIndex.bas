@@ -14,14 +14,16 @@ End Sub
 Sub Init
 	'initialize the page
 	vm.Initialize(Me, Main.appname)
-	vm.NavBar.UpdateTitle("Expenses.Show")
+	'add a hamburger
+	vm.NavBar.AddHamburger
+	vm.NavBar.Hamburger.SetVisible(True)
+	vm.NavBar.AddTitle("Expenses.Show","")
+	vm.NavBar.AddSpacer
+	vm.NavBar.SetVisible(True)
 	'set primary color for the navbar
-	'vm.NavBar.SetPrimary(True)
+	vm.NavBar.SetPrimary(True)
 	'fix the navbar so that it does not move
 	vm.NavBar.SetModeFixed(True)
-	'hide the back button
-	'show the hamburger button
-	vm.NavBar.SetHasMenuButton(True)
 	vm.navbar.AddIcon("btnPrint", "print", "Print expenses", "")
 	'
 	'build the page
@@ -38,8 +40,8 @@ End Sub
 
 Sub LoadTypes
 	vm.SetStateSingle("types", Array())
-	Dim dbsql As BANanoMySQL
-	dbsql.Initialize(Main.dbase, "expensetypes", "id")
+	Dim dbsql As BANanoMySQLE
+	dbsql.Initialize(Main.dbase, "expensetypes", "id", "id")
 	dbsql.SelectAll(Array("id","text"), Array("text"))
 	dbsql.json = BANano.CallInlinePHPWait(dbsql.methodname, dbsql.Build)
 	dbsql.FromJSON
@@ -50,8 +52,8 @@ End Sub
 
 Sub LoadCategories
 	vm.SetStateSingle("categories", Array())
-	Dim dbsql As BANanoMySQL
-	dbsql.Initialize(Main.dbase, "expensecategories", "id")
+	Dim dbsql As BANanoMySQLE
+	dbsql.Initialize(Main.dbase, "expensecategories", "id", "id")
 	dbsql.SelectAll(Array("id","text"), Array("text"))
 	dbsql.json = BANano.CallInlinePHPWait(dbsql.methodname, dbsql.Build)
 	dbsql.FromJSON

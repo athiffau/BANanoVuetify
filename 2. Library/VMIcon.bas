@@ -10,9 +10,11 @@ Sub Class_Globals
 	Public ID As String
 	Private vue As BANanoVue
 	Private BANano As BANano  'ignore
-	Private DesignMode As Boolean
+	Private DesignMode As Boolean   'ignore
 	Private Module As Object
 	Private bStatic As Boolean
+	Public Badge As VMBadge
+	Private hasBadge As Boolean
 End Sub
 
 'initialize the Icon
@@ -24,12 +26,62 @@ Public Sub Initialize(v As BANanoVue, sid As String, eventHandler As Object) As 
 	Module = eventHandler
 	vue = v
 	bStatic = False
+	Badge.Initialize(vue, $"${ID}badge"$, Module)
+	hasBadge = False
+	SetOnClick(Module, $"${sid}_click"$)
+	Return Me
+End Sub
+
+
+
+'add an element to the page content
+Sub AddElement(elm As VMElement)
+	Icon.SetText(elm.ToString)
+End Sub
+
+Sub SetData(xprop As String, xValue As Object) As VMIcon
+	vue.SetData(xprop, xValue)
+	Return Me
+End Sub
+
+
+
+Sub SetOnClick(EventHandler As Object, methodName As String) As VMIcon
+	methodName = methodName.tolowercase
+	If SubExists(EventHandler, methodName) = False Then Return Me
+	Dim e As BANanoEvent
+	Dim cb As BANanoObject = BANano.CallBack(EventHandler, methodName, Array(e))
+	SetAttr(CreateMap("@click": methodName))
+	'add to methods
+	vue.SetCallBack(methodName, cb)
+	Return Me
+End Sub
+
+Sub SetVOnce(t As Boolean) As VMIcon
+	Icon.setvonce(t)
+	Return Me
+End Sub
+
+Sub SetBadge(scontent As String) As VMIcon
+	Badge.SetContent(scontent)
+	Badge.SetBordered(True)
+	Badge.SetOverlap(True)
+	Badge.SetColorIntensity(vue.COLOR_CYAN, vue.INTENSITY_NORMAL)
+	Badge.SetAvatar(True)
+	Badge.SetIcon("")
+	Badge.SetDot(False)
+	Return Me
+End Sub
+
+Sub SetHasBadge(b As Boolean) As VMIcon
+	hasBadge = b
 	Return Me
 End Sub
 
 Sub SetStatic(b As Boolean) As VMIcon
 	bStatic = b
 	Icon.SetStatic(b)
+	Badge.SetStatic(b)
 	Return Me
 End Sub
 
@@ -37,17 +89,6 @@ End Sub
 Sub SetCenterOnParent(b As Boolean) As VMIcon
 	If b = False Then Return Me
 	Icon.CenterOnParent = True
-	Return Me
-End Sub
-
-Sub SetOnClick(methodName As String) As VMIcon
-	methodName = methodName
-	If SubExists(Module, methodName) = False Then Return Me
-	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, e)
-	SetAttrSingle("@click", methodName)
-	'add to methods
-	vue.SetCallBack(methodName, cb)
 	Return Me
 End Sub
 
@@ -90,7 +131,15 @@ End Sub
 
 'get component
 Sub ToString As String
-	Return Icon.ToString
+	If hasBadge = False Then
+		Return Icon.ToString
+	End If
+	If Badge.HasContent Then
+		Badge.AddComponent(Icon.ToString)
+		Return Badge.tostring
+	Else
+		Return Icon.ToString
+	End If
 End Sub
 
 'set the icon name
@@ -113,7 +162,7 @@ Sub SetColorIntensity(varColor As String, varIntensity As String) As VMIcon
 	Return Me
 End Sub
 
-Sub SetVIf(vif As Object) As VMIcon
+Sub SetVIf(vif As String) As VMIcon
 	Icon.SetVIf(vif)
 	Return Me
 End Sub
@@ -123,7 +172,7 @@ Sub SetVElse(vif As Object) As VMIcon
 	Return Me
 End Sub
 
-Sub SetVShow(vif As Object) As VMIcon
+Sub SetVShow(vif As String) As VMIcon
 	Icon.SetVShow(vif)
 	Return Me
 End Sub
@@ -137,6 +186,11 @@ End Sub
 Sub AddChild(child As VMElement) As VMIcon
 	Dim childHTML As String = child.ToString
 	Icon.SetText(childHTML)
+	Return Me
+End Sub
+
+Sub SetIcon(t As String) As VMIcon
+	SetText(t)
 	Return Me
 End Sub
 
@@ -410,6 +464,7 @@ End Sub
 
 Sub SetDesignMode(b As Boolean) As VMIcon
 	Icon.SetDesignMode(b)
+	Badge.SetDesignMode(b)
 	DesignMode = b
 	Return Me
 End Sub

@@ -10,7 +10,7 @@ Sub Class_Globals
 	Public ID As String
 	Private vue As BANanoVue
 	Private BANano As BANano  'ignore
-	Private DesignMode As Boolean
+	Private DesignMode As Boolean   'ignore
 	Private Module As Object
 End Sub
 
@@ -22,11 +22,54 @@ Public Sub Initialize(v As BANanoVue, sid As String, eventHandler As Object) As 
 	DesignMode = False
 	Module = eventHandler
 	vue = v
+	SetOnChange(Module, $"${ID}_change"$)
 	Return Me
 End Sub
 
+Sub SetData(xprop As String, xValue As Object) As VMSlideGroup
+	vue.SetData(xprop, xValue)
+	Return Me
+End Sub
+
+
+
+
+'add an element to the page content
+Sub AddElement(elm As VMElement)
+	SlideGroup.SetText(elm.ToString)
+End Sub
+
+Sub AddComponent(comp As String) As VMSlideGroup
+	SetText(comp)
+	Return Me
+End Sub
+
+Sub AddItem(vitem As VMSlideItem) As VMSlideGroup
+	SetText(vitem.ToString)
+	Return Me
+End Sub
+
+'selValue
+Sub SetOnChange(eventHandler As Object,methodName As String) As VMSlideGroup
+	methodName = methodName.tolowercase
+	If SubExists(eventHandler, methodName) = False Then Return Me
+	Dim e As BANanoEvent
+	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, Array(e))
+	SetAttr(CreateMap("@change": methodName))
+	'add to methods
+	vue.SetCallBack(methodName, cb)
+	Return Me
+End Sub
+
+
 'get component
 Sub ToString As String
+	If vue.ShowWarnings Then
+		Dim eName As String = $"${ID}_change"$
+		If SubExists(Module, eName) = False Then
+			Log($"VMSlideGroup.${eName} event has not been defined!"$)
+		End If
+	End If
 	Return SlideGroup.ToString
 End Sub
 
@@ -35,12 +78,12 @@ Sub SetVModel(k As String) As VMSlideGroup
 	Return Me
 End Sub
 
-Sub SetVIf(vif As Object) As VMSlideGroup
+Sub SetVIf(vif As String) As VMSlideGroup
 	SlideGroup.SetVIf(vif)
 	Return Me
 End Sub
 
-Sub SetVShow(vif As Object) As VMSlideGroup
+Sub SetVShow(vif As String) As VMSlideGroup
 	SlideGroup.SetVShow(vif)
 	Return Me
 End Sub
@@ -75,7 +118,7 @@ Sub AddClass(c As String) As VMSlideGroup
 End Sub
 
 'set an attribute
-Sub SetAttr(attr as map) As VMSlideGroup
+Sub SetAttr(attr As Map) As VMSlideGroup
 	SlideGroup.SetAttr(attr)
 	Return Me
 End Sub
@@ -183,7 +226,7 @@ End Sub
 
 'set value
 Sub SetValue(varValue As Object) As VMSlideGroup
-	SetAttrSingle("value", varValue)
+	SlideGroup.SetValue(varValue)
 	Return Me
 End Sub
 
@@ -204,8 +247,8 @@ Sub SetOnClickLocation(methodName As String) As VMSlideGroup
 	methodName = methodName.tolowercase
 	If SubExists(Module, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, e)
-	SetAttr(CreateMap("v-on:click:location": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
+	SetAttr(CreateMap("@click:location": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -386,12 +429,6 @@ End Sub
 'set the sizes for this item
 Sub SetDeviceSizes(SS As String, SM As String, SL As String, SX As String) As VMSlideGroup
 	SlideGroup.SetDeviceSizes(SS, SM, SL, SX)
-	Return Me
-End Sub
-
-
-Sub AddComponent(comp As String) As VMSlideGroup
-	SlideGroup.SetText(comp)
 	Return Me
 End Sub
 

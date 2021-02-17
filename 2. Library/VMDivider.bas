@@ -4,7 +4,7 @@ ModulesStructureVersion=1
 Type=Class
 Version=8.1
 @EndOfDesignText@
-#IgnoreWarnings:12
+#IgnoreWarnings:12, 9
 Sub Class_Globals
 	Public Divider As VMElement
 	Private vue As BANanoVue
@@ -31,6 +31,12 @@ Sub SetDeviceOffsets(OS As String, OM As String,OL As String,OX As String) As VM
 	Divider.SetDeviceOffsets(OS, OM, OL, OX)
 	Return Me
 End Sub
+
+Sub SetData(prop As String, value As Object) As VMDivider
+	vue.SetData(prop, value)
+	Return Me
+End Sub
+
 
 'set the sizes for this item
 Sub SetDeviceSizes(SS As String, SM As String, SL As String, SX As String) As VMDivider
@@ -73,12 +79,12 @@ Sub SetVModel(k As String) As VMDivider
 	Return Me
 End Sub
 
-Sub SetVIf(vif As Object) As VMDivider
+Sub SetVIf(vif As String) As VMDivider
 	Divider.SetVIf(vif)
 	Return Me
 End Sub
 
-Sub SetVShow(vif As Object) As VMDivider
+Sub SetVShow(vif As String) As VMDivider
 	Divider.SetVShow(vif)
 	Return Me
 End Sub

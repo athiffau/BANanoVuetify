@@ -10,8 +10,8 @@ Sub Class_Globals
 	Public ID As String
 	Private vue As BANanoVue
 	Private BANano As BANano  'ignore
-	Private DesignMode As Boolean
-	Private Module As Object
+	Private DesignMode As Boolean   'ignore
+	Private Module As Object    'ignore
 	Private bStatic As Boolean
 End Sub
 
@@ -27,11 +27,25 @@ Public Sub Initialize(v As BANanoVue, sid As String, eventHandler As Object) As 
 	Return Me
 End Sub
 
+
+
+'add an element to the page content
+Sub AddElement(elm As VMElement)
+	ToolTip.SetText(elm.ToString)
+End Sub
+
 Sub SetStatic(b As Boolean) As VMToolTip
 	bStatic = b
 	ToolTip.SetStatic(b)
 	Return Me
 End Sub
+
+Sub SetData(xprop As String, xValue As Object) As VMToolTip
+	vue.SetData(xprop, xValue)
+	Return Me
+End Sub
+
+
 
 Sub SetAttrLoose(loose As String) As VMToolTip
 	ToolTip.SetAttrLoose(loose)
@@ -56,12 +70,12 @@ Sub SetVModel(k As String) As VMToolTip
 	Return Me
 End Sub
 
-Sub SetVIf(vif As Object) As VMToolTip
+Sub SetVIf(vif As String) As VMToolTip
 	ToolTip.SetVIf(vif)
 	Return Me
 End Sub
 
-Sub SetVShow(vif As Object) As VMToolTip
+Sub SetVShow(vif As String) As VMToolTip
 	ToolTip.SetVShow(vif)
 	Return Me
 End Sub
@@ -79,7 +93,7 @@ Sub AddChild(child As VMElement) As VMToolTip
 End Sub
 
 'set text
-Sub SetText(t As Object) As VMToolTip
+Sub SetText(t As String) As VMToolTip
 	ToolTip.SetText(t)
 	Return Me
 End Sub
@@ -521,8 +535,8 @@ Sub SetTransition(varTransition As String) As VMToolTip
 End Sub
 
 'set value, visible / not visible
-Sub SetValue(varValue As Object) As VMToolTip
-	SetAttrSingle("value", varValue)
+Sub SetValue(varValue As String) As VMToolTip
+	ToolTip.SetValue(varValue)
 	Return Me
 End Sub
 
@@ -603,7 +617,7 @@ Sub SetTabIndex(ti As String) As VMToolTip
 End Sub
 
 'The Select name. Similar To HTML5 name attribute.
-Sub SetName(varName As Object, bbind As Boolean) As VMToolTip
+Sub SetName(varName As String, bbind As Boolean) As VMToolTip
 	ToolTip.SetName(varName, bbind)
 	Return Me
 End Sub

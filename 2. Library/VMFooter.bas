@@ -10,8 +10,11 @@ Sub Class_Globals
 	Public ID As String
 	Private vue As BANanoVue
 	Private BANano As BANano  'ignore
-	Private DesignMode As Boolean
+	Private DesignMode As Boolean   'ignore
 	Private Module As Object
+	Public HasContent As Boolean
+	Private bStatic As Boolean
+	Private smodel As String
 	Public Container As VMContainer
 End Sub
 
@@ -23,22 +26,96 @@ Public Sub Initialize(v As BANanoVue, sid As String, eventHandler As Object) As 
 	DesignMode = False
 	Module = eventHandler
 	vue = v
-	SetVModel(ID)
-	Container.Initialize(vue, $"${ID}content"$, Module) 
+	SetVShow(Footer.showkey)
+	HasContent = False
+	bStatic = False
+	Container.Initialize(vue, $"${ID}cont"$, eventHandler)
+	Show
 	Return Me
+End Sub
+
+Sub RemoveVShow As VMFooter
+	Footer.RemoveVShow
+	vue.RemoveData(Footer.showKey)
+	Return Me
+End Sub
+
+'add an element to the page content
+Sub AddElement(elm As VMElement)
+	Footer.SetText(elm.ToString)
+End Sub
+
+Sub RemoveVModel As VMFooter
+	RemoveAttr("v-model")
+	Return Me
+End Sub
+
+Sub SetData(xprop As String, xValue As Object) As VMFooter
+	vue.SetData(xprop, xValue)
+	Return Me
+End Sub
+
+Sub SetStatic(b As Boolean) As VMFooter
+	bStatic = b
+	Footer.SetStatic(b)
+	Return Me
+End Sub
+
+Sub AddMadeWithLove(Row As Int, Col As Int, Message As String, CreatorName As String, EmailAddress As String)
+	Dim footerDiv As VMElement
+	footerDiv.initialize(vue, "footerdiv")
+	footerDiv.AddClass("white--text ml-3")
+	footerDiv.SetText("Made with")
+	'
+	Dim footerIcon As VMIcon
+	footerIcon.Initialize(vue, "footerlove", Me).SetText("mdi-heart-multiple").AddClass("red--text")
+	footerIcon.AddClass("mx-1")
+	footerDiv.SetText(footerIcon.tostring)
+	'
+	Dim lblWith As VMLabel
+	lblWith.initialize(vue, "lblwith")
+	lblWith.SetText(Message)
+	lblWith.AddClass("white--text").AddClass("mr-1")
+	footerDiv.SetText(lblWith.ToString)
+	'
+	Dim lbla As VMLabel
+	lbla.Initialize(vue, "lbla").SetTag("a").SetHREF($"mailto:${EmailAddress}"$).SetText($"${CreatorName}"$)
+	lbla.AddClass("white--text")
+	footerDiv.SetText(lbla.tostring)
+	Container.AddCOmponent(Row,Col, footerDiv.tostring)
 End Sub
 
 'set color intensity
 Sub SetColorIntensity(varColor As String, varIntensity As String) As VMFooter
+	If varColor = "" Then Return Me
 	Dim pp As String = $"${ID}Color"$
 	Dim scolor As String = $"${varColor} ${varIntensity}"$
+	If bStatic Then
+		Footer.Bind("color", scolor)
+		Return Me
+	End If
 	vue.SetStateSingle(pp, scolor)
 	Footer.Bind(":color", pp)
 	Return Me
 End Sub
 
 Sub AddSpacer As VMFooter
-	Footer.AddSpacer
+	Dim spc As VMElement
+	spc.Initialize(vue, "").SetTag("v-spacer")
+	Footer.AddElement(spc)
+	Return Me
+End Sub
+
+Sub AddSpan(spanText As String) As VMFooter
+	Dim span As VMElement
+	span.Initialize(vue, "").SetTag("span").SetText(spanText)
+	AddComponent(span.ToString)
+	Return Me
+End Sub
+
+Sub AddCopyRight(cYear As String) As VMFooter
+	Dim spanText As String = $"&copy; ${cYear}"$
+	AddSpan(spanText)
 	Return Me
 End Sub
 
@@ -54,38 +131,40 @@ Sub SetAttributes(attrs As List) As VMFooter
 	Return Me
 End Sub
 
+Sub SetVisible(b As Boolean) As VMFooter
+	vue.SetData(smodel, b)
+	Return Me
+End Sub
+
 Sub Hide As VMFooter
-	vue.SetStateSingle(ID, False)
+	vue.SetStateSingle(smodel, False)
 	Return Me
 End Sub
 
 Sub Show As VMFooter
-	vue.SetStateSingle(ID, True)
+	vue.SetStateSingle(smodel, True)
 	Return Me
 End Sub
 
 'get component
 Sub ToString As String
-	AddComponent(Container.ToString)
+	If Container.HasContent Then Footer.SetText(Container.ToString)
 	Return Footer.ToString
 End Sub
 
 Sub AddComponent(comp As String) As VMFooter
 	Footer.SetText(comp)
+	HasContent = True
 	Return Me
 End Sub
 
-Sub SetVModel(k As String) As VMFooter
-	Footer.SetVModel(k)
-	Return Me
-End Sub
-
-Sub SetVIf(vif As Object) As VMFooter
+Sub SetVIf(vif As String) As VMFooter
 	Footer.SetVIf(vif)
 	Return Me
 End Sub
 
-Sub SetVShow(vif As Object) As VMFooter
+Sub SetVShow(vif As String) As VMFooter
+	smodel = vif
 	Footer.SetVShow(vif)
 	Return Me
 End Sub
@@ -99,12 +178,7 @@ End Sub
 Sub AddChild(child As VMElement) As VMFooter
 	Dim childHTML As String = child.ToString
 	Footer.SetText(childHTML)
-	Return Me
-End Sub
-
-'set text
-Sub SetText(t As Object) As VMFooter
-	Footer.SetText(t)
+	HasContent = True
 	Return Me
 End Sub
 
@@ -139,7 +213,12 @@ Sub AddChildren(children As List)
 End Sub
 
 'set absolute
-Sub SetAbsolute(varAbsolute As Object) As VMFooter
+Sub SetAbsolute(varAbsolute As Boolean) As VMFooter
+	If varAbsolute = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("absolute", varAbsolute)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Absolute"$
 	vue.SetStateSingle(pp, varAbsolute)
 	Footer.Bind(":absolute", pp)
@@ -147,15 +226,19 @@ Sub SetAbsolute(varAbsolute As Object) As VMFooter
 End Sub
 
 'set app
-Sub SetApp(varApp As Object) As VMFooter
-	Dim pp As String = $"${ID}App"$
-	vue.SetStateSingle(pp, varApp)
-	Footer.Bind(":app", pp)
+Sub SetApp(varApp As Boolean) As VMFooter
+	If varApp = False Then Return Me
+	Footer.SetAttrLoose("app")
 	Return Me
 End Sub
 
 'set color
-Sub SetColor(varColor As Object) As VMFooter
+Sub SetColor(varColor As String) As VMFooter
+	If varColor = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("color", varColor)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Color"$
 	vue.SetStateSingle(pp, varColor)
 	Footer.Bind(":color", pp)
@@ -163,7 +246,12 @@ Sub SetColor(varColor As Object) As VMFooter
 End Sub
 
 'set dark
-Sub SetDark(varDark As Object) As VMFooter
+Sub SetDark(varDark As Boolean) As VMFooter
+	If varDark = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("dark", varDark)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Dark"$
 	vue.SetStateSingle(pp, varDark)
 	Footer.Bind(":dark", pp)
@@ -171,7 +259,12 @@ Sub SetDark(varDark As Object) As VMFooter
 End Sub
 
 'set elevation
-Sub SetElevation(varElevation As Object) As VMFooter
+Sub SetElevation(varElevation As String) As VMFooter
+	If varElevation = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("elevation", varElevation)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Elevation"$
 	vue.SetStateSingle(pp, varElevation)
 	Footer.Bind(":elevation", pp)
@@ -179,7 +272,12 @@ Sub SetElevation(varElevation As Object) As VMFooter
 End Sub
 
 'set fixed
-Sub SetFixed(varFixed As Object) As VMFooter
+Sub SetFixed(varFixed As Boolean) As VMFooter
+	If varFixed = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("fixed", varFixed)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Fixed"$
 	vue.SetStateSingle(pp, varFixed)
 	Footer.Bind(":fixed", pp)
@@ -187,7 +285,12 @@ Sub SetFixed(varFixed As Object) As VMFooter
 End Sub
 
 'set height
-Sub SetHeight(varHeight As Object) As VMFooter
+Sub SetHeight(varHeight As String) As VMFooter
+	If varHeight = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("height", varHeight)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Height"$
 	vue.SetStateSingle(pp, varHeight)
 	Footer.Bind(":height", pp)
@@ -195,7 +298,12 @@ Sub SetHeight(varHeight As Object) As VMFooter
 End Sub
 
 'set inset
-Sub SetInset(varInset As Object) As VMFooter
+Sub SetInset(varInset As Boolean) As VMFooter
+	If varInset = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("inset", varInset)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Inset"$
 	vue.SetStateSingle(pp, varInset)
 	Footer.Bind(":inset", pp)
@@ -203,7 +311,12 @@ Sub SetInset(varInset As Object) As VMFooter
 End Sub
 
 'set light
-Sub SetLight(varLight As Object) As VMFooter
+Sub SetLight(varLight As Boolean) As VMFooter
+	If varLight = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("light", varLight)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Light"$
 	vue.SetStateSingle(pp, varLight)
 	Footer.Bind(":light", pp)
@@ -211,7 +324,12 @@ Sub SetLight(varLight As Object) As VMFooter
 End Sub
 
 'set max-height
-Sub SetMaxHeight(varMaxHeight As Object) As VMFooter
+Sub SetMaxHeight(varMaxHeight As String) As VMFooter
+	If varMaxHeight = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("max-height", varMaxHeight)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}MaxHeight"$
 	vue.SetStateSingle(pp, varMaxHeight)
 	Footer.Bind(":max-height", pp)
@@ -219,7 +337,12 @@ Sub SetMaxHeight(varMaxHeight As Object) As VMFooter
 End Sub
 
 'set max-width
-Sub SetMaxWidth(varMaxWidth As Object) As VMFooter
+Sub SetMaxWidth(varMaxWidth As String) As VMFooter
+	If varMaxWidth = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("max-width", varMaxWidth)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}MaxWidth"$
 	vue.SetStateSingle(pp, varMaxWidth)
 	Footer.Bind(":max-width", pp)
@@ -227,7 +350,12 @@ Sub SetMaxWidth(varMaxWidth As Object) As VMFooter
 End Sub
 
 'set min-height
-Sub SetMinHeight(varMinHeight As Object) As VMFooter
+Sub SetMinHeight(varMinHeight As String) As VMFooter
+	If varMinHeight = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("min-height", varMinHeight)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}MinHeight"$
 	vue.SetStateSingle(pp, varMinHeight)
 	Footer.Bind(":min-height", pp)
@@ -235,7 +363,12 @@ Sub SetMinHeight(varMinHeight As Object) As VMFooter
 End Sub
 
 'set padless
-Sub SetPadless(varPadless As Object) As VMFooter
+Sub SetPadless(varPadless As Boolean) As VMFooter
+	If varPadless = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("padless", varPadless)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Padless"$
 	vue.SetStateSingle(pp, varPadless)
 	Footer.Bind(":padless", pp)
@@ -243,15 +376,19 @@ Sub SetPadless(varPadless As Object) As VMFooter
 End Sub
 
 'set tag
-Sub SetTag(varTag As Object) As VMFooter
-	Dim pp As String = $"${ID}Tag"$
-	vue.SetStateSingle(pp, varTag)
-	Footer.Bind(":tag", pp)
+Sub SetTag(varTag As String) As VMFooter
+	If varTag = "" Then Return Me
+	SetAttrSingle("tag", varTag)
 	Return Me
 End Sub
 
 'set tile
-Sub SetTile(varTile As Object) As VMFooter
+Sub SetTile(varTile As Boolean) As VMFooter
+	If varTile = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("tile", varTile)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Tile"$
 	vue.SetStateSingle(pp, varTile)
 	Footer.Bind(":tile", pp)
@@ -259,23 +396,17 @@ Sub SetTile(varTile As Object) As VMFooter
 End Sub
 
 'set width
-Sub SetWidth(varWidth As Object) As VMFooter
+Sub SetWidth(varWidth As String) As VMFooter
+	If varWidth = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("width", varWidth)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Width"$
 	vue.SetStateSingle(pp, varWidth)
 	Footer.Bind(":width", pp)
 	Return Me
 End Sub
-
-Sub Enable As VMFooter
-	Footer.Enable(True)
-	Return Me
-End Sub
-
-Sub Disable As VMFooter
-	Footer.Disable(True)
-	Return Me
-End Sub
-
 
 'bind a property to state
 Sub Bind(prop As String, stateprop As String) As VMFooter
@@ -318,12 +449,6 @@ Sub SetName(varName As Object, bbind As Boolean) As VMFooter
 	Return Me
 End Sub
 
-Sub SetDisabled(b As Boolean) As VMFooter
-	Footer.SetDisabled(b)
-	Return Me
-End Sub
-
-
 Sub SetStyleSingle(prop As String, value As String) As VMFooter
 	Footer.SetStyleSingle(prop, value)
 	Return Me
@@ -338,23 +463,9 @@ Sub BuildModel(mprops As Map, mstyles As Map, lclasses As List, loose As List) A
 Footer.BuildModel(mprops, mstyles, lclasses, loose)
 Return Me
 End Sub
-Sub SetVisible(b As Boolean) As VMFooter
-Footer.SetVisible(b)
-Return Me
-End Sub
 
-'set color intensity
-Sub SetTextColor(varColor As String) As VMFooter
-	Dim sColor As String = $"${varColor}--text"$
-	AddClass(sColor)
-	Return Me
-End Sub
-
-'set color intensity
-Sub SetTextColorIntensity(varColor As String, varIntensity As String) As VMFooter
-	Dim sColor As String = $"${varColor}--text"$
-	Dim sIntensity As String = $"text--${varIntensity}"$
-	Dim mcolor As String = $"${sColor} ${sIntensity}"$
-	AddClass(mcolor)
+'set disabled
+Sub SetDisabled(varDisabled As Boolean) As VMFooter
+	Footer.SetDisabled(varDisabled)
 	Return Me
 End Sub

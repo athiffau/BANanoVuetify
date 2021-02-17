@@ -10,7 +10,7 @@ Sub Class_Globals
 	Public ID As String
 	Private vue As BANanoVue
 	Private BANano As BANano  'ignore
-	Private DesignMode As Boolean
+	Private DesignMode As Boolean   'ignore
 	Private Module As Object
 	Private bStatic As Boolean
 End Sub
@@ -25,7 +25,15 @@ Public Sub Initialize(v As BANanoVue, sid As String, eventHandler As Object) As 
 	vue = v
 	Radio.typeOf = "radio"
 	bStatic = False
+	SetOnChange(Module, $"${ID}_change"$)
 	Return Me
+End Sub
+
+
+
+'add an element to the page content
+Sub AddElement(elm As VMElement)
+	Radio.SetText(elm.ToString)
 End Sub
 
 Sub SetStatic(b As Boolean) As VMRadio
@@ -39,6 +47,13 @@ Sub SetRC(sRow As String, sCol As String) As VMRadio
 	Radio.SetRC(sRow, sCol)
 	Return Me
 End Sub
+
+Sub SetData(xprop As String, xValue As Object) As VMRadio
+	vue.SetData(xprop, xValue)
+	Return Me
+End Sub
+
+
 
 'set the offsets for this item
 Sub SetDeviceOffsets(OS As String, OM As String,OL As String,OX As String) As VMRadio
@@ -111,6 +126,12 @@ End Sub
 
 'get component
 Sub ToString As String
+	If vue.ShowWarnings Then
+	Dim eName As String = $"${ID}_change"$
+	If SubExists(Module, eName) = False Then
+		Log($"VMRadio.${eName} event has not been defined!"$)
+	End If
+	End If
 	RemoveAttr("required")
 	RemoveAttr(":required")
 	Return Radio.ToString
@@ -121,12 +142,12 @@ Sub SetVModel(k As String) As VMRadio
 	Return Me
 End Sub
 
-Sub SetVIf(vif As Object) As VMRadio
+Sub SetVIf(vif As String) As VMRadio
 	Radio.SetVIf(vif)
 	Return Me
 End Sub
 
-Sub SetVShow(vif As Object) As VMRadio
+Sub SetVShow(vif As String) As VMRadio
 	Radio.SetVShow(vif)
 	Return Me
 End Sub
@@ -313,7 +334,7 @@ End Sub
 
 'set value
 Sub SetValue(varValue As Object) As VMRadio
-	Radio.SetAttrSingle("value", varValue)
+	Radio.SetValue(varValue)
 	Return Me
 End Sub
 
@@ -333,8 +354,8 @@ Sub SetOnChange(eventHandler As Object,methodName As String) As VMRadio
 	methodName = methodName.tolowercase
 	If SubExists(eventHandler, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, e)
-	SetAttr(CreateMap("v-on:change": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, Array(e))
+	SetAttr(CreateMap("@change": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -345,8 +366,8 @@ Sub SetOnClickAppend(methodName As String) As VMRadio
 	methodName = methodName.tolowercase
 	If SubExists(Module, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, e)
-	SetAttr(CreateMap("v-on:click:append": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
+	SetAttr(CreateMap("@click:append": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -357,8 +378,8 @@ Sub SetOnClickPrepend(methodName As String) As VMRadio
 	methodName = methodName.tolowercase
 	If SubExists(Module, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, e)
-	SetAttr(CreateMap("v-on:click:prepend": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
+	SetAttr(CreateMap("@click:prepend": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -369,8 +390,8 @@ Sub SetOnMousedown(methodName As String) As VMRadio
 	methodName = methodName.tolowercase
 	If SubExists(Module, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, e)
-	SetAttr(CreateMap("v-on:mousedown": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
+	SetAttr(CreateMap("@mousedown": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -381,8 +402,8 @@ Sub SetOnMouseup(methodName As String) As VMRadio
 	methodName = methodName.tolowercase
 	If SubExists(Module, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, e)
-	SetAttr(CreateMap("v-on:mouseup": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
+	SetAttr(CreateMap("@mouseup": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -393,8 +414,8 @@ Sub SetOnUpdateError(methodName As String) As VMRadio
 	methodName = methodName.tolowercase
 	If SubExists(Module, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, e)
-	SetAttr(CreateMap("v-on:update:error": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
+	SetAttr(CreateMap("@update:error": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me

@@ -19,6 +19,9 @@ Sub Class_Globals
 	Public Container As VMContainer
 	Private titleKey As String
 	Private contentKey As String
+	Private bStatic As Boolean
+	Private Form As VMForm
+	Private smodel As String
 End Sub
 
 'initialize the Dialog
@@ -29,18 +32,60 @@ Public Sub Initialize(v As BANanoVue, sid As String, eventHandler As Object) As 
 	DesignMode = False
 	Module = eventHandler
 	vue = v
-	SetVModel(ID)
+	SetVModel(Dialog.showkey)
 	Card.Initialize(vue, $"${ID}card"$, eventHandler)
 	Card.IsDialog = True
 	Title = Card.title
 	Content = Card.text
 	Actions = Card.Actions
-	Container = Card.container
+	Form = Card.Form
+	Container = Form.Container
 	Actions.AddSpacer
 	'
 	Title.AddClass("headline")
 	titleKey = $"${ID}title"$
 	contentKey = $"${ID}content"$
+	bStatic = False
+	Hide
+	Return Me
+End Sub
+
+
+
+'add an element to the page content
+Sub AddElement(elm As VMElement)
+	Dialog.SetText(elm.ToString)
+End Sub
+
+Sub SetData(prop As String, value As Object) As VMDialog
+	vue.SetData(prop, value)
+	Return Me
+End Sub
+
+
+Sub RemoveVModel As VMDialog
+	RemoveAttr("v-model")
+	Return Me
+End Sub
+
+
+Sub Validate
+	Card.Form.validate
+End Sub
+
+Sub Reset
+	Card.Form.Reset	
+End Sub
+
+Sub ResetValidation
+	Card.Form.ResetValidation
+End Sub
+
+Sub SetStatic(b As Boolean) As VMDialog
+	bStatic = b
+	Dialog.SetStatic(b)
+	Card.setstatic(b)
+	Container.SetStatic(b)
 	Return Me
 End Sub
 
@@ -62,7 +107,7 @@ End Sub
 
 'get required fields
 Sub Required As Map
-	Return Container.required
+	Return Container.Required
 End Sub
 
 'set single style
@@ -85,12 +130,20 @@ End Sub
 
 'set the title of the dialog
 Sub SetTitle(sTitle As String) As VMDialog
+	If bStatic Then
+		Title.SetText(sTitle)
+		Return Me
+	End If
 	vue.SetStateSingle(titleKey, sTitle)
 	Title.SetText($"{{ ${titleKey} }}"$)
 	Return Me
 End Sub
 
 Sub SetContent(sContent As String) As VMDialog
+	If bStatic Then
+		Content.SetText(sContent)
+		Return Me
+	End If
 	vue.SetStateSingle(contentKey, sContent)
 	Content.SetText($"{{ ${contentKey} }}"$)
 	Return Me
@@ -119,19 +172,28 @@ Sub UseTheme(themeName As String) As VMDialog
 	Return Me
 End Sub
 
-
 'set color intensity
 Sub SetColorIntensity(varColor As String, varIntensity As String) As VMDialog
-	Dim pp As String = $"${ID}Color"$
+	If varColor = "" Then Return Me
 	Dim scolor As String = $"${varColor} ${varIntensity}"$
+	If bStatic Then
+		SetAttrSingle("color", scolor)	
+		Return Me
+	End If
+	Dim pp As String = $"${ID}Color"$
 	vue.SetStateSingle(pp, scolor)
 	Dialog.Bind(":color", pp)
 	Return Me
 End Sub
 
+Sub SetOK(okID As String, okCaption As String) As VMDialog
+	AddOK(okID, okCaption)
+	Return Me
+End Sub
+
 Sub AddOK(okID As String, okCaption As String) As VMDialog
 	Dim btnOK As VMButton
-	btnOK.Initialize(vue, okID, Module)
+	btnOK.Initialize(vue, okID, Module).SetStatic(bStatic).SetDesignMode(DesignMode)
 	btnOK.SetPrimary(True)
 	btnOK.SetLabel(okCaption)
 	btnOK.SetTransparent(True)
@@ -139,9 +201,19 @@ Sub AddOK(okID As String, okCaption As String) As VMDialog
 	Return Me
 End Sub
 
+Sub SetCancel(cancelID As String, cancelCaption As String) As VMDialog
+	AddCANCEL(cancelID, cancelCaption)
+	Return Me
+End Sub
+
+Sub AddButton(btn As VMButton) As VMDialog
+	btn.pop(Actions.CardActions)
+	Return Me
+End Sub
+
 Sub AddCANCEL(cancelID As String, cancelCaption As String) As VMDialog
 	Dim btnCancel As VMButton
-	btnCancel.Initialize(vue, cancelID, Module)
+	btnCancel.Initialize(vue, cancelID, Module).SetStatic(bStatic).SetDesignMode(DesignMode)
 	btnCancel.SetLabel(cancelCaption)
 	btnCancel.SetAccent(True)
 	btnCancel.SetTransparent(True)
@@ -156,21 +228,23 @@ Sub SetTitlePrimary(b As Boolean) As VMDialog
 End Sub
 
 Sub ToString As String
+	Dialog.RemoveVShow
 	Card.Pop(Dialog)
 	Return Dialog.tostring
 End Sub
 
 Sub SetVModel(k As String) As VMDialog
+	smodel = k
 	Dialog.SetVModel(k)
 	Return Me
 End Sub
 
-Sub SetVIf(vif As Object) As VMDialog
+Sub SetVIf(vif As String) As VMDialog
 	Dialog.SetVIf(vif)
 	Return Me
 End Sub
 
-Sub SetVShow(vif As Object) As VMDialog
+Sub SetVShow(vif As String) As VMDialog
 	Dialog.SetVShow(vif)
 	Return Me
 End Sub
@@ -224,7 +298,12 @@ Sub AddChildren(children As List)
 End Sub
 
 'set activator
-Sub SetActivator(varActivator As Object) As VMDialog
+Sub SetActivator(varActivator As String) As VMDialog
+	If varActivator = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("activator", varActivator)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Activator"$
 	vue.SetStateSingle(pp, varActivator)
 	Dialog.Bind(":activator", pp)
@@ -232,7 +311,12 @@ Sub SetActivator(varActivator As Object) As VMDialog
 End Sub
 
 'set attach
-Sub SetAttach(varAttach As Object) As VMDialog
+Sub SetAttach(varAttach As Boolean) As VMDialog
+	If varAttach = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("attach", varAttach)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Attach"$
 	vue.SetStateSingle(pp, varAttach)
 	Dialog.Bind(":attach", pp)
@@ -240,7 +324,12 @@ Sub SetAttach(varAttach As Object) As VMDialog
 End Sub
 
 'set content-class
-Sub SetContentClass(varContentClass As Object) As VMDialog
+Sub SetContentClass(varContentClass As String) As VMDialog
+	If varContentClass = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("content-class", varContentClass)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}ContentClass"$
 	vue.SetStateSingle(pp, varContentClass)
 	Dialog.Bind(":content-class", pp)
@@ -248,7 +337,12 @@ Sub SetContentClass(varContentClass As Object) As VMDialog
 End Sub
 
 'set dark
-Sub SetDark(varDark As Object) As VMDialog
+Sub SetDark(varDark As Boolean) As VMDialog
+	If varDark = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("dark", varDark)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Dark"$
 	vue.SetStateSingle(pp, varDark)
 	Dialog.Bind(":dark", pp)
@@ -262,7 +356,12 @@ Sub SetDisabled(varDisabled As Boolean) As VMDialog
 End Sub
 
 'set eager
-Sub SetEager(varEager As Object) As VMDialog
+Sub SetEager(varEager As Boolean) As VMDialog
+	If varEager = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("eager", varEager)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Eager"$
 	vue.SetStateSingle(pp, varEager)
 	Dialog.Bind(":eager", pp)
@@ -272,7 +371,13 @@ End Sub
 'set fullscreen
 Sub SetFullscreen(varFullscreen As Boolean) As VMDialog
 	If varFullscreen = False Then Return Me
-	Dialog.SetAttrLoose("fullscreen")
+	If bStatic Then
+		SetAttrSingle("fullscreen", varFullscreen)
+		Return Me
+	End If
+	Dim pp As String = $"${ID}fullscreen"$
+	vue.SetStateSingle(pp, varFullscreen)
+	Dialog.Bind(":fullscreen", pp)
 	Return Me
 End Sub
 
@@ -290,7 +395,12 @@ Sub SetBackdrop(b As Boolean) As VMDialog
 End Sub
 
 'set internal-activator
-Sub SetInternalActivator(varInternalActivator As Object) As VMDialog
+Sub SetInternalActivator(varInternalActivator As Boolean) As VMDialog
+	If varInternalActivator = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("internal-activator", varInternalActivator)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}InternalActivator"$
 	vue.SetStateSingle(pp, varInternalActivator)
 	Dialog.Bind(":internal-activator", pp)
@@ -298,7 +408,12 @@ Sub SetInternalActivator(varInternalActivator As Object) As VMDialog
 End Sub
 
 'set light
-Sub SetLight(varLight As Object) As VMDialog
+Sub SetLight(varLight As Boolean) As VMDialog
+	If varLight = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("light", varLight)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Light"$
 	vue.SetStateSingle(pp, varLight)
 	Dialog.Bind(":light", pp)
@@ -306,7 +421,12 @@ Sub SetLight(varLight As Object) As VMDialog
 End Sub
 
 'set max-width
-Sub SetMaxWidth(varMaxWidth As Object) As VMDialog
+Sub SetMaxWidth(varMaxWidth As String) As VMDialog
+	If varMaxWidth = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("max-width", varMaxWidth)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}MaxWidth"$
 	vue.SetStateSingle(pp, varMaxWidth)
 	Dialog.Bind(":max-width", pp)
@@ -314,7 +434,12 @@ Sub SetMaxWidth(varMaxWidth As Object) As VMDialog
 End Sub
 
 'set no-click-animation
-Sub SetNoClickAnimation(varNoClickAnimation As Object) As VMDialog
+Sub SetNoClickAnimation(varNoClickAnimation As Boolean) As VMDialog
+	If varNoClickAnimation = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("no-click-animation", varNoClickAnimation)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}NoClickAnimation"$
 	vue.SetStateSingle(pp, varNoClickAnimation)
 	Dialog.Bind(":no-click-animation", pp)
@@ -322,7 +447,12 @@ Sub SetNoClickAnimation(varNoClickAnimation As Object) As VMDialog
 End Sub
 
 'set open-on-hover
-Sub SetOpenOnHover(varOpenOnHover As Object) As VMDialog
+Sub SetOpenOnHover(varOpenOnHover As Boolean) As VMDialog
+	If varOpenOnHover = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("open-on-hover", varOpenOnHover)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}OpenOnHover"$
 	vue.SetStateSingle(pp, varOpenOnHover)
 	Dialog.Bind(":open-on-hover", pp)
@@ -330,7 +460,12 @@ Sub SetOpenOnHover(varOpenOnHover As Object) As VMDialog
 End Sub
 
 'set origin
-Sub SetOrigin(varOrigin As Object) As VMDialog
+Sub SetOrigin(varOrigin As String) As VMDialog
+	If varOrigin = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("origin", varOrigin)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Origin"$
 	vue.SetStateSingle(pp, varOrigin)
 	Dialog.Bind(":origin", pp)
@@ -338,15 +473,39 @@ Sub SetOrigin(varOrigin As Object) As VMDialog
 End Sub
 
 'set overlay-color
-Sub SetOverlayColor(varOverlayColor As Object) As VMDialog
+Sub SetOverlayColor(varOverlayColor As String) As VMDialog
+	If varOverlayColor = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("overlay-color", varOverlayColor)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}OverlayColor"$
 	vue.SetStateSingle(pp, varOverlayColor)
 	Dialog.Bind(":overlay-color", pp)
 	Return Me
 End Sub
 
+'set color intensity
+Sub SetOverlayColorIntensity(varColor As String, varIntensity As String) As VMDialog
+	If varColor = "" Then Return Me
+	Dim scolor As String = $"${varColor} ${varIntensity}"$
+	If bStatic Then
+		SetAttrSingle("overlay-color", scolor)
+		Return Me
+	End If
+	Dim pp As String = $"${ID}Color"$
+	vue.SetStateSingle(pp, scolor)
+	Dialog.Bind(":overlay-color", pp)
+	Return Me
+End Sub
+
 'set overlay-opacity
-Sub SetOverlayOpacity(varOverlayOpacity As Object) As VMDialog
+Sub SetOverlayOpacity(varOverlayOpacity As String) As VMDialog
+	If varOverlayOpacity = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("overlay-opacity", varOverlayOpacity)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}OverlayOpacity"$
 	vue.SetStateSingle(pp, varOverlayOpacity)
 	Dialog.Bind(":overlay-opacity", pp)
@@ -354,7 +513,12 @@ Sub SetOverlayOpacity(varOverlayOpacity As Object) As VMDialog
 End Sub
 
 'set persistent
-Sub SetPersistent(varPersistent As Object) As VMDialog
+Sub SetPersistent(varPersistent As Boolean) As VMDialog
+	If varPersistent = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("persistent", varPersistent)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Persistent"$
 	vue.SetStateSingle(pp, varPersistent)
 	Dialog.Bind(":persistent", pp)
@@ -362,7 +526,12 @@ Sub SetPersistent(varPersistent As Object) As VMDialog
 End Sub
 
 'set retain-focus
-Sub SetRetainFocus(varRetainFocus As Object) As VMDialog
+Sub SetRetainFocus(varRetainFocus As Boolean) As VMDialog
+	If varRetainFocus Then Return Me
+	If bStatic Then
+		SetAttrSingle("retain-focus", varRetainFocus)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}RetainFocus"$
 	vue.SetStateSingle(pp, varRetainFocus)
 	Dialog.Bind(":retain-focus", pp)
@@ -372,12 +541,23 @@ End Sub
 'set scrollable
 Sub SetScrollable(varScrollable As Boolean) As VMDialog
 	If varScrollable = False Then Return Me
-	Dialog.SetAttrLoose("scrollable")
+	If bStatic Then
+		SetAttrSingle("scrollable", varScrollable)
+		Return Me
+	End If
+	Dim pp As String = $"${ID}scrollable"$
+	vue.SetStateSingle(pp, varScrollable)
+	Dialog.Bind(":scrollable", pp)
 	Return Me
 End Sub
 
 'set transition
-Sub SetTransition(varTransition As Object) As VMDialog
+Sub SetTransition(varTransition As String) As VMDialog
+	If varTransition = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("transition", varTransition)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Transition"$
 	vue.SetStateSingle(pp, varTransition)
 	Dialog.Bind(":transition", pp)
@@ -385,13 +565,18 @@ Sub SetTransition(varTransition As Object) As VMDialog
 End Sub
 
 'set value
-Sub SetValue(varValue As Object) As VMDialog
-	SetAttrSingle("value", varValue)
+Sub SetValue(varValue As Boolean) As VMDialog
+	Dialog.SetValue(varValue)
 	Return Me
 End Sub
 
 'set width
-Sub SetWidth(varWidth As Object) As VMDialog
+Sub SetWidth(varWidth As String) As VMDialog
+	If varWidth = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("width", varWidth)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Width"$
 	vue.SetStateSingle(pp, varWidth)
 	Dialog.Bind(":width", pp)
@@ -409,8 +594,8 @@ Sub SetOnClickOutside(methodName As String) As VMDialog
 	methodName = methodName.tolowercase
 	If SubExists(Module, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, e)
-	SetAttr(CreateMap("v-on:click:outside": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
+	SetAttr(CreateMap("@click:outside": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -421,8 +606,8 @@ Sub SetOnInput(methodName As String) As VMDialog
 	methodName = methodName.tolowercase
 	If SubExists(Module, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, e)
-	SetAttr(CreateMap("v-on:input": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
+	SetAttr(CreateMap("@input": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -433,21 +618,27 @@ Sub SetOnKeydown(methodName As String) As VMDialog
 	methodName = methodName.tolowercase
 	If SubExists(Module, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, e)
-	SetAttr(CreateMap("v-on:keydown": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
+	SetAttr(CreateMap("@keydown": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
 End Sub
 
 
+Sub SetVisible(b As Boolean) As VMDialog
+	vue.SetData(smodel, b)
+	Return Me
+End Sub
+
 Sub Hide As VMDialog
-	vue.SetStateSingle(ID, False)
+	vue.SetStateSingle(smodel, False)
 	Return Me
 End Sub
 
 Sub Show As VMDialog
-	vue.SetStateSingle(ID, True)
+	Container.SetDefaults
+	vue.SetStateSingle(smodel, True)
 	Return Me
 End Sub
 
@@ -488,6 +679,8 @@ End Sub
 Sub SetDesignMode(b As Boolean) As VMDialog
 	Dialog.SetDesignMode(b)
 	DesignMode = b
+	Card.SetDesignMode(b)
+	Container.SetDesignMode(b)
 	Return Me
 End Sub
 
@@ -514,6 +707,7 @@ End Sub
 
 
 Sub SetHeight(h As String) As VMDialog
+	If h = "" Then Return Me
 	Dialog.SetStyleSingle("height", h)
 	Return Me
 End Sub
@@ -524,13 +718,9 @@ Sub BuildModel(mprops As Map, mstyles As Map, lclasses As List, loose As List) A
 	Return Me
 End Sub
 
-Sub SetVisible(b As Boolean) As VMDialog
-	Dialog.SetVisible(b)
-	Return Me
-End Sub
-
 'set color intensity
 Sub SetTextColor(varColor As String) As VMDialog
+	If varColor = "" Then Return Me
 	Dim sColor As String = $"${varColor}--text"$
 	AddClass(sColor)
 	Return Me
@@ -538,6 +728,7 @@ End Sub
 
 'set color intensity
 Sub SetTextColorIntensity(varColor As String, varIntensity As String) As VMDialog
+	If varColor = "" Then Return Me
 	Dim sColor As String = $"${varColor}--text"$
 	Dim sIntensity As String = $"text--${varIntensity}"$
 	Dim mcolor As String = $"${sColor} ${sIntensity}"$

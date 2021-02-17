@@ -10,8 +10,9 @@ Sub Class_Globals
 	Public ID As String
 	Private vue As BANanoVue
 	Private BANano As BANano  'ignore
-	Private DesignMode As Boolean
-	Private Module As Object
+	Private DesignMode As Boolean   'ignore
+	Private Module As Object    'ignore
+	Private bStatic As Boolean    'ignore
 End Sub
 
 'initialize the StepperItems
@@ -21,6 +22,26 @@ Public Sub Initialize(v As BANanoVue, sid As String, eventHandler As Object) As 
 	DesignMode = False
 	Module = eventHandler
 	vue = v
+	bStatic = False
+	Return Me
+End Sub
+
+Sub SetData(xprop As String, xValue As Object) As VMStepperItems
+	vue.SetData(xprop, xValue)
+	Return Me
+End Sub
+
+
+
+'add an element to the page content
+Sub AddElement(elm As VMElement)
+	StepperItems.SetText(elm.ToString)
+End Sub
+
+
+Sub SetStatic(b As Boolean) As VMStepperItems
+	bStatic = b
+	StepperItems.SetStatic(b)
 	Return Me
 End Sub
 
@@ -41,12 +62,12 @@ Sub SetVModel(k As String) As VMStepperItems
 	Return Me
 End Sub
 
-Sub SetVIf(vif As Object) As VMStepperItems
+Sub SetVIf(vif As String) As VMStepperItems
 	StepperItems.SetVIf(vif)
 	Return Me
 End Sub
 
-Sub SetVShow(vif As Object) As VMStepperItems
+Sub SetVShow(vif As String) As VMStepperItems
 	StepperItems.SetVShow(vif)
 	Return Me
 End Sub
@@ -149,16 +170,6 @@ Sub UseTheme(themeName As String) As VMStepperItems
 	Return Me
 End Sub
 
-
-'set color intensity
-Sub SetColorIntensity(varColor As String, varIntensity As String) As VMStepperItems
-	Dim pp As String = $"${ID}Color"$
-	Dim scolor As String = $"${varColor} ${varIntensity}"$
-	vue.SetStateSingle(pp, scolor)
-	StepperItems.Bind(":color", pp)
-	Return Me
-End Sub
-
 'remove an attribute
 public Sub RemoveAttr(sName As String) As VMStepperItems
 	StepperItems.RemoveAttr(sName)
@@ -251,23 +262,8 @@ Sub BuildModel(mprops As Map, mstyles As Map, lclasses As List, loose As List) A
 StepperItems.BuildModel(mprops, mstyles, lclasses, loose)
 Return Me
 End Sub
+
 Sub SetVisible(b As Boolean) As VMStepperItems
 StepperItems.SetVisible(b)
 Return Me
-End Sub
-
-'set color intensity
-Sub SetTextColor(varColor As String) As VMStepperItems
-	Dim sColor As String = $"${varColor}--text"$
-	AddClass(sColor)
-	Return Me
-End Sub
-
-'set color intensity
-Sub SetTextColorIntensity(varColor As String, varIntensity As String) As VMStepperItems
-	Dim sColor As String = $"${varColor}--text"$
-	Dim sIntensity As String = $"text--${varIntensity}"$
-	Dim mcolor As String = $"${sColor} ${sIntensity}"$
-	AddClass(mcolor)
-	Return Me
 End Sub

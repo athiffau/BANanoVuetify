@@ -10,8 +10,9 @@ Sub Class_Globals
 	Public ID As String
 	Private vue As BANanoVue
 	Private BANano As BANano  'ignore
-	Private DesignMode As Boolean
-	Private Module As Object
+	Private DesignMode As Boolean    'ignore
+	Private Module As Object        'ignore
+	Private bStatic As Boolean       'ignore
 End Sub
 
 'initialize the ListItemGroup
@@ -26,6 +27,43 @@ Public Sub Initialize(v As BANanoVue, sid As String, eventHandler As Object) As 
 End Sub
 
 
+
+'add an element to the page content
+Sub AddElement(elm As VMElement)
+	ListItemGroup.SetText(elm.ToString)
+End Sub
+
+'set on change
+Sub SetOnChange(methodName As String) As VMListItemGroup
+	methodName = methodName.tolowercase
+	If SubExists(Module, methodName) = False Then Return Me
+	Dim items As List
+	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(items))
+	SetAttr(CreateMap("@change": methodName))
+	'add to methods
+	vue.SetCallBack(methodName, cb)
+	Return Me
+End Sub
+
+Sub SetData(xprop As String, xValue As Object) As VMListItemGroup
+	vue.SetData(xprop, xValue)
+	Return Me
+End Sub
+
+
+
+Sub AddComponent(comp As String) As VMListItemGroup
+	ListItemGroup.SetText(comp)
+	Return Me
+End Sub
+
+
+Sub SetStatic(b As Boolean) As VMListItemGroup
+	bStatic = b
+	ListItemGroup.SetStatic(b)
+	Return Me
+End Sub
+
 Sub SetAttributes(attrs As List) As VMListItemGroup
 	For Each stra As String In attrs
 		SetAttrLoose(stra)
@@ -35,9 +73,6 @@ End Sub
 
 'get component
 Sub ToString As String
-	
-	
-	
 	Return ListItemGroup.ToString
 End Sub
 
@@ -46,12 +81,12 @@ Sub SetVModel(k As String) As VMListItemGroup
 	Return Me
 End Sub
 
-Sub SetVIf(vif As Object) As VMListItemGroup
+Sub SetVIf(vif As String) As VMListItemGroup
 	ListItemGroup.SetVIf(vif)
 	Return Me
 End Sub
 
-Sub SetVShow(vif As Object) As VMListItemGroup
+Sub SetVShow(vif As String) As VMListItemGroup
 	ListItemGroup.SetVShow(vif)
 	Return Me
 End Sub
@@ -160,16 +195,6 @@ Sub UseTheme(themeName As String) As VMListItemGroup
 	Return Me
 End Sub
 
-
-'set color intensity
-Sub SetColorIntensity(varColor As String, varIntensity As String) As VMListItemGroup
-	Dim pp As String = $"${ID}Color"$
-	Dim scolor As String = $"${varColor} ${varIntensity}"$
-	vue.SetStateSingle(pp, scolor)
-	ListItemGroup.Bind(":color", pp)
-	Return Me
-End Sub
-
 'remove an attribute
 public Sub RemoveAttr(sName As String) As VMListItemGroup
 	ListItemGroup.RemoveAttr(sName)
@@ -232,20 +257,4 @@ End Sub
 Sub SetVisible(b As Boolean) As VMListItemGroup
 ListItemGroup.SetVisible(b)
 Return Me
-End Sub
-
-'set color intensity
-Sub SetTextColor(varColor As String) As VMListItemGroup
-	Dim sColor As String = $"${varColor}--text"$
-	AddClass(sColor)
-	Return Me
-End Sub
-
-'set color intensity
-Sub SetTextColorIntensity(varColor As String, varIntensity As String) As VMListItemGroup
-	Dim sColor As String = $"${varColor}--text"$
-	Dim sIntensity As String = $"text--${varIntensity}"$
-	Dim mcolor As String = $"${sColor} ${sIntensity}"$
-	AddClass(mcolor)
-	Return Me
 End Sub

@@ -23,12 +23,22 @@ Sub Class_Globals
 	Public COLUMN_DATETIME As String = "datetime"
 	Public COLUMN_IMAGE As String = "image"
 	Public COLUMN_MONEY As String = "money"
+	Public COLUMN_NUMBER As String = "number"
 	Public COLUMN_FILESIZE As String = "filesize"
 	Public COLUMN_CHIP As String = "chip"
 	Public COLUMN_EDIT As String = "edit"
 	Public COLUMN_DELETE As String = "delete"
 	Public COLUMN_ACTION As String = "action"
-	
+	Public COLUMN_SWITCH As String = "switch"
+	Public COLUMN_AVATARIMG As String = "avatarimg"
+	Public COLUMN_RATING As String = "rating"
+	Public COLUMN_LINK As String = "link"
+	Public COLUMN_PROGRESS_CIRCULAR As String = "progresscircular"
+	Public COLUMN_PROGRESS_LINEAR As String = "progresslinear"
+	Public COLUMN_SAVE As String = "save"
+	Public COLUMN_CANCEL As String = "cancel"
+	Public COLUMN_BUTTON As String = "button"
+		
 	'alignment
 	Public ALIGN_CENTER As String = "center"
 	Public ALIGN_RIGHT As String = "end"
@@ -40,25 +50,37 @@ Sub Class_Globals
 	Private exclusions As List
 	'
 	Private headers As String
-	Private vcard As VMCard
+	Public vcard As VMCard
 	Private title As String
 	Private search As String
 	Private items As String
 	Type DataTableColumn(value As String, text As String, align As String, sortable As Boolean, filterable As Boolean, divider As Boolean, _
-	className As String, width As String, filter As String, sort As String, TypeOf As String, extra As String, icon As String)
-	Private hasSearch As Boolean
+	className As String, width As String, filter As String, sort As String, TypeOf As String, extra As String, icon As String, Disabled As Boolean, imgWidth As String, imgHeight As String, avatarSize As String, iconSize As String, iconColor As String, ReadOnly As Boolean, progressColor As String, progressRotate As String, progressSize As String, progressWidth As String, progressHeight As String, progressShowValue As Boolean, valueFormat As String, bindTotals As String, hasTotal As Boolean, depressed As Boolean, rounded As Boolean, dark As Boolean, label As String, color As String, outlined As Boolean, shaped As Boolean, target As String, prefix As String)
+	Private bStatic As Boolean
+	Private hdr As List
+	Private keyID As String
+	Public masterColumns As List
+	Public CardTitle As VMCardTitle
+	Private hasTotals As Boolean
+	Private hasExternalPagination As Boolean
+	Private totalVisible As String
+	Private selected As String
+	Private rows As List
 End Sub
 
 'initialize the DataTable
+'<code>dt.Initialize(vue, "dt1", "id", Me)
+'</code>
 Public Sub Initialize(v As BANanoVue, sid As String, sPrimaryKey As String, eventHandler As Object) As VMDataTable
 	ID = sid.tolowercase
 	vue = v
+	Module = eventHandler
+	keyID = $"${ID}key"$
 	DataTable.Initialize(v, ID)
 	DataTable.SetTag("v-data-table")
 	vcard.Initialize(vue, $"${ID}card"$, Module)
+	CardTitle = vcard.Title
 	DesignMode = False
-	Module = eventHandler
-	
 	filters.Initialize 
 	hasFilters = False
 	exclusions.Initialize 
@@ -66,30 +88,190 @@ Public Sub Initialize(v As BANanoVue, sid As String, sPrimaryKey As String, even
 	title = $"${ID}title"$
 	search = $"${ID}search"$
 	items = $"${ID}items"$
-	vue.SetData(headers, Array())
-	vue.SetData(items, Array())
+	selected = $"${ID}selected"$
+	vue.SetData(headers, vue.newlist)
+	vue.SetData(items, vue.newlist)
 	vue.SetData(title, "")
+	vue.SetData(selected, vue.NewList)
+	PrimaryKey = sPrimaryKey
+	SetSortBy(vue.newlist)
+	SetGroupBy(vue.NewList)
+	SetExpanded(vue.NewList)
+	SetGroupDesc(vue.NewList)
+	SetSortDesc(vue.NewList)
+	SetValue(vue.NewList)
 	'
-	vcard.Title.SetText($"{{ ${title} }}"$)
-	vcard.Title.AddSpacer	
 	vcard.IsDialog = False
 	vcard.IsTable = True	'
-	DataTable.Bind(":headers", headers)	
-	DataTable.Bind(":items", items)
-	PrimaryKey = sPrimaryKey
-	DataTable.Bind("item-key",PrimaryKey)
-	SetLoading(False)
-	SetLoadingText("")
-	hasSearch = False
 	columnsM.Initialize 
+	masterColumns.Initialize 
+	hasTotals = False
+	hasExternalPagination = False
+	totalVisible = ""
+	SetVModel(selected)
+	SetNoDataText("Working on it, please wait...")
+	rows.Initialize 
 	Return Me
 End Sub
 
+
+'add an element to the page content
+Sub AddElement(elm As VMElement)
+	DataTable.SetText(elm.ToString)
+End Sub
+
+'set all selected
+Sub SetSelected(nl As List)
+	vue.SetData(selected, nl)
+End Sub
+
+'get all selected
+Sub GetSelected As List
+	Dim lst As List = vue.GetData(selected)
+	Return lst
+End Sub
+
+'get all the data from the table
+Sub GetData As List
+	Dim lst As List = vue.GetData(items)
+	Return lst
+End Sub
+
+'return a list of selected primary keys
+Sub GetItemKeys(lst As List) As List
+	Dim xlist As List
+	xlist.Initialize
+	For Each m As Map In lst
+		Dim xkey As String = m.GetDefault(PrimaryKey, "")
+		xlist.Add(xkey)
+	Next
+	Return xlist
+End Sub
+
+'return a list of selected property values
+Sub GetItemProps(lst As List, prop As String) As List
+	Dim xlist As List
+	xlist.Initialize
+	For Each m As Map In lst
+		Dim xkey As String = m.GetDefault(prop, "")
+		xlist.Add(xkey)
+	Next
+	Return xlist
+End Sub
+
+'set vuejs state
+Sub SetData(prop As String, value As Object) As VMDataTable
+	vue.SetData(prop, value)
+	Return Me
+End Sub
+
+'clear the data-table content
+Sub BANanoReplace
+	Dim x As String = ToString
+	BANano.GetElement($"#${ID}card"$).RenderReplace(x, "")
+	Refresh
+End Sub
+
+'reset the filters
+Sub ResetFilter
+	ApplyFilter(masterColumns)
+End Sub
+
+'apply a filters bases on fields
+Sub ApplyFilter(thisFilter As List)
+	'save this filter as a map, use the sequence of added columns
+	'to the data-table
+	Dim cols As List = vue.newlist
+	Dim tk As Map = CreateMap()
+	For Each colx As String In thisFilter
+		tk.Put(colx, colx)
+	Next
+	Dim ds As List = vue.NewList
+	
+	'define new columns
+	Dim nm As Map = CreateMap()
+	'loop through master column
+	For Each mc As String In masterColumns
+		'is it on the filter
+		If tk.ContainsKey(mc) Then
+			Dim nf As DataTableColumn = columnsM.Get(mc)
+			nm.Put(mc, nf)
+			cols.Add(mc)
+			'
+			Dim ctext As String = nf.text
+			Dim nc As Map = CreateMap()
+			nc.Put("id", mc)
+			nc.Put("text", ctext)
+			ds.Add(nc)
+		End If
+	Next
+	BuildHeaders(nm)
+	vue.SetData($"${ID}columns"$, cols)
+	'filter source
+	vue.SetData($"${ID}fsource"$, ds)
+End Sub
+
+'set the content as static
+Sub SetStatic(b As Boolean) As VMDataTable
+	bStatic = b
+	DataTable.SetStatic(b)
+	vcard.setstatic(b)
+	Return Me
+End Sub
+
+'reset the structure of the data-table
 Sub Reset
+	rows.Initialize 
 	exclusions.Initialize 
 	filters.Initialize
 	hasFilters = False
 	columnsM.Initialize
+	masterColumns.Initialize
+	vue.SetData(headers, vue.newlist)
+	vue.SetData(items, vue.newlist)
+	vue.SetData(title, "")
+	vue.SetData(selected, vue.NewList)
+	SetSortBy(vue.newlist)
+	SetGroupBy(vue.NewList)
+	SetExpanded(vue.NewList)
+	SetGroupDesc(vue.NewList)
+	SetSortDesc(vue.NewList)
+	SetValue(vue.NewList)
+	vue.SetData($"${ID}columns"$, vue.newlist)
+	vue.SetData($"${ID}fsource"$, vue.newlist)
+	SetPage("1")
+	vue.SetData($"${ID}pagecount"$, "0")
+	vue.SetData(keyID, DateTime.Now)
+End Sub
+
+'clear the row contents
+Sub Clear
+	rows.Initialize
+	exclusions.Initialize
+	filters.Initialize
+	hasFilters = False
+	vue.SetData(items, vue.newlist)
+	vue.SetData(selected, vue.NewList)
+	SetSortBy(vue.newlist)
+	SetGroupBy(vue.NewList)
+	SetExpanded(vue.NewList)
+	SetGroupDesc(vue.NewList)
+	SetSortDesc(vue.NewList)
+	SetValue(vue.NewList)
+	SetPage("1")
+	vue.SetData($"${ID}pagecount"$, "0")
+	vue.SetData($"${ID}fsource"$, vue.newlist)
+End Sub
+
+'add a new record
+Sub AddRow(rowData As Map) As VMDataTable
+	rows.Add(rowData)
+	Return Me
+End Sub
+
+'set dynamic data after adding columns
+Sub ResetColumns
+	BuildHeaders(columnsM)
 End Sub
 
 'set the row and column position
@@ -117,6 +299,29 @@ Sub SetDevicePositions(srow As String, scell As String, small As String, medium 
 	Return Me
 End Sub
 
+'add save icon
+Sub AddSave(colField As String, colTitle As String)
+	AddExclusion(colField)
+	AddColumn(colField,colTitle)
+	SetColumnFilterable(colField,False)
+	SetColumnType(colField, COLUMN_SAVE)
+	SetColumnSortable(colField, False)
+	SetColumnAlignment(colField, ALIGN_CENTER)
+	SetColumnIcon(colField, "mdi-content-save")
+End Sub
+
+'add cancel icon
+Sub AddCancel(colField As String, colTitle As String)
+	AddExclusion(colField)
+	AddColumn(colField,colTitle)
+	SetColumnFilterable(colField,False)
+	SetColumnType(colField, COLUMN_CANCEL)
+	SetColumnSortable(colField, False)
+	SetColumnAlignment(colField, ALIGN_CENTER)
+	SetColumnIcon(colField, "mdi-cancel")
+End Sub
+
+
 'add edit icon
 Sub AddEdit(colField As String, colTitle As String)
 	AddExclusion(colField)
@@ -125,8 +330,10 @@ Sub AddEdit(colField As String, colTitle As String)
 	SetColumnType(colField, COLUMN_EDIT)
 	SetColumnSortable(colField, False)
 	SetColumnAlignment(colField, ALIGN_CENTER)
+	SetColumnIcon(colField, "mdi-pencil")
 End Sub
 
+'add delete icon
 Sub AddDelete(colField As String, colTitle As String)
 	AddExclusion(colField)
 	AddColumn(colField,colTitle)
@@ -134,8 +341,10 @@ Sub AddDelete(colField As String, colTitle As String)
 	SetColumnType(colField, COLUMN_DELETE)
 	SetColumnSortable(colField, False)
 	SetColumnAlignment(colField, ALIGN_CENTER)
+	SetColumnIcon(colField, "mdi-delete")
 End Sub
 
+'add an icon
 Sub AddIcon(colField As String, colTitle As String, colIcon As String)
 	AddExclusion(colField)
 	AddColumn(colField,colTitle)
@@ -146,44 +355,405 @@ Sub AddIcon(colField As String, colTitle As String, colIcon As String)
 	SetColumnIcon(colField, colIcon)
 End Sub
 
+'add an action
+Sub AddAction(colField As String, colTitle As String, colIcon As String)
+	AddExclusion(colField)
+	AddColumn(colField,colTitle)
+	SetColumnFilterable(colField,False)
+	SetColumnType(colField, COLUMN_ACTION)
+	SetColumnSortable(colField, False)
+	SetColumnAlignment(colField, ALIGN_CENTER)
+	SetColumnIcon(colField, colIcon)
+End Sub
+
+'add icon field
+Sub AddIconView(colField As String, colTitle As String)
+	AddColumn(colField,colTitle)
+	SetColumnType(colField, COLUMN_ICON)
+	SetColumnFilterable(colField,False)
+	SetColumnSortable(colField, False)
+End Sub
+
+'add switch field
+Sub AddSwitch(colField As String, colTitle As String)
+	AddColumn(colField,colTitle)
+	SetColumnType(colField, COLUMN_SWITCH)
+	SetColumnFilterable(colField,False)
+	SetColumnSortable(colField, False)
+End Sub
+
+'set a field as a switch
+Sub SetColumnsSwitch(colFields As List)
+	For Each col As String In colFields
+		SetColumnType(col, COLUMN_SWITCH)
+		SetColumnFilterable(col,False)
+		SetColumnSortable(col, False)
+	Next
+End Sub
+
+'set a field as a link
+Sub SetColumnsLinks(colFields As List)
+	For Each col As String In colFields
+		SetColumnType(col, COLUMN_LINK)
+	Next
+End Sub
+
+'set column as a checkbox
+Sub SetColumnsCheckBox(colFields As List)
+	For Each col As String In colFields
+		SetColumnType(col, COLUMN_CHECKBOX)
+		SetColumnFilterable(col,False)
+		SetColumnSortable(col, False)
+	Next
+End Sub
+
+'add an image
+Sub AddImage(colField As String, colTitle As String)
+	AddColumn(colField,colTitle)
+	SetColumnType(colField, COLUMN_IMAGE)
+	SetColumnFilterable(colField,False)
+	SetColumnSortable(colField, False)
+End Sub
+
+'add a link
+Sub AddLink(colField As String, colTitle As String, target As String)
+	AddColumn(colField, colTitle)
+	SetColumnType(colField, COLUMN_LINK)
+	SetColumnTarget(colField, target)
+End Sub
+
+'add an avatar image
+Sub AddAvatarImg(colField As String, colTitle As String)
+	AddColumn(colField,colTitle)
+	SetColumnType(colField, COLUMN_AVATARIMG)
+	SetColumnFilterable(colField,False)
+	SetColumnSortable(colField, False)
+End Sub
+
+'add a rating
+Sub AddRating(colField As String, colTitle As String)
+	AddColumn(colField,colTitle)
+	SetColumnType(colField, COLUMN_RATING)
+End Sub
+
+'add a progress circular
+Sub AddProgressCircular(colField As String, colTitle As String)
+	AddColumn(colField,colTitle)
+	SetColumnType(colField, COLUMN_PROGRESS_CIRCULAR)
+End Sub
+
+'add a progress linear
+Sub AddProgressLinear(colField As String, colTitle As String)
+	AddColumn(colField,colTitle)
+	SetColumnType(colField, COLUMN_PROGRESS_LINEAR)
+End Sub
+
 'add edit & delete button
 Sub AddEditThrash
-	AddEdit("edit", "Edit")
-	AddDelete("delete", "Delete")
+	AddAction("edit", "Edit", "mdi-pencil")
+	AddAction("delete", "Delete", "mdi-delete")
 End Sub
 
+'add a delete icon
+Sub SetDelete(b As Boolean) As VMDataTable
+	If b = False Then Return Me
+	AddAction("delete", "Delete", "mdi-delete")
+	Return Me
+End Sub
+
+'add an edit icon
+Sub SetEdit(b As Boolean) As VMDataTable
+	If b = False Then Return Me
+	AddAction("edit", "Edit", "mdi-pencil")
+	Return Me
+End Sub
+
+'add a save icon
+Sub SetSave(b As Boolean) As VMDataTable
+	If b = False Then Return Me
+	AddSave("save", "Save")
+	Return Me
+End Sub
+
+'add a cancel button
+Sub SetCancel(b As Boolean) As VMDataTable
+	If b = False Then Return Me
+	AddCancel("cancel", "Cancel")
+	Return Me
+End Sub
+
+'add a download button
+Sub SetDownload(b As Boolean) As VMDataTable
+	If b = False Then Return Me
+	AddDownload
+	Return Me
+End Sub
+
+'add download
 Sub AddDownload
-	AddIcon("download","Get","attach_file")
+	AddIcon("download","Get","mdi-download")
 End Sub
 
+'add horizontal menu button
 Sub AddMenuH
-	AddIcon("menu","Menu","more_horiz")
+	AddIcon("menu","Menu","mdi-dots-horizontal")
 End Sub
 
+'add vertical menu
+Sub SetMenu(b As Boolean) As VMDataTable
+	If b = False Then Return Me
+	AddMenuV
+	Return Me
+End Sub
+
+'add vertical menu
 Sub AddMenuV
-	AddIcon("menu","Menu","more_vert")
+	AddIcon("menu","Menu","mdi-dots-vertical")
 End Sub
 
+'add clone
+Sub SetClone(b As Boolean) As VMDataTable
+	If b = False Then Return Me
+	AddClone
+	Return Me
+End Sub
+
+'add clone
 Sub AddClone
-	AddIcon("clone","Clone","done_all")
+	AddIcon("clone","Clone","mdi-content-copy")
 End Sub
 
+'add print
+Sub SetPrint(b As Boolean) As VMDataTable
+	If b = False Then Return Me
+	AddPrint
+	Return Me
+End Sub
+
+'add print
 Sub AddPrint
-	AddIcon("print", "Print", "print")
+	AddIcon("print", "Print", "mdi-printer")
 End Sub
 
+'add new
+Sub SetAddNew(key As String, iconName As String, toolTip As String) As VMDataTable
+	AddNew(key, iconName, toolTip)
+	Return Me
+End Sub
 
+'add search functionality
+Sub SetSearchBox(b As Boolean) As VMDataTable
+	If b = False Then Return Me
+	AddSearch
+	Return Me
+End Sub
+
+'add search box
 Sub AddSearch
 	DataTable.Bind(":search", search)
 	vcard.Title.AddSearch(search)
-	hasSearch = True
-	vcard.Title.addspacer
 End Sub
 
+'add spacer on the toolbar
+Sub AddToolBarSpacer As VMDataTable
+	vcard.Title.AddSpacer
+	Return Me
+End Sub
+
+'add divider
+Sub AddDivider
+	AddToolBarDivider
+End Sub
+
+'add spacer
+Sub AddSpacer
+	AddToolBarSpacer
+End Sub
+
+'add divider on the toolbar
+Sub AddToolBarDivider As VMDataTable
+	vcard.Title.AddDivider(True, Null, Null, Array("mx-2"), Null)
+	Return Me
+End Sub
+
+
+'add a column to clear sort
+Sub SetClearSort
+	Dim btn As VMButton
+	btn.Initialize(vue, "removesort", Me)
+	btn.SetStatic(bStatic)
+	btn.SetDesignMode(DesignMode)
+	btn.SetFabButton("mdi-sort-variant-remove").SetTooltip("Clear Sort").SetColor("orange").SetSmall(True)
+	vcard.Title.AddComponent(btn.tostring)
+End Sub
+
+'remove sort
+Sub removesort_click(e As BANanoEvent)  'ignoredeadcode
+	SetSortBy(vue.NewList)
+End Sub
+
+'this should be added after all columns are added
+Sub SetColumnChooser(isfilter As Boolean)
+	If isfilter = False Then Return
+	'all columns should be selected
+	Dim ftime As List = vue.newlist
+	Dim fsource As List = vue.newlist
+	For Each colname As String In masterColumns
+		Dim colm As DataTableColumn = columnsM.Get(colname)
+		Dim coltext As String = colm.text
+		'for selected items
+		ftime.add(colname)
+		'for data source
+		Dim cols As Map = CreateMap()
+		cols.Put("id", colname)
+		cols.Put("text", coltext)
+		fsource.Add(cols)
+	Next
+	'selectec items
+	vue.SetData($"${ID}columns"$, ftime)
+	'filter source
+	vue.SetData($"${ID}fsource"$, fsource)
+	'
+	Dim dSource As String = $"${ID}fsource"$
+	Dim dtKey As String = "id"
+	Dim dtTitle As String = "text"
+	'
+	Dim dtMenu As VMMenu
+	dtMenu.Initialize(vue, $"${ID}fsmenu"$, Me)
+	dtMenu.SetOpenOnHover(False)
+	dtMenu.SetOffSetY(True)
+	'dtMenu.SetAttrSingle(":nudge-left", "170")
+	dtMenu.SetAttrSingle(":close-on-content-click", "false")
+	'
+	Dim tmpact As VMTemplate
+	tmpact.Initialize(vue, "", Me)
+	tmpact.SetAttrSingle("v-slot:activator", "{ on, attrs }")
+	'
+	'create the menu button
+	Dim btnMenu As VMButton
+	btnMenu.Initialize(vue, $"${ID}fsbutton"$, Me)
+	'btnMenu.SetAttrLoose("icon")
+	btnMenu.SetAttrSingle("v-on", "on")
+	btnMenu.SetAttrSingle("v-bind", "attrs")
+	btnMenu.SetFab(True)
+	btnMenu.SetSmall(True)
+	btnMenu.SetColor("purple")
+	btnMenu.SetDark(True)
+	btnMenu.Show
+	'
+	Dim btnIcon As VMIcon
+	btnIcon.initialize(vue, $"${ID}fsicon"$, Me)
+	btnIcon.SetText("mdi-dots-vertical")
+	'add icon to button
+	btnMenu.AddComponent(btnIcon.tostring)
+	'add to template
+	tmpact.AddComponent(btnMenu.ToString)
+	'add button to menu
+	dtMenu.AddComponent(tmpact.tostring)
+	'create a list
+	Dim dtList As VMList
+	dtList.Initialize(vue, $"${ID}list"$, Me)
+	dtList.SetDense(True)
+	'
+	Dim vlig As VMListItemGroup
+	vlig.Initialize(vue, $"${ID}lig"$, Me)
+	vlig.SetVModel($"${ID}columns"$)
+	vlig.SetAttrLoose("multiple")
+	vlig.SetOnChange("columnchooser")
+	'
+	Dim dtLI As VMListItem
+	dtLI.Initialize(vue, "", Me)
+	dtLI.SetAttrSingle("v-for", $"(item, index) in ${dSource}"$)
+	dtLI.SetAttrSingle(":key", $"item.${dtKey}"$)
+	dtLI.SetAttrSingle(":value", $"item.${dtKey}"$)
+	'add checkbox slot
+	Dim tmpx As VMTemplate
+	tmpx.Initialize(vue, "", Me)
+	tmpx.SetAttrSingle("v-slot:default", "{ active, toggle }")
+	'add action item
+	Dim vlia As VMListItemAction
+	vlia.Initialize(vue, "", Me)
+	'add checkbox
+	Dim vliacb As VMCheckBox
+	vliacb.Initialize(vue, "", Me)
+	vliacb.SetStatic(bStatic)
+	vliacb.SetAttrSingle(":input-value", "active")
+	vliacb.SetAttrSingle(":key", $"item.${dtKey}"$)
+	vliacb.SetAttrSingle(":true-value", $"item.${dtKey}"$)
+	vliacb.SetColor("primary")
+	vliacb.SetDense(True)
+	vliacb.SetAttrSingle("@click", "toggle")
+		
+	'add checkbox to item action
+	vlia.AddComponent(vliacb.tostring)
+	tmpx.AddComponent(vlia.ToString)
+	
+	'add title
+	Dim vlic As VMListItemContent
+	vlic.Initialize(vue, "", Me)
+	Dim vlit As VMListItemTitle
+	vlit.Initialize(vue, "", Me)
+	vlit.SetStatic(bStatic)
+	vlit.SetVText($"item.${dtTitle}"$)
+	vlic.AddComponent(vlit.ToString)
+	'add template to item
+	tmpx.AddComponent(vlic.ToString)
+	dtLI.AddComponent(tmpx.tostring)
+	'add to group
+	vlig.AddComponent(dtLI.ToString)
+	'add item to list
+	dtList.AddComponent(vlig.tostring)
+	'add list to menu
+	dtMenu.AddComponent(dtList.Tostring)
+	'add to the card
+	Dim smenu As String = dtMenu.ToString
+	vcard.Title.AddComponent(smenu)
+	'
+	'add filter cancel
+	vcard.Title.AddDivider(True,Null,Null,Array("mx-2"),Null)
+	'
+	Dim btn As VMButton
+	btn.Initialize(vue, "removefilter", Me)
+	btn.SetStatic(bStatic)
+	btn.SetDesignMode(DesignMode)
+	btn.SetFabButton("mdi-filter-remove").SetTooltip("Reset filter").SetColor("red").SetSmall(True)
+	vcard.Title.AddComponent(btn.tostring)
+	'watch changes
+	'vue.SetWatch($"${ID}columns"$, True, False, Me, "columnchooser")
+End Sub
+
+private Sub removefilter_click(e As BANanoEvent)  'ignoredeadcode
+	ApplyFilter(masterColumns)
+End Sub
+
+private Sub columnchooser   'ignoredeadcode
+	'get chosen columns
+	Dim cols As List = vue.GetData($"${ID}columns"$)
+	ApplyFilter(cols)
+End Sub
+
+'return the chosen columns
+Sub GetSelectedColumns As List
+	Dim cols As List = vue.GetData($"${ID}columns"$)
+	Return cols
+End Sub
+
+'add a new button
 Sub AddNew(key As String, iconName As String, toolTip As String) As VMDataTable
 	key = key.tolowercase
 	Dim btn As VMButton
-	btn.Initialize(vue, key, Module).SetFabButton(iconName).SetTooltip(toolTip).SetPrimary(True).AddClass("mb-2")
+	btn.Initialize(vue, key, Module).SetStatic(bStatic).SetDesignMode(DesignMode)
+	btn.SetFabButton(iconName).SetTooltip(toolTip).SetPrimary(True).SetSmall(True)
+	vcard.Title.SetText(btn.ToString)
+	Return Me
+End Sub
+
+'add a delete all
+Sub AddDeleteAll(key As String, iconName As String, toolTip As String) As VMDataTable
+	key = key.tolowercase
+	Dim btn As VMButton
+	btn.Initialize(vue, key, Module).SetStatic(bStatic).SetDesignMode(DesignMode)
+	btn.SetFabButton(iconName).SetTooltip(toolTip).SetColor("red").SetSmall(True)
 	vcard.Title.SetText(btn.ToString)
 	Return Me
 End Sub
@@ -191,33 +761,87 @@ End Sub
 'update database from existing saved state
 Sub SetDataSourceName(dsName As String) As VMDataTable
 	dsName = dsName.ToLowerCase
+	If vue.StateExists(dsName) = False Then
+		vue.SetData(dsName, vue.newlist)
+	End If
 	Dim recs As List = vue.GetData(dsName)
 	vue.SetData(items, recs)
+	SetSortBy(vue.newlist)
+	SetGroupBy(vue.NewList)
+	SetExpanded(vue.NewList)
+	SetGroupDesc(vue.NewList)
+	SetSortDesc(vue.NewList)
+	SetValue(vue.NewList)
 	Return Me
 End Sub
 
 'update from a list of existing recods
 Sub SetDataSource(ds As List) As VMDataTable
 	vue.SetData(items, ds)
+	SetSortBy(vue.newlist)
+	SetGroupBy(vue.NewList)
+	SetExpanded(vue.NewList)
+	SetGroupDesc(vue.NewList)
+	SetSortDesc(vue.NewList)
+	SetValue(vue.NewList)
+	SetPage("1")
+	vue.SetData($"${ID}pagecount"$, "0")
+	Return Me
+End Sub
+
+'add button to title
+Sub AddButton(btn As VMButton) As VMDataTable
+	vcard.Title.SetText(btn.tostring)
+	Return Me
+End Sub
+
+'add button to title
+Sub AddButton1(key As String, iconName As String, text As String, toolTip As String) As VMDataTable
+	vcard.Title.AddButton1(key, iconName, "", text, toolTip, "")
+	Return Me
+End Sub
+
+'add icon to title
+Sub AddButtonIcon(key As String, iconName As String, iconColor As String, toolTip As String) As VMDataTable
+	vcard.Title.AddIcon(key, iconName, iconColor, "", toolTip, "")
+	Return Me
+End Sub
+
+'add menu to title
+Sub AddMenu(menu As VMMenu) As VMDataTable
+	vcard.Title.SetText(menu.ToString)
 	Return Me
 End Sub
 
 'set the title of the table
 Sub SetTitle(sTitle As String) As VMDataTable
+	If sTitle = "" Then Return Me
+	If bStatic Then
+		vcard.Title.SetText(sTitle)
+		vcard.Title.AddSpacer
+		Return Me
+	End If
+	vue.SetData(title, sTitle)
+	vcard.Title.SetText($"{{ ${title} }}"$)
+	vcard.Title.AddSpacer
+	Return Me
+End Sub
+
+'update the table title
+Sub UpdateTitle(sTitle As String) As VMDataTable
 	vue.SetData(title, sTitle)
 	Return Me
 End Sub
 
 'add columns to exclude
 Sub AddExclusion(colKey As String) As VMDataTable
-	colKey = colKey.tolowercase
 	exclusions.Add(colKey)
 	Return Me
 End Sub
 
 'set filters
 Sub SetFilters(sourceOf As String)
-	filters = vue.GetState(sourceOf, Array())
+	filters = vue.GetState(sourceOf, vue.newlist)
 	hasFilters = True
 End Sub
 
@@ -226,6 +850,54 @@ Sub AddColumn(colName As String, colTitle As String) As VMDataTable
 	AddColumn1(colName, colTitle, COLUMN_TEXT, 0, True, ALIGN_LEFT)
 	Return Me
 End Sub
+
+'add date column and use any of dayjs formats
+'<code>dt.AddDateColumn("dateColumn", "Date", "DD/MM/YYY")
+'</code>
+Sub AddDateColumn(colName As String, colTitle As String, colFormat As String) As VMDataTable
+	AddColumn(colName, colTitle)
+	SetColumnDateFormat(colName, colFormat)
+	Return Me
+End Sub
+
+'add date time column and use any dayjs formats
+'<code>dt.AddDateColumn("dateColumn", "Date", "DD/MM/YYY HH:MM:SS")
+'</code>
+Sub AddDateTimeColumnDate(colName As String, colTitle As String, colFormat As String) As VMDataTable
+	AddColumn(colName, colTitle)
+	SetColumnDateTimeFormat(colName, colFormat)
+	Return Me
+End Sub
+
+'add number column and use any numeraljs formats
+'<code>dt.AddNumberColumn("money", "Received", "$0,0.00")
+'</code>
+Sub AddNumberColumn(colName As String, colTitle As String, colFormat As String) As VMDataTable
+	AddColumn(colName, colTitle)
+	SetColumnNumberFormat(colName, colFormat)
+	Return Me
+End Sub
+
+'add button column
+'<code>dt.AddButtonColumn("btnAdd1Day", "Add 1 Day")
+'</code>
+Sub AddButtonColumn(colName As String, colTitle As String) As VMDataTable
+	AddColumn(colName, colTitle)
+	SetColumnType(colName, COLUMN_BUTTON)
+	SetButtonLabel(colName, colTitle)
+	Return Me
+End Sub
+
+'add link column
+'<code>dt.AddLinkColumn("emailaddress", "Add 1 Day")
+'</code>
+Sub AddLinkColumn(colName As String, colTitle As String, target As String) As VMDataTable
+	AddColumn(colName, colTitle)
+	SetColumnType(colName, COLUMN_LINK)
+	SetColumnTarget(colName, target)
+	Return Me
+End Sub
+
 
 'add columns from key value pairs
 Sub AddColumns(flds As Map) As VMDataTable
@@ -236,11 +908,168 @@ Sub AddColumns(flds As Map) As VMDataTable
 	Return Me
 End Sub
 
+'add expansion slot
+Sub AddExpandSlot(bSingleExpand As Boolean, cont As VMContainer)
+	AddExpandColumn
+	SetSingleExpand(bSingleExpand)
+	SetExpanded(vue.newlist)
+	SetShowExpand(True)
+	
+	Dim expandSlot As VMTemplate
+	expandSlot.Initialize(vue, $"${ID}expand"$, Module)
+	expandSlot.SetAttrSingle("v-slot:expanded-item", "{ headers, item }")
+	If cont <> Null Then expandSlot.SetText(cont.tostring)
+	AddComponent(expandSlot.tostring)
+End Sub
+
+'add a combo dialog
+Sub AddEditDialogCombo(colName As String, bLarge As Boolean, sourceTable As String, sourceField As String, displayField As String, returnObject As Boolean)
+	Dim changeEvent As String = $"${ID}_${colName}_change"$
+	Dim el As VMSelect
+	el.Initialize(vue, $"${ID}${colName}"$, Module)
+	If SubExists(Module, changeEvent) Then
+		el.SetOnChange(Module, $"${ID}_${colName}_change"$)
+		el.SetAttrSingle("@change", $"${changeEvent}(props.item)"$)
+		Dim item As Map
+		Dim cb As BANanoObject = BANano.CallBack(Module, changeEvent, Array(item))
+		vue.SetCallBack(changeEvent, cb)
+	End If
+	el.SetStatic(bStatic)
+	el.SetDesignMode(DesignMode)
+	el.SetAttrSingle(":label", "props.header.text")
+	el.SetComboBox
+	el.SetClearable(True)
+	el.SetReturnObject(False)
+	el.SetVModel($"props.item.${colName}"$)
+	el.SetDataSource(sourceTable, sourceField, displayField,returnObject)
+	Dim scombo As String = el.tostring
+	'
+	Dim slarge As String = "large lazy"
+	If bLarge = False Then slarge = ""
+	Dim temp As String = $"<template v-slot:item.${colName}="props">
+<v-edit-dialog :return-value.sync="props.item.${colName}" @save="${ID}_saveitem(props.item)" @cancel="${ID}_cancelitem(props.item)" @open="${ID}_openitem(props.item)" @close="${ID}_closeitem(props.item)" ${slarge}> {{ props.item.${colName} }}
+<template v-slot:input> ${scombo} </template>
+</v-edit-dialog>
+</template>"$
+	AddComponent(temp)
+End Sub
+'
+'add autocomplete edit
+Sub AddEditDialogAutoComplete(colName As String, bLarge As Boolean, sourceTable As String, sourceField As String, displayField As String, returnObject As Boolean)
+	Dim changeEvent As String = $"${ID}_${colName}_change"$
+	Dim el As VMSelect
+	el.Initialize(vue, $"${ID}${colName}"$, Module)
+	If SubExists(Module, changeEvent) Then
+		el.SetOnChange(Module, $"${ID}_${colName}_change"$)
+		el.SetAttrSingle("@change", $"${changeEvent}(props)"$)
+		Dim item As Map
+		Dim cb As BANanoObject = BANano.CallBack(Module, changeEvent, Array(item))
+		vue.SetCallBack(changeEvent, cb)
+	End If
+	el.SetStatic(bStatic)
+	el.SetDesignMode(DesignMode)
+	el.SetAutoComplete
+	el.SetAttrSingle(":label", $"props.header.text"$)
+	el.SetClearable(True)
+	el.SetReturnObject(False)
+	el.SetVModel($"props.item.${colName}"$)
+	el.SetDataSource(sourceTable, sourceField, displayField,returnObject)
+	Dim scombo As String = el.tostring
+	'
+	Dim slarge As String = "large"
+	If bLarge = False Then slarge = ""
+	Dim temp As String = $"<template v-slot:item.${colName}="props">
+<v-edit-dialog :return-value.sync="props.item.${colName}" @save="${ID}_saveitem(props.item)" @cancel="${ID}_cancelitem(props.item)" @open="${ID}_openitem(props.item)" @close="${ID}_closeitem(props.item)" ${slarge} lazy> {{ props.item.${colName} }}
+<template v-slot:input> ${scombo} </template>
+</v-edit-dialog>
+</template>"$
+	AddComponent(temp)
+End Sub
+
+'add edit dialog
+Sub AddEditDialog(colName As String, bLarge As Boolean)
+	Dim slarge As String = "large"
+	If bLarge = False Then slarge = ""
+Dim temp As String = $"<template v-slot:item.${colName}="props">
+<v-edit-dialog :return-value.sync="props.item.${colName}" @save="${ID}_saveitem(props.item)" @cancel="${ID}_cancelitem(props.item)" 
+@open="${ID}_openitem(props.item)" @close="${ID}_closeitem(props.item)" ${slarge} lazy> {{ props.item.${colName} }}
+<template v-slot:input> <v-text-field @change="${ID}_saveitem(props.item)" v-model="props.item.${colName}" :label="props.header.text" counter></v-text-field></template></v-edit-dialog>
+</template>"$
+	AddComponent(temp)
+End Sub
+
+Sub AddEditDialogTextArea(colName As String, bLarge As Boolean)
+	Dim slarge As String = "large"
+	If bLarge = False Then slarge = ""
+Dim temp As String = $"<template v-slot:item.${colName}="props">
+<v-edit-dialog :return-value.sync="props.item.${colName}" @save="${ID}_saveitem(props.item)" @cancel="${ID}_cancelitem(props.item)" @open="${ID}_openitem(props.item)" @close="${ID}_closeitem(props.item)" ${slarge} lazy> {{ props.item.${colName} }}
+<template v-slot:input> <v-textarea v-model="props.item.${colName}" :label="props.header.text" counter></v-textarea></template>
+</v-edit-dialog>
+</template>"$
+	  AddComponent(temp)
+End Sub
+
+'add save cancel for dialog
+'<code>
+'Sub tableName_saveitem(item As Map)
+'End Sub
+'
+'Sub tableName_cancelitem(item As Map)
+'End Sub
+'
+'Sub tableName_openitem(item As Map)
+'End Sub
+'
+'Sub tableName_closeitem(item As Map)
+'End Sub
+'</code>
+Sub AddSaveCancelOpenClose
+	Dim savemethodName As String = $"${ID}_saveitem"$
+	If SubExists(Module, savemethodName) = False Then 
+		Log($"VMDataTable: Please add '${ID}_saveitem(item As Map)' callback."$)
+		Return
+	End If
+	Dim item As Map
+	Dim cb As BANanoObject = BANano.CallBack(Module, savemethodName, Array(item))
+	vue.SetCallBack(savemethodName, cb)
+	'
+	Dim cancelmethodName As String = $"${ID}_cancelitem"$
+	If SubExists(Module, cancelmethodName) = False Then 
+		Log($"VMDataTable: Please add '${ID}_cancelitem(item As Map)' callback."$)
+		Return
+	End If
+	Dim item As Map
+	Dim cb As BANanoObject = BANano.CallBack(Module, cancelmethodName, Array(item))
+	vue.SetCallBack(cancelmethodName, cb)
+	'
+	Dim openmethodName As String = $"${ID}_openitem"$
+	If SubExists(Module, openmethodName) = False Then 
+		Log($"VMDataTable: Please add '${ID}_openitem(item As Map)' callback."$)
+		Return
+	End If
+	Dim item As Map
+	Dim cb As BANanoObject = BANano.CallBack(Module, openmethodName, Array(item))
+	vue.SetCallBack(openmethodName, cb)
+	
+	Dim closemethodName As String = $"${ID}_closeitem"$
+	If SubExists(Module, closemethodName) = False Then 
+		Log($"VMDataTable: Please add '${ID}_closeitem(item As Map)' callback."$)
+		Return
+	End If
+	Dim item As Map
+	Dim cb As BANanoObject = BANano.CallBack(Module, closemethodName, Array(item))
+	vue.SetCallBack(closemethodName, cb)
+End Sub
+
+'add expand column
+Sub AddExpandColumn
+	AddColumn("data-table-expand", "")
+End Sub
+
 'add a column
+'key, title, 
 Sub AddColumn1(colName As String, colTitle As String, colType As String, colWidth As Int, colSortable As Boolean, colAlign As String) As VMDataTable
-	'column name should not have a space
-	colName = colName.Replace(" ","")
-	colName = colName.tolowercase
+	masterColumns.Add(colName)
 	If hasFilters Then
 		If exclusions.IndexOf(colName) = -1 Then
 			If filters.IndexOf(colName) = -1 Then Return Me
@@ -260,15 +1089,65 @@ Sub AddColumn1(colName As String, colTitle As String, colType As String, colWidt
 	nf.filter = Null
 	nf.sort = Null
 	nf.TypeOf = colType
-	'
+	nf.Disabled = False
+	nf.valueFormat = ""
+	nf.bindTotals = ""
+	nf.hasTotal = False
+	nf.depressed = False
+	nf.rounded = False
+	nf.dark = False
+	nf.label = ""
+	nf.color = ""
+	nf.outlined = False
+	nf.shaped = False
 	columnsM.Put(colName, nf)
+	SetColumnType(colName, colType)
+	Return Me
+End Sub
+
+Sub SetColumnTarget(colName As String, target As String) As VMDataTable
+	If columnsM.ContainsKey(colName) Then
+		Dim col As DataTableColumn = columnsM.Get(colName)
+		col.target = target
+		columnsM.Put(colName,col)
+	End If
+	Return Me
+End Sub
+
+Sub SetColumnPrefix(colName As String, prefix As String) As VMDataTable
+	If columnsM.ContainsKey(colName) Then
+		Dim col As DataTableColumn = columnsM.Get(colName)
+		col.prefix = prefix
+		columnsM.Put(colName,col)
+	End If
+	Return Me
+End Sub
+
+
+'define whether a column will be totalled or not
+Sub SetColumnTotal(colName As String, callBackMethod As String) As VMDataTable
+	If columnsM.ContainsKey(colName) Then
+		Dim col As DataTableColumn = columnsM.Get(colName)
+		col.bindTotals = callBackMethod
+		columnsM.Put(colName,col)
+		hasTotals = True
+	End If
+	Return Me
+End Sub
+
+'set image dimensions
+Sub SetImageDimensions(colName As String, imgHeight As String, imgWidth As String) As VMDataTable
+	If columnsM.ContainsKey(colName) Then
+		Dim col As DataTableColumn = columnsM.Get(colName)
+		col.imgHeight = imgHeight
+		col.imgWidth = imgWidth
+		columnsM.Put(colName,col)
+	End If
 	Return Me
 End Sub
 
 'set column sortable
 Sub SetColumnSortable(colName As String, colSortable As Boolean) As VMDataTable
-	colName = colName.Replace(" ","")
-	colName = colName.tolowercase
 	If columnsM.ContainsKey(colName) Then
 		Dim col As DataTableColumn = columnsM.Get(colName)
 		col.sortable = colSortable
@@ -277,10 +1156,28 @@ Sub SetColumnSortable(colName As String, colSortable As Boolean) As VMDataTable
 	Return Me
 End Sub
 
+'set column sortable
+Sub SetColumnDisabled(colName As String, colDisabled As Boolean) As VMDataTable
+	If columnsM.ContainsKey(colName) Then
+		Dim col As DataTableColumn = columnsM.Get(colName)
+		col.Disabled = colDisabled
+		columnsM.Put(colName,col)
+	End If
+	Return Me
+End Sub
+
+'set column sortable
+Sub SetColumnReadOnly(colName As String, colReadOnly As Boolean) As VMDataTable
+	If columnsM.ContainsKey(colName) Then
+		Dim col As DataTableColumn = columnsM.Get(colName)
+		col.ReadOnly = colReadOnly
+		columnsM.Put(colName,col)
+	End If
+	Return Me
+End Sub
+
 'set the column data template
 Sub SetColumnAlignment(colName As String, colAlign As String) As VMDataTable
-	colName = colName.Replace(" ","")
-	colName = colName.tolowercase
 	If columnsM.ContainsKey(colName) Then
 		Dim col As DataTableColumn = columnsM.Get(colName)
 		col.align = colAlign
@@ -291,8 +1188,6 @@ End Sub
 
 'set the column data template
 Sub SetColumnExtra(colName As String, colExtra As String) As VMDataTable
-	colName = colName.Replace(" ","")
-	colName = colName.tolowercase
 	If columnsM.ContainsKey(colName) Then
 		Dim col As DataTableColumn = columnsM.Get(colName)
 		col.extra = colExtra
@@ -301,9 +1196,8 @@ Sub SetColumnExtra(colName As String, colExtra As String) As VMDataTable
 	Return Me
 End Sub
 
+'change column icon
 Sub SetColumnIcon(colName As String, icon As String) As VMDataTable
-	colName = colName.Replace(" ","")
-	colName = colName.tolowercase
 	If columnsM.ContainsKey(colName) Then
 		Dim col As DataTableColumn = columnsM.Get(colName)
 		col.icon = icon
@@ -312,11 +1206,190 @@ Sub SetColumnIcon(colName As String, icon As String) As VMDataTable
 	Return Me
 End Sub
 
+'set icon dimension
+Sub SetIconDimensions(colName As String, iconSize As String, iconColor As String) As VMDataTable
+	If columnsM.ContainsKey(colName) Then
+		Dim col As DataTableColumn = columnsM.Get(colName)
+		col.iconSize = iconSize
+		col.iconColor = iconColor
+		columnsM.Put(colName,col)
+	End If
+	Return Me
+End Sub
+
+Sub SetIconDimensions1(colName As String, iconSize As String, iconColor As String, columnWidth As String) As VMDataTable
+	If columnsM.ContainsKey(colName) Then
+		Dim col As DataTableColumn = columnsM.Get(colName)
+		col.iconSize = iconSize
+		col.iconColor = iconColor
+		col.width = columnWidth
+		columnsM.Put(colName,col)
+	End If
+	Return Me
+End Sub
+
+'set progress circular dialog
+Sub SetProgressCircularDimensions(colName As String, progressColor As String, progressRotate As String, progressSize As String, progressWidth As String) As VMDataTable
+	If columnsM.ContainsKey(colName) Then
+		Dim col As DataTableColumn = columnsM.Get(colName)
+		col.progressRotate = progressRotate
+		col.progressSize = progressSize
+		col.progressWidth = progressWidth
+		col.progressColor = progressColor
+		columnsM.Put(colName,col)
+	End If
+	Return Me
+End Sub
+
+Sub SetProgressLinearDimensions(colName As String, progressColor As String, progressHeight As String, progressShowValue As Boolean) As VMDataTable
+	If columnsM.ContainsKey(colName) Then
+		Dim col As DataTableColumn = columnsM.Get(colName)
+		col.progressHeight = progressHeight
+		col.progressShowValue = progressShowValue
+		col.progressColor = progressColor
+		columnsM.Put(colName,col)
+	End If
+	Return Me
+End Sub
+
+'make the button to be depressed
+Sub SetButtonDepressed(colName As String) As VMDataTable
+	If columnsM.ContainsKey(colName) Then
+		Dim col As DataTableColumn = columnsM.Get(colName)
+		col.depressed = True
+		columnsM.Put(colName,col)
+	End If
+	Return Me
+End Sub
+
+'make the button to be round
+Sub SetButtonRounded(colName As String) As VMDataTable
+	If columnsM.ContainsKey(colName) Then
+		Dim col As DataTableColumn = columnsM.Get(colName)
+		col.rounded = True
+		columnsM.Put(colName,col)
+	End If
+	Return Me
+End Sub
+
+'make the button to be shaped
+Sub SetButtonShaped(colName As String) As VMDataTable
+	If columnsM.ContainsKey(colName) Then
+		Dim col As DataTableColumn = columnsM.Get(colName)
+		col.shaped = True
+		columnsM.Put(colName,col)
+	End If
+	Return Me
+End Sub
+
+
+
+'make the button to be round
+Sub SetButtonOutlined(colName As String) As VMDataTable
+	If columnsM.ContainsKey(colName) Then
+		Dim col As DataTableColumn = columnsM.Get(colName)
+		col.outlined = True
+		columnsM.Put(colName,col)
+	End If
+	Return Me
+End Sub
+
+'make the button to be dark
+Sub SetButtonDark(colName As String) As VMDataTable
+	If columnsM.ContainsKey(colName) Then
+		Dim col As DataTableColumn = columnsM.Get(colName)
+		col.dark = True
+		columnsM.Put(colName,col)
+	End If
+	Return Me
+End Sub
+
+
+'make the button to have a single label
+Sub SetButtonLabel(colName As String, label As String) As VMDataTable
+	If columnsM.ContainsKey(colName) Then
+		Dim col As DataTableColumn = columnsM.Get(colName)
+		col.label = label
+		columnsM.Put(colName,col)
+	End If
+	Return Me
+End Sub
+
+'make the button to be depressed
+Sub SetButtonColor(colName As String, color As String, intensity As String) As VMDataTable
+	If columnsM.ContainsKey(colName) Then
+		Dim col As DataTableColumn = columnsM.Get(colName)
+		Dim scolor As String = $"${color} ${intensity}"$
+		col.color = scolor
+		columnsM.Put(colName,col)
+	End If
+	Return Me
+End Sub
+
+'make the button to be primary
+Sub SetButtonPrimary(colName As String) As VMDataTable
+	If columnsM.ContainsKey(colName) Then
+		Dim col As DataTableColumn = columnsM.Get(colName)
+		col.color = "primary"
+		columnsM.Put(colName,col)
+	End If
+	Return Me
+End Sub
+
+'make the button to be success
+Sub SetButtonSuccess(colName As String) As VMDataTable
+	If columnsM.ContainsKey(colName) Then
+		Dim col As DataTableColumn = columnsM.Get(colName)
+		col.color = "success"
+		columnsM.Put(colName,col)
+	End If
+	Return Me
+End Sub
+
+'make the button to be success
+Sub SetButtonError(colName As String) As VMDataTable
+	If columnsM.ContainsKey(colName) Then
+		Dim col As DataTableColumn = columnsM.Get(colName)
+		col.color = "error"
+		columnsM.Put(colName,col)
+	End If
+	Return Me
+End Sub
+
+'make the button to be warning
+Sub SetButtonWarning(colName As String) As VMDataTable
+	If columnsM.ContainsKey(colName) Then
+		Dim col As DataTableColumn = columnsM.Get(colName)
+		col.color = "warning"
+		columnsM.Put(colName,col)
+	End If
+	Return Me
+End Sub
+
+'make the button to be secondary
+Sub SetButtonSecondary(colName As String) As VMDataTable
+	If columnsM.ContainsKey(colName) Then
+		Dim col As DataTableColumn = columnsM.Get(colName)
+		col.color = "secondary"
+		columnsM.Put(colName,col)
+	End If
+	Return Me
+End Sub
+
+'set rating dimensions
+Sub SetRatingDimensions(colName As String, ratLength As String, ratColor As String) As VMDataTable
+	If columnsM.ContainsKey(colName) Then
+		Dim col As DataTableColumn = columnsM.Get(colName)
+		col.iconSize = ratLength
+		col.iconColor = ratColor
+		columnsM.Put(colName,col)
+	End If
+	Return Me
+End Sub
+
 
 'set the column data template
 Sub SetColumnWidth(colName As String, colWidth As Int) As VMDataTable
-	colName = colName.Replace(" ","")
-	colName = colName.tolowercase
 	If columnsM.ContainsKey(colName) Then
 		Dim col As DataTableColumn = columnsM.Get(colName)
 		col.width = colWidth
@@ -327,9 +1400,6 @@ End Sub
 
 'set column filterable
 Sub SetColumnFilterable(colName As String, colFilter As Boolean) As VMDataTable
-	colName = colName.Replace(" ","")
-	colName = colName.tolowercase
-	
 	If columnsM.ContainsKey(colName) Then
 		Dim col As DataTableColumn = columnsM.Get(colName)
 		col.filterable = colFilter
@@ -340,9 +1410,6 @@ End Sub
 
 'set column class
 Sub SetColumnClass(colName As String, colClass As String) As VMDataTable
-	colName = colName.Replace(" ","")
-	colName = colName.tolowercase
-	
 	If columnsM.ContainsKey(colName) Then
 		Dim col As DataTableColumn = columnsM.Get(colName)
 		col.classname = colClass
@@ -351,13 +1418,13 @@ Sub SetColumnClass(colName As String, colClass As String) As VMDataTable
 	Return Me
 End Sub
 
-private Sub BuildHeaders
-	Dim hdr As List
+'build headers
+private Sub BuildHeaders(colNames As Map)
 	hdr.Initialize 
 	'
-	For Each k As String In columnsM.keys
+	For Each k As String In colNames.keys
 		'get the column details
-		Dim nf As DataTableColumn = columnsM.Get(k)
+		Dim nf As DataTableColumn = colNames.Get(k)
 		'
 		Dim header As Map = CreateMap()
 		header.Initialize 
@@ -378,32 +1445,72 @@ End Sub
 
 'set the column data template
 Sub SetColumnType(colName As String, colType As String) As VMDataTable
-	colName = colName.Replace(" ","")
-	colName = colName.tolowercase
-	
 	If columnsM.ContainsKey(colName) Then
 		Dim col As DataTableColumn = columnsM.Get(colName)
 		col.TypeOf = colType
 		Select Case colType
-		Case COLUMN_IMAGE
+		Case COLUMN_IMAGE, COLUMN_AVATARIMG, COLUMN_SWITCH, COLUMN_BUTTON
 			col.filterable = False
+		Case COLUMN_NUMBER
+			col.align = ALIGN_RIGHT
+			col.valueFormat = "0"
+			Dim item As Map
+			Dim value As String
+			Dim cb As BANanoObject = BANano.CallBack(Me, "getmoneyformat", Array(item, value))
+			'add to methods
+			vue.SetCallBack("getmoneyformat", cb)
 		Case COLUMN_MONEY
 			col.align = ALIGN_RIGHT
+			col.valueFormat = "0,0.00"
+			Dim item As Map
+			Dim value As String
+			Dim cb As BANanoObject = BANano.CallBack(Me, "getmoneyformat", Array(item, value))
+			'add to methods
+			vue.SetCallBack("getmoneyformat", cb)
 		Case COLUMN_FILESIZE
 			col.align = ALIGN_RIGHT
+			Dim item As Map
+			Dim cb As BANanoObject = BANano.CallBack(Me, "getfilesize", Array(item))
+			'add to methods
+			vue.SetCallBack("getfilesize", cb)
 		Case COLUMN_DATE
-			'col.Put("format", "yyyy-mm-dd")
+			col.valueFormat = "yyyy-MM-dd"
+			Dim item As Map
+			Dim value As String
+			Dim cb As BANanoObject = BANano.CallBack(Me, "getdateformat", Array(item, value))
+			'add to methods
+			vue.SetCallBack("getdateformat", cb)
 		Case COLUMN_TIME
-			'col.Put("format", "HH:MM")
+			col.valueFormat = "HH:MM"
+			Dim item As Map
+			Dim value As String
+			Dim cb As BANanoObject = BANano.CallBack(Me, "getdateformat", Array(item, value))
+			'add to methods
+			vue.SetCallBack("getdateformat", cb)
 		Case COLUMN_DATETIME
-			'col.Put("format", "yyyy-mm-dd HH:MM")
+			col.valueFormat = "yyyy-MM-dd HH:MM"
+			Dim item As Map
+			Dim value As String
+			Dim cb As BANanoObject = BANano.CallBack(Me, "getdateformat", Array(item, value))
+			'add to methods
+			vue.SetCallBack("getdateformat", cb)
 		End Select
 		columnsM.Put(colName,col)
 	End If
 	Return Me
 End Sub
 
+'build controls
 private Sub BuildControls
+	Dim sbTotals As StringBuilder
+	sbTotals.Initialize 
+	If hasTotals Then
+		'lets define the totals row
+		sbTotals.Append($"<template slot="body.append">"$)
+		sbTotals.Append($"<tr>"$)
+		sbTotals.Append($"<th class="title">Totals</th>"$)
+	End If
+	'
 	Dim sb As StringBuilder
 	sb.Initialize 
 	For Each k As String In columnsM.Keys
@@ -412,105 +1519,349 @@ private Sub BuildControls
 		Dim ct As String = nf.TypeOf
 		'get column name
 		Dim value As String = nf.value
+		Dim methodName As String = $"${ID}_${value}"$
+		'does it have a total
+		If hasTotals Then
+			Dim bindTotals As String = nf.bindTotals
+			Select Case bindTotals
+			Case ""
+				sbTotals.Append($"<th class="title"></th>"$)
+			Case Else
+				sbTotals.Append($"<th class="title">{{ ${bindTotals} }}</th>"$)
+			End Select
+		End If
 		'
 		Select Case ct
-		Case COLUMN_CHECKBOX	
-			Dim tmpc As VMTemplate
-			tmpc.Initialize(vue, "" , Module)
+		Case COLUMN_DATE, COLUMN_DATETIME, COLUMN_TIME
+			'get the date format
+			Dim df As String = nf.valueFormat
+			'
+			Dim tmp As VMTemplate
+			tmp.Initialize(vue, "" , Module).SetStatic(bStatic).SetDesignMode(DesignMode)
+			tmp.SetAttrSingle($"#item.${value}"$, "{item}")
+			'
+			Dim span As VMElement
+			span.Initialize(vue,"")
+			span.SetTag("span") 
+			span.SetText($"{{ getdateformat(item.${value}, "${df}") }}"$)
+			tmp.AddComponent(span.ToString)
+			sb.Append(tmp.ToString)
+		Case COLUMN_LINK
+			Dim tmp As VMTemplate
+			tmp.Initialize(vue, "" , Module).SetStatic(bStatic).SetDesignMode(DesignMode)
 			Dim sline As String = $"v-slot:item.${value}="{ item }""$
-			tmpc.SetAttrLoose(sline)
+			tmp.SetAttrLoose(sline)
+				'
+			Dim aLink As VMElement
+			aLink.Initialize(vue, "").SetTag("a")
+			aLink.SetStatic(bStatic)
+			aLink.SetDesignMode(DesignMode)
+			Dim sLink As String = $"item.${value}"$
+			aLink.AddAttr(":href", "'" & nf.prefix & "' + " & sLink)
+			aLink.AddAttr("target", nf.target)
+			aLink.SetText($"{{ item.${value} }}"$)
+			tmp.AddComponent(aLink.ToString)
+			sb.Append(tmp.ToString)
+		Case COLUMN_MONEY, COLUMN_NUMBER
+			'get the date format
+			Dim mf As String = nf.valueFormat
 			'
-			Dim scb As VMSimpleCheckBox
-			scb.Initialize(vue, "", Module).SetVModel($"item.${value}"$).SetAttributes(Array("disabled"))
-			If nf.extra <> "" Then scb.SetAttrLoose(nf.extra)
+			Dim tmp As VMTemplate
+			tmp.Initialize(vue, "" , Module).SetStatic(bStatic).SetDesignMode(DesignMode)
+			tmp.SetAttrSingle($"#item.${value}"$, "{item}")
 			'
-			tmpc.AddComponent(scb.ToString)
-			sb.Append(tmpc.ToString) 
+			Dim span As VMElement
+			span.Initialize(vue,"")
+			span.SetTag("span")
+			span.SetText($"{{ getmoneyformat(item.${value}, "${mf}") }}"$)
+			tmp.AddComponent(span.ToString)
+			sb.Append(tmp.ToString)
+		Case COLUMN_FILESIZE
+			Dim tmp As VMTemplate
+			tmp.Initialize(vue, "" , Module).SetStatic(bStatic).SetDesignMode(DesignMode)
+			tmp.SetAttrSingle($"#item.${value}"$, "{item}")
+				'
+			Dim span As VMElement
+			span.Initialize(vue,"")
+			span.SetTag("span")
+			span.SetText($"{{ getfilesize(item.${value}) }}"$)
+			tmp.AddComponent(span.ToString)
+			sb.Append(tmp.ToString)
+		
+		Case COLUMN_PROGRESS_LINEAR
+			Dim tmp As VMTemplate
+			tmp.Initialize(vue, "" , Module).SetStatic(bStatic).SetDesignMode(DesignMode)
+			Dim sline As String = $"v-slot:item.${value}="{ item }""$
+			tmp.SetAttrLoose(sline)
+			'
+			Dim pl As VMProgressLinear
+			pl.Initialize(vue, $"${ID}${value}"$, Module).SetStatic(bStatic).SetDesignMode(DesignMode)
+			pl.SetVModel($"item.${value}"$)
+			pl.SetReactive(True)
+			pl.SetRounded(True)
+			If nf.progressColor <> "" Then pl.SetColor(nf.progressColor)
+			If nf.progressheight <> "" Then pl.SetHeight(nf.progressheight)
+			If nf.progressShowValue Then
+				Dim tmpx As VMElement
+				tmpx.Initialize(vue, "").SetTag("strong")
+				tmpx.AddComponent($"{{ Math.ceil(item.${value}) }}%"$)
+				pl.AddComponent(tmpx.ToString)
+			End If
+			tmp.AddComponent(pl.ToString)
+			sb.Append(tmp.ToString)
+		Case COLUMN_PROGRESS_CIRCULAR
+			Dim tmp As VMTemplate
+			tmp.Initialize(vue, "" , Module).SetStatic(bStatic).SetDesignMode(DesignMode)
+			Dim sline As String = $"v-slot:item.${value}="{ item }""$
+			tmp.SetAttrLoose(sline)
+			'
+			Dim pc As VMProgressCircular
+			pc.Initialize(vue, $"${ID}${value}"$, Module).SetStatic(bStatic).SetDesignMode(DesignMode)
+			pc.SetVModel($"item.${value}"$)
+			pc.SetReactive(True)
+			pc.AddComponent($"{{ item.${value} }}"$)
+			If nf.progressRotate <> "" Then pc.SetRotate(nf.progressRotate)
+			If nf.progressSize <> "" Then pc.SetSize(nf.progressSize)
+			If nf.progressWidth <> "" Then pc.SetWidth(nf.progressWidth)
+			If nf.progressColor <> "" Then pc.SetColor(nf.progressColor)
+			tmp.AddComponent(pc.ToString)
+			sb.Append(tmp.ToString)
+		Case COLUMN_RATING
+			Dim tmp As VMTemplate
+			tmp.Initialize(vue, "" , Module).SetStatic(bStatic).SetDesignMode(DesignMode)
+			Dim sline As String = $"v-slot:item.${value}="{ item }""$
+			tmp.SetAttrLoose(sline)
+			'
+			Dim rat As VMRating
+			rat.Initialize(vue, $"${ID}${value}"$, Module).SetStatic(bStatic).SetDesignMode(DesignMode)
+			rat.SetDense(True)
+			rat.SetVModel($"item.${value}"$)
+			If nf.Disabled Then rat.SetAttrLoose("disabled")
+			If nf.ReadOnly Then rat.SetAttrLoose("readonly")
+			If nf.iconSize <> "" Then rat.SetLength(nf.iconSize)
+			If nf.iconColor <> "" Then rat.SetColor(nf.iconColor)
+			'
+			Dim methodName As String = $"${ID}_change"$
+			If SubExists(Module, methodName) Then
+				rat.SetAttrSingle("@input", $"${methodName}(item)"$)
+				vue.SetMethod(Module, methodName)
+			End If
+			tmp.AddComponent(rat.ToString)
+			sb.Append(tmp.ToString)
+		Case COLUMN_AVATARIMG
+			Dim tmp As VMTemplate
+			tmp.Initialize(vue, "" , Module).SetStatic(bStatic).SetDesignMode(DesignMode)
+			Dim sline As String = $"v-slot:item.${value}="{ item }""$
+			tmp.SetAttrLoose(sline)
+				
+			Dim avt As VMAvatar
+			Dim avtimg As VMImage
+			'
+			avt.Initialize(vue,"", "").SetStatic(bStatic).SetDesignMode(DesignMode)
+			avtimg.Initialize(vue, "","").SetStatic(bStatic).SetDesignMode(DesignMode)
+			avtimg.SetSrc($"item.${value}"$)
+			avtimg.SetAlt($"item.${value}"$)
+			If nf.imgHeight <> "" Then
+				avtimg.SetHeight(nf.imgheight)
+				avtimg.SetMaxHeight(nf.imgheight)
+			End If
+			'
+			If nf.imgWidth <> "" Then
+				avtimg.SetWidth(nf.imgWidth)
+				avtimg.SetMaxWidth(nf.imgWidth)
+			End If
+			avt.AddComponent(avtimg.ToString)
+			tmp.AddComponent(avt.ToString)
+			sb.Append(tmp.ToString)
+		Case COLUMN_SWITCH, COLUMN_CHECKBOX
+			Dim tmp As VMTemplate
+			tmp.Initialize(vue, "" , Module).SetStatic(bStatic).SetDesignMode(DesignMode)
+			Dim sline As String = $"v-slot:item.${value}="{ item }""$
+			tmp.SetAttrLoose(sline)
+			'
+			Dim swt As VMCheckBox
+			swt.Initialize(vue, $"${ID}${value}"$, Module).SetStatic(bStatic).SetDesignMode(DesignMode)
+			If ct = COLUMN_SWITCH Then 
+				swt.SetTag("v-switch")
+				swt.SetInset(True)
+				swt.SetDense(True)
+			End If			
+			swt.SetValue("Yes")
+			swt.SetTrueValue("Yes")
+			swt.SetUncheckedValue("No")
+			swt.SetFalseValue("No")
+			swt.SetVModel($"item.${value}"$)
+			If nf.Disabled Then swt.SetAttrLoose("disabled")
+			'
+			Dim methodName As String = $"${ID}_change"$
+			If SubExists(Module, methodName) Then
+				swt.SetAttrSingle("@change", $"${methodName}(item)"$)
+				vue.SetMethod(Module, methodName)
+			End If
+			tmp.AddComponent(swt.ToString)
+			sb.Append(tmp.ToString)
+		Case COLUMN_ICON
+			Dim tmp As VMTemplate
+			tmp.Initialize(vue, "" , Module).SetStatic(bStatic).SetDesignMode(DesignMode)
+			Dim sline As String = $"v-slot:item.${value}="{ item }""$
+			tmp.SetAttrLoose(sline)
+			'
+			Dim aIcon As VMIcon
+			aIcon.Initialize(vue, $"${ID}${value}"$, Module).SetStatic(bStatic).SetDesignMode(DesignMode)
+			aIcon.SetVText($"item.${value}"$)
+			If nf.Disabled Then aIcon.SetAttrLoose("disabled")
+			If nf.iconSize <> "" Then aIcon.SetSize(nf.iconSize)
+			If nf.iconColor <> "" Then aIcon.SetColor(nf.iconcolor)
+			tmp.AddComponent(aIcon.ToString)
+			sb.Append(tmp.ToString)
+		Case COLUMN_IMAGE
+			Dim tmp As VMTemplate
+			tmp.Initialize(vue, "" , Module).SetStatic(bStatic).SetDesignMode(DesignMode)
+			Dim sline As String = $"v-slot:item.${value}="{ item }""$
+			tmp.SetAttrLoose(sline)
+			'		
+			Dim avtimg As VMImage
+			avtimg.Initialize(vue, "","").SetStatic(bStatic).SetDesignMode(DesignMode)
+			avtimg.SetSrc($"item.${value}"$)
+			avtimg.SetAlt($"item.${value}"$)
+			If nf.Disabled Then avtimg.SetAttrLoose("disabled")
+			If nf.imgHeight <> "" Then
+				avtimg.SetHeight(nf.imgheight)
+				avtimg.SetMaxHeight(nf.imgheight)
+			End If
+			'
+			If nf.imgWidth <> "" Then
+				avtimg.SetWidth(nf.imgWidth)
+				avtimg.SetMaxWidth(nf.imgWidth)
+			End If
+			tmp.AddComponent(avtimg.ToString)
+			sb.Append(tmp.ToString)
 		Case COLUMN_CHIP
 			Dim tmp As VMTemplate
-			tmp.Initialize(vue, "" , Module)
+			tmp.Initialize(vue, "" , Module).SetStatic(bStatic).SetDesignMode(DesignMode)
 			Dim sline As String = $"v-slot:item.${value}="{ item }""$
 			tmp.SetAttrLoose(sline)
 			'
 			Dim chp As VMChip
-			chp.Initialize(vue, "", Module).SetAttributes(Array("dark")).SetText($"{{ item.${value} }}"$)
+			chp.Initialize(vue, "", Module).SetStatic(bStatic).SetDesignMode(DesignMode)
+			chp.SetAttributes(Array("dark"))
+			chp.SetText($"{{ item.${value} }}"$)
+			If nf.Disabled Then chp.SetAttrLoose("disabled")
 			If nf.extra <> "" Then chp.SetAttrLoose(nf.extra)
 			'
 			tmp.AddComponent(chp.ToString)
 			sb.Append(tmp.ToString)
-		Case COLUMN_EDIT
+		Case COLUMN_BUTTON
 			Dim tmp As VMTemplate
-			tmp.Initialize(vue, "" , Module)
-			Dim sline As String = $"v-slot:item.edit="{ item }""$
+			tmp.Initialize(vue, "" , Module).SetStatic(bStatic).SetDesignMode(DesignMode)
+			Dim sline As String = $"v-slot:item.${value}="{ item }""$
 			tmp.SetAttrLoose(sline)
-				'
-			Dim eIcon As VMIcon
-			eIcon.Initialize(vue, $"${ID}edit"$, Module).AddClass("mr-2").SetStatic(True)
-			eIcon.SetAttrSingle("@click", $"${ID}_edit(item)"$)
-			eIcon.SetText("mdi-pencil")
-			tmp.AddComponent(eIcon.ToString)
 			'
-			sb.Append(tmp.ToString)
-			vue.SetMethod(Module, $"${ID}_edit"$)
-		Case COLUMN_DELETE
-			Dim tmpd As VMTemplate
-			tmpd.Initialize(vue, "" , Module)
-			Dim sline As String = $"v-slot:item.delete="{ item }""$
-			tmpd.SetAttrLoose(sline)
+			Dim abtn As VMButton
+			abtn.Initialize(vue, $"${ID}${value}"$, Module).SetStatic(bStatic).SetDesignMode(DesignMode)
+			abtn.AddClass("mr-2")
+			abtn.SetDepressed(nf.depressed)
+			abtn.SetRounded(nf.rounded)
+			abtn.SetDark(nf.dark)
+			abtn.SetLabel(nf.label)
+			abtn.SetColor(nf.color)
+			abtn.SetOutlined(nf.outlined)
+			abtn.SetShaped(nf.shaped)
 			'
-			Dim eIcon As VMIcon
-			eIcon.Initialize(vue, $"${ID}delete"$, Module).AddClass("mr-2").SetStatic(True)
-			eIcon.SetAttrSingle("@click", $"${ID}_delete(item)"$)
-			eIcon.SetText("mdi-delete")
-			tmpd.AddComponent(eIcon.ToString)
-			'
-			sb.Append(tmpd.ToString)
-			vue.SetMethod(Module, $"${ID}_delete"$)
-		Case COLUMN_ACTION
-			Dim methodName As String = $"${ID}_${value}"$
-			'
+			If SubExists(Module, methodName) Then
+				abtn.SetAttrSingle("@click", $"${ID}_${value}(item)"$)
+				vue.SetMethod(Module, methodName)
+			End If
+			tmp.AddComponent(abtn.ToString)
+			sb.Append(tmp.tostring)
+		Case COLUMN_ACTION, COLUMN_EDIT, COLUMN_DELETE, COLUMN_SAVE, COLUMN_CANCEL
 			Dim tmpa As VMTemplate
-			tmpa.Initialize(vue, "" , Module)
+			tmpa.Initialize(vue, "" , Module).SetStatic(bStatic).SetDesignMode(DesignMode)
 			Dim sline As String = $"v-slot:item.${value}="{ item }""$
 			tmpa.SetAttrLoose(sline)
 			'
+			Dim abtn As VMButton
+			abtn.Initialize(vue, $"${ID}${value}"$, Module).SetStatic(bStatic).SetDesignMode(DesignMode)
+			abtn.SetElevation("4").SetFab(True).SetSmall(True).SetDark(True)
+			abtn.AddClass("mr-2")
+			If nf.iconColor <> "" Then abtn.SetColor(nf.iconcolor)
+			If nf.Disabled Then abtn.SetAttrLoose("disabled")
+			 
 			Dim aIcon As VMIcon
-			aIcon.Initialize(vue, $"${ID}${value}"$, Module).AddClass("mr-2").SetStatic(True)
-			aIcon.SetAttrSingle("@click", $"${ID}_${value}(item)"$)
+			aIcon.Initialize(vue, $"${ID}${value}icon"$, Module).SetStatic(bStatic).SetDesignMode(DesignMode)
 			aIcon.SetText(nf.icon)
-			tmpa.AddComponent(aIcon.ToString)
-			'
-			sb.Append(tmpa.ToString)
+			If nf.iconSize <> "" Then aIcon.SetSize(nf.iconSize)
+			abtn.AddComponent(aIcon.tostring)
 			
-			Dim item As Map
-			Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(item))
-			vue.SetCallBack(methodName, cb)
+			If SubExists(Module, methodName) Then
+				abtn.SetAttrSingle("@click", $"${ID}_${value}(item)"$)
+				vue.SetMethod(Module, methodName)
+			End If
+			tmpa.AddComponent(abtn.ToString)
+			sb.Append(tmpa.ToString)
 		End Select	
 	Next
+	'
+	If hasTotals Then
+		sbTotals.Append($"</tr>"$)
+		sbTotals.Append("</template>")
+		sb.Append(sbTotals.ToString)
+	End If
 	DataTable.SetText(sb.ToString)
 End Sub
 
 'get component
 Sub ToString As String
+	If rows.Size > 0 Then
+		vue.SetData(items, rows)
+	End If
+	vue.SetData(keyID, DateTime.Now)
 	'build the headers
-	BuildHeaders
+	BuildHeaders(columnsM)
+	vcard.Bind(":key", keyID)
+	DataTable.Bind(":headers", headers)
+	DataTable.Bind(":items", items)
 	BuildControls
 	vcard.AddStuff(DataTable.ToString)
+	If hasExternalPagination Then
+		Dim pgDiv As VMElement
+		pgDiv.Initialize(vue, $"${ID}pgdiv"$)
+		pgDiv.AddClass("text-xs-center pt-2")
+		'
+		Dim pg As VMPagination
+		pg.Initialize(vue, $"${ID}pagination"$, Module)
+		pg.SetTotalVisible(totalVisible)
+		pg.SetDataTable(ID)
+		pgDiv.AddComponent(pg.ToString)
+		vcard.AddStuff(pgDiv.ToString)
+	End If
 	Return vcard.ToString
 End Sub
 
+'set total-visible
+Sub SetTotalVisible(varTotalVisible As String) As VMDataTable
+	totalVisible = varTotalVisible
+	Return Me
+End Sub
+
+'update the data
+Sub Refresh
+	If rows.Size > 0 Then
+		SetDataSource(rows)
+	End If
+	Dim dt As String = DateTime.now
+	vue.SetData(keyID, dt)
+End Sub
+
+'set vmodel
 Sub SetVModel(k As String) As VMDataTable
 	DataTable.SetVModel(k)
 	Return Me
 End Sub
 
-Sub SetVIf(vif As Object) As VMDataTable
-	DataTable.SetVIf(vif)
-	Return Me
-End Sub
-
-Sub SetVShow(vif As Object) As VMDataTable
-	DataTable.SetVShow(vif)
+'set vif
+Sub SetVIf(vif As String) As VMDataTable
+	vcard.SetVIf(vif)
 	Return Me
 End Sub
 
@@ -523,6 +1874,12 @@ End Sub
 Sub AddChild(child As VMElement) As VMDataTable
 	Dim childHTML As String = child.ToString
 	DataTable.SetText(childHTML)
+	Return Me
+End Sub
+
+'add a component 
+Sub AddComponent(tcomp As String) As VMDataTable
+	SetText(tcomp)
 	Return Me
 End Sub
 
@@ -562,48 +1919,26 @@ Sub AddChildren(children As List)
 	Next
 End Sub
 
-'set calculate-width
-Sub SetCalculateWidth(varCalculateWidth As Object) As VMDataTable
-	Dim pp As String = $"${ID}CalculateWidth"$
-	vue.SetStateSingle(pp, varCalculateWidth)
-	DataTable.Bind(":calculate-width", pp)
-	Return Me
-End Sub
-
-'set caption
-Sub SetCaption(varCaption As Object) As VMDataTable
-	Dim pp As String = $"${ID}Caption"$
-	vue.SetStateSingle(pp, varCaption)
-	DataTable.Bind(":caption", pp)
-	Return Me
-End Sub
-
-'set custom-filter
-Sub SetCustomFilter(varCustomFilter As Object) As VMDataTable
-	Dim pp As String = $"${ID}CustomFilter"$
-	vue.SetStateSingle(pp, varCustomFilter)
-	DataTable.Bind(":custom-filter", pp)
-	Return Me
-End Sub
-
-'set custom-group
-Sub SetCustomGroup(varCustomGroup As Object) As VMDataTable
-	Dim pp As String = $"${ID}CustomGroup"$
-	vue.SetStateSingle(pp, varCustomGroup)
-	DataTable.Bind(":custom-group", pp)
-	Return Me
-End Sub
-
-'set custom-sort
-Sub SetCustomSort(varCustomSort As Object) As VMDataTable
-	Dim pp As String = $"${ID}CustomSort"$
-	vue.SetStateSingle(pp, varCustomSort)
-	DataTable.Bind(":custom-sort", pp)
+'set calculate-widths
+Sub SetCalculateWidths(varCalculateWidths As Boolean) As VMDataTable
+	If varCalculateWidths = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("calculate-widths", varCalculateWidths)
+		Return Me
+	End If
+	Dim pp As String = $"${ID}CalculateWidths"$
+	vue.SetStateSingle(pp, varCalculateWidths)
+	DataTable.Bind(":calculate-widths", pp)
 	Return Me
 End Sub
 
 'set dark
-Sub SetDark(varDark As Object) As VMDataTable
+Sub SetDark(varDark As Boolean) As VMDataTable
+	If varDark = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("dark", varDark)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Dark"$
 	vue.SetStateSingle(pp, varDark)
 	DataTable.Bind(":dark", pp)
@@ -611,7 +1946,11 @@ Sub SetDark(varDark As Object) As VMDataTable
 End Sub
 
 'set dense
-Sub SetDense(varDense As Object) As VMDataTable
+Sub SetDense(varDense As Boolean) As VMDataTable
+	If bStatic Then
+		SetAttrSingle("dense", varDense)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Dense"$
 	vue.SetStateSingle(pp, varDense)
 	DataTable.Bind(":dense", pp)
@@ -619,7 +1958,12 @@ Sub SetDense(varDense As Object) As VMDataTable
 End Sub
 
 'set disable-filtering
-Sub SetDisableFiltering(varDisableFiltering As Object) As VMDataTable
+Sub SetDisableFiltering(varDisableFiltering As Boolean) As VMDataTable
+	If varDisableFiltering = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("disable-filtering", varDisableFiltering)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}DisableFiltering"$
 	vue.SetStateSingle(pp, varDisableFiltering)
 	DataTable.Bind(":disable-filtering", pp)
@@ -627,7 +1971,12 @@ Sub SetDisableFiltering(varDisableFiltering As Object) As VMDataTable
 End Sub
 
 'set disable-pagination
-Sub SetDisablePagination(varDisablePagination As Object) As VMDataTable
+Sub SetDisablePagination(varDisablePagination As Boolean) As VMDataTable
+	If varDisablePagination = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("disable-pagination", varDisablePagination)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}DisablePagination"$
 	vue.SetStateSingle(pp, varDisablePagination)
 	DataTable.Bind(":disable-pagination", pp)
@@ -635,95 +1984,38 @@ Sub SetDisablePagination(varDisablePagination As Object) As VMDataTable
 End Sub
 
 'set disable-sort
-Sub SetDisableSort(varDisableSort As Object) As VMDataTable
+Sub SetDisableSort(varDisableSort As Boolean) As VMDataTable
+	If varDisableSort = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("disable-sort", varDisableSort)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}DisableSort"$
 	vue.SetStateSingle(pp, varDisableSort)
 	DataTable.Bind(":disable-sort", pp)
 	Return Me
 End Sub
 
-'set expand-icon
-Sub SetExpandIcon(varExpandIcon As Object) As VMDataTable
-	Dim pp As String = $"${ID}ExpandIcon"$
-	vue.SetStateSingle(pp, varExpandIcon)
-	DataTable.Bind(":expand-icon", pp)
-	Return Me
-End Sub
-
-'set expanded
-Sub SetExpanded(varExpanded As Object) As VMDataTable
-	Dim pp As String = $"${ID}Expanded"$
-	vue.SetStateSingle(pp, varExpanded)
-	DataTable.Bind(":expanded", pp)
-	Return Me
-End Sub
-
 'set fixed-header
-Sub SetFixedHeader(varFixedHeader As Object) As VMDataTable
+Sub SetFixedHeader(varFixedHeader As Boolean) As VMDataTable
+	If varFixedHeader = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("fixed-header", varFixedHeader)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}FixedHeader"$
 	vue.SetStateSingle(pp, varFixedHeader)
 	DataTable.Bind(":fixed-header", pp)
 	Return Me
 End Sub
 
-'set footer-props
-Sub SetFooterProps(varFooterProps As Object) As VMDataTable
-	Dim pp As String = $"${ID}FooterProps"$
-	vue.SetStateSingle(pp, varFooterProps)
-	DataTable.Bind(":footer-props", pp)
-	Return Me
-End Sub
-
-'set group-by
-Sub SetGroupBy(varGroupBy As Object) As VMDataTable
-	Dim pp As String = $"${ID}GroupBy"$
-	vue.SetStateSingle(pp, varGroupBy)
-	DataTable.Bind(":group-by", pp)
-	Return Me
-End Sub
-
-'set group-desc
-Sub SetGroupDesc(varGroupDesc As Object) As VMDataTable
-	Dim pp As String = $"${ID}GroupDesc"$
-	vue.SetStateSingle(pp, varGroupDesc)
-	DataTable.Bind(":group-desc", pp)
-	Return Me
-End Sub
-
-'set header-props
-Sub SetHeaderProps(varHeaderProps As Object) As VMDataTable
-	Dim pp As String = $"${ID}HeaderProps"$
-	vue.SetStateSingle(pp, varHeaderProps)
-	DataTable.Bind(":header-props", pp)
-	Return Me
-End Sub
-
-'set headers
-Sub SetHeaders(varHeaders As Object) As VMDataTable
-	Dim pp As String = $"${ID}Headers"$
-	vue.SetStateSingle(pp, varHeaders)
-	DataTable.Bind(":headers", pp)
-	Return Me
-End Sub
-
-'set headers-length
-Sub SetHeadersLength(varHeadersLength As Object) As VMDataTable
-	Dim pp As String = $"${ID}HeadersLength"$
-	vue.SetStateSingle(pp, varHeadersLength)
-	DataTable.Bind(":headers-length", pp)
-	Return Me
-End Sub
-
-'set height
-Sub SetHeight(varHeight As Object) As VMDataTable
-	Dim pp As String = $"${ID}Height"$
-	vue.SetStateSingle(pp, varHeight)
-	DataTable.Bind(":height", pp)
-	Return Me
-End Sub
-
 'set hide-default-footer
-Sub SetHideDefaultFooter(varHideDefaultFooter As Object) As VMDataTable
+Sub SetHideDefaultFooter(varHideDefaultFooter As Boolean) As VMDataTable
+	If varHideDefaultFooter = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("hide-default-footer", varHideDefaultFooter)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}HideDefaultFooter"$
 	vue.SetStateSingle(pp, varHideDefaultFooter)
 	DataTable.Bind(":hide-default-footer", pp)
@@ -731,39 +2023,25 @@ Sub SetHideDefaultFooter(varHideDefaultFooter As Object) As VMDataTable
 End Sub
 
 'set hide-default-header
-Sub SetHideDefaultHeader(varHideDefaultHeader As Object) As VMDataTable
+Sub SetHideDefaultHeader(varHideDefaultHeader As Boolean) As VMDataTable
+	If varHideDefaultHeader = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("hide-default-header", varHideDefaultHeader)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}HideDefaultHeader"$
 	vue.SetStateSingle(pp, varHideDefaultHeader)
 	DataTable.Bind(":hide-default-header", pp)
 	Return Me
 End Sub
 
-'set item-key
-Sub SetItemKey(varItemKey As Object) As VMDataTable
-	Dim pp As String = $"${ID}ItemKey"$
-	vue.SetStateSingle(pp, varItemKey)
-	DataTable.Bind(":item-key", pp)
-	Return Me
-End Sub
-
-'set items
-Sub SetItems(varItems As Object) As VMDataTable
-	Dim pp As String = $"${ID}Items"$
-	vue.SetStateSingle(pp, varItems)
-	DataTable.Bind(":items", pp)
-	Return Me
-End Sub
-
-'set items-per-page
-Sub SetItemsPerPage(varItemsPerPage As Object) As VMDataTable
-	Dim pp As String = $"${ID}ItemsPerPage"$
-	vue.SetStateSingle(pp, varItemsPerPage)
-	DataTable.Bind(":items-per-page", pp)
-	Return Me
-End Sub
-
 'set light
-Sub SetLight(varLight As Object) As VMDataTable
+Sub SetLight(varLight As Boolean) As VMDataTable
+	If varLight = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("light", varLight)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Light"$
 	vue.SetStateSingle(pp, varLight)
 	DataTable.Bind(":light", pp)
@@ -771,39 +2049,25 @@ Sub SetLight(varLight As Object) As VMDataTable
 End Sub
 
 'set loading
-Sub SetLoading(varLoading As Object) As VMDataTable
+Sub SetLoading(varLoading As Boolean) As VMDataTable
+	If varLoading = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("loading", varLoading)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Loading"$
 	vue.SetStateSingle(pp, varLoading)
 	DataTable.Bind(":loading", pp)
 	Return Me
 End Sub
 
-'set loading-text
-Sub SetLoadingText(varLoadingText As Object) As VMDataTable
-	Dim pp As String = $"${ID}LoadingText"$
-	vue.SetStateSingle(pp, varLoadingText)
-	DataTable.Bind(":loading-text", pp)
-	Return Me
-End Sub
-
-'set locale
-Sub SetLocale(varLocale As Object) As VMDataTable
-	Dim pp As String = $"${ID}Locale"$
-	vue.SetStateSingle(pp, varLocale)
-	DataTable.Bind(":locale", pp)
-	Return Me
-End Sub
-
-'set mobile-breakpoint
-Sub SetMobileBreakpoint(varMobileBreakpoint As Object) As VMDataTable
-	Dim pp As String = $"${ID}MobileBreakpoint"$
-	vue.SetStateSingle(pp, varMobileBreakpoint)
-	DataTable.Bind(":mobile-breakpoint", pp)
-	Return Me
-End Sub
-
 'set multi-sort
-Sub SetMultiSort(varMultiSort As Object) As VMDataTable
+Sub SetMultiSort(varMultiSort As Boolean) As VMDataTable
+	If varMultiSort = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("multi-sort", varMultiSort)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}MultiSort"$
 	vue.SetStateSingle(pp, varMultiSort)
 	DataTable.Bind(":multi-sort", pp)
@@ -811,71 +2075,25 @@ Sub SetMultiSort(varMultiSort As Object) As VMDataTable
 End Sub
 
 'set must-sort
-Sub SetMustSort(varMustSort As Object) As VMDataTable
+Sub SetMustSort(varMustSort As Boolean) As VMDataTable
+	If varMustSort = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("must-sort", varMustSort)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}MustSort"$
 	vue.SetStateSingle(pp, varMustSort)
 	DataTable.Bind(":must-sort", pp)
 	Return Me
 End Sub
 
-'set no-data-text
-Sub SetNoDataText(varNoDataText As Object) As VMDataTable
-	Dim pp As String = $"${ID}NoDataText"$
-	vue.SetStateSingle(pp, varNoDataText)
-	DataTable.Bind(":no-data-text", pp)
-	Return Me
-End Sub
-
-'set no-results-text
-Sub SetNoResultsText(varNoResultsText As Object) As VMDataTable
-	Dim pp As String = $"${ID}NoResultsText"$
-	vue.SetStateSingle(pp, varNoResultsText)
-	DataTable.Bind(":no-results-text", pp)
-	Return Me
-End Sub
-
-'set options
-Sub SetOptions(varOptions As Object) As VMDataTable
-	Dim pp As String = $"${ID}Options"$
-	vue.SetStateSingle(pp, varOptions)
-	DataTable.Bind(":options", pp)
-	Return Me
-End Sub
-
-'set page
-Sub SetPage(varPage As Object) As VMDataTable
-	Dim pp As String = $"${ID}Page"$
-	vue.SetStateSingle(pp, varPage)
-	DataTable.Bind(":page", pp)
-	Return Me
-End Sub
-
-'set search
-Sub SetSearch(varSearch As Object) As VMDataTable
-	Dim pp As String = $"${ID}Search"$
-	vue.SetStateSingle(pp, varSearch)
-	DataTable.Bind(":search", pp)
-	Return Me
-End Sub
-
-'set selectable-key
-Sub SetSelectableKey(varSelectableKey As Object) As VMDataTable
-	Dim pp As String = $"${ID}SelectableKey"$
-	vue.SetStateSingle(pp, varSelectableKey)
-	DataTable.Bind(":selectable-key", pp)
-	Return Me
-End Sub
-
-'set server-items-length
-Sub SetServerItemsLength(varServerItemsLength As Object) As VMDataTable
-	Dim pp As String = $"${ID}ServerItemsLength"$
-	vue.SetStateSingle(pp, varServerItemsLength)
-	DataTable.Bind(":server-items-length", pp)
-	Return Me
-End Sub
-
 'set show-expand
-Sub SetShowExpand(varShowExpand As Object) As VMDataTable
+Sub SetShowExpand(varShowExpand As Boolean) As VMDataTable
+	If varShowExpand = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("show-expand", varShowExpand)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}ShowExpand"$
 	vue.SetStateSingle(pp, varShowExpand)
 	DataTable.Bind(":show-expand", pp)
@@ -883,7 +2101,12 @@ Sub SetShowExpand(varShowExpand As Object) As VMDataTable
 End Sub
 
 'set show-group-by
-Sub SetShowGroupBy(varShowGroupBy As Object) As VMDataTable
+Sub SetShowGroupBy(varShowGroupBy As Boolean) As VMDataTable
+	If varShowGroupBy = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("show-group-by", varShowGroupBy)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}ShowGroupBy"$
 	vue.SetStateSingle(pp, varShowGroupBy)
 	DataTable.Bind(":show-group-by", pp)
@@ -891,7 +2114,12 @@ Sub SetShowGroupBy(varShowGroupBy As Object) As VMDataTable
 End Sub
 
 'set show-select
-Sub SetShowSelect(varShowSelect As Object) As VMDataTable
+Sub SetShowSelect(varShowSelect As Boolean) As VMDataTable
+	If varShowSelect = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("show-select", varShowSelect)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}ShowSelect"$
 	vue.SetStateSingle(pp, varShowSelect)
 	DataTable.Bind(":show-select", pp)
@@ -899,7 +2127,12 @@ Sub SetShowSelect(varShowSelect As Object) As VMDataTable
 End Sub
 
 'set single-expand
-Sub SetSingleExpand(varSingleExpand As Object) As VMDataTable
+Sub SetSingleExpand(varSingleExpand As Boolean) As VMDataTable
+	If varSingleExpand = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("single-expand", varSingleExpand)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}SingleExpand"$
 	vue.SetStateSingle(pp, varSingleExpand)
 	DataTable.Bind(":single-expand", pp)
@@ -907,15 +2140,267 @@ Sub SetSingleExpand(varSingleExpand As Object) As VMDataTable
 End Sub
 
 'set single-select
-Sub SetSingleSelect(varSingleSelect As Object) As VMDataTable
+Sub SetSingleSelect(varSingleSelect As Boolean) As VMDataTable
+	If varSingleSelect = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("single-select", varSingleSelect)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}SingleSelect"$
 	vue.SetStateSingle(pp, varSingleSelect)
 	DataTable.Bind(":single-select", pp)
 	Return Me
 End Sub
 
+'set caption
+Sub SetCaption(varCaption As String) As VMDataTable
+	If varCaption = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("caption", varCaption)
+		Return Me
+	End If
+	Dim pp As String = $"${ID}Caption"$
+	vue.SetStateSingle(pp, varCaption)
+	DataTable.Bind(":caption", pp)
+	Return Me
+End Sub
+
+'set expand-icon
+Sub SetExpandIcon(varExpandIcon As String) As VMDataTable
+	If varExpandIcon = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("expand-icon", varExpandIcon)
+		Return Me
+	End If
+	Dim pp As String = $"${ID}ExpandIcon"$
+	vue.SetStateSingle(pp, varExpandIcon)
+	DataTable.Bind(":expand-icon", pp)
+	Return Me
+End Sub
+
+'set headers-length
+Sub SetHeadersLength(varHeadersLength As String) As VMDataTable
+	If varHeadersLength = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("headers-length", varHeadersLength)
+		Return Me
+	End If
+	Dim pp As String = $"${ID}HeadersLength"$
+	vue.SetStateSingle(pp, varHeadersLength)
+	DataTable.Bind(":headers-length", pp)
+	Return Me
+End Sub
+
+'set height
+Sub SetHeight(varHeight As String) As VMDataTable
+	If varHeight = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("height", varHeight)
+		Return Me
+	End If
+	Dim pp As String = $"${ID}Height"$
+	vue.SetStateSingle(pp, varHeight)
+	DataTable.Bind(":height", pp)
+	Return Me
+End Sub
+
+'set item-key
+Sub SetItemKey1(varItemKey As String) As VMDataTable
+	PrimaryKey = varItemKey
+'	If varItemKey = "" Then Return Me
+'	If bStatic Then
+'		SetAttrSingle("item-key", varItemKey)
+'		Return Me
+'	End If
+'	Dim pp As String = $"${ID}ItemKey"$
+'	vue.SetStateSingle(pp, varItemKey)
+'	DataTable.Bind(":item-key", pp)
+	Return Me
+End Sub
+
+'set item-key and force usage
+Sub SetItemKey(varItemKey As String) As VMDataTable
+	PrimaryKey = varItemKey
+	If varItemKey = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("item-key", varItemKey)
+		Return Me
+	End If
+	Dim pp As String = $"${ID}ItemKey"$
+	vue.SetStateSingle(pp, varItemKey)
+	DataTable.Bind(":item-key", pp)
+	Return Me
+End Sub
+
+'set items-per-page
+Sub SetItemsPerPage(varItemsPerPage As String) As VMDataTable
+	If varItemsPerPage = "" Then Return Me
+	varItemsPerPage = BANano.parseInt(varItemsPerPage)
+	If bStatic Then
+		SetAttrSingle("items-per-page", varItemsPerPage)
+		Return Me
+	End If
+	Dim pp As String = $"${ID}ItemsPerPage"$
+	vue.SetStateSingle(pp, varItemsPerPage)
+	DataTable.Bind(":items-per-page", pp)
+	Return Me
+End Sub
+
+'set loading-text
+Sub SetLoadingText(varLoadingText As String) As VMDataTable
+	If varLoadingText = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("loading-text", varLoadingText)
+		Return Me
+	End If
+	Dim pp As String = $"${ID}LoadingText"$
+	vue.SetStateSingle(pp, varLoadingText)
+	DataTable.Bind(":loading-text", pp)
+	Return Me
+End Sub
+
+'set locale
+Sub SetLocale(varLocale As String) As VMDataTable
+	If varLocale = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("locale", varLocale)
+		Return Me
+	End If
+	Dim pp As String = $"${ID}Locale"$
+	vue.SetStateSingle(pp, varLocale)
+	DataTable.Bind(":locale", pp)
+	Return Me
+End Sub
+
+'set mobile-breakpoint
+Sub SetMobileBreakpoint(varMobileBreakpoint As String) As VMDataTable
+	If varMobileBreakpoint = "" Then Return Me
+	varMobileBreakpoint = BANano.parseInt(varMobileBreakpoint)
+	If bStatic Then
+		SetAttrSingle("mobile-breakpoint", varMobileBreakpoint)
+		Return Me
+	End If
+	Dim pp As String = $"${ID}MobileBreakpoint"$
+	vue.SetStateSingle(pp, varMobileBreakpoint)
+	DataTable.Bind(":mobile-breakpoint", pp)
+	Return Me
+End Sub
+
+'set no-data-text
+Sub SetNoDataText(varNoDataText As String) As VMDataTable
+	If varNoDataText = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("no-data-text", varNoDataText)
+		Return Me
+	End If
+	Dim pp As String = $"${ID}NoDataText"$
+	vue.SetStateSingle(pp, varNoDataText)
+	DataTable.Bind(":no-data-text", pp)
+	Return Me
+End Sub
+
+'set no-results-text
+Sub SetNoResultsText(varNoResultsText As String) As VMDataTable
+	If varNoResultsText = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("no-results-text", varNoResultsText)
+		Return Me
+	End If
+	Dim pp As String = $"${ID}NoResultsText"$
+	vue.SetStateSingle(pp, varNoResultsText)
+	DataTable.Bind(":no-results-text", pp)
+	Return Me
+End Sub
+
+'set page
+Sub SetPage(varPage As String) As VMDataTable
+	If varPage = "" Then Return Me
+	varPage = BANano.parseInt(varPage)
+	If bStatic Then
+		SetAttrSingle("page", varPage)
+		Return Me
+	End If
+	Dim pp As String = $"${ID}Page"$
+	vue.SetStateSingle(pp, varPage)
+	DataTable.Bind(":page.sync", pp)
+	Return Me
+End Sub
+
+'link a data-table to the pagination
+Sub SetExternalPagination As VMDataTable
+	SetPage("1")
+	vue.SetData($"${ID}pagecount"$, "0")
+	Dim scode As String = ID & "pagecount = $event"
+	SetAttrSingle("@page-count", scode)
+	SetHideDefaultFooter(True)
+	hasExternalPagination = True
+	Return Me
+End Sub
+
+'set selectable-key
+Sub SetSelectableKey(varSelectableKey As String) As VMDataTable
+	If varSelectableKey = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("selectable-key", varSelectableKey)
+		Return Me
+	End If
+	Dim pp As String = $"${ID}SelectableKey"$
+	vue.SetStateSingle(pp, varSelectableKey)
+	DataTable.Bind(":selectable-key", pp)
+	Return Me
+End Sub
+
+'set server-items-length
+Sub SetServerItemsLength(varServerItemsLength As String) As VMDataTable
+	If varServerItemsLength = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("server-items-length", varServerItemsLength)
+		Return Me
+	End If
+	Dim pp As String = $"${ID}ServerItemsLength"$
+	vue.SetStateSingle(pp, varServerItemsLength)
+	DataTable.Bind(":server-items-length", pp)
+	Return Me
+End Sub
+
+'set expanded
+Sub SetExpanded(varExpanded As List) As VMDataTable
+	Dim pp As String = $"${ID}Expanded"$
+	vue.SetStateSingle(pp, varExpanded)
+	DataTable.Bind(":expanded.sync", pp)
+	Return Me
+End Sub
+
+'set group-by
+Sub SetGroupBy(varGroupBy As List) As VMDataTable
+	If bStatic Then
+		SetAttrSingle("group-by", BANano.FromJson(varGroupBy))
+		Return Me
+	End If
+	Dim pp As String = $"${ID}GroupBy"$
+	vue.SetStateSingle(pp, varGroupBy)
+	DataTable.Bind(":group-by", pp)
+	Return Me
+End Sub
+
+'set group-desc
+Sub SetGroupDesc(varGroupDesc As List) As VMDataTable
+	If bStatic Then
+		SetAttrSingle("group-desc", BANano.FromJson(varGroupDesc))
+		Return Me
+	End If
+	Dim pp As String = $"${ID}GroupDesc"$
+	vue.SetStateSingle(pp, varGroupDesc)
+	DataTable.Bind(":group-desc", pp)
+	Return Me
+End Sub
+
 'set sort-by
-Sub SetSortBy(varSortBy As Object) As VMDataTable
+Sub SetSortBy(varSortBy As List) As VMDataTable
+	If bStatic Then
+		SetAttrSingle("sort-by", BANano.FromJson(varSortBy))
+		Return Me
+	End If
 	Dim pp As String = $"${ID}SortBy"$
 	vue.SetStateSingle(pp, varSortBy)
 	DataTable.Bind(":sort-by", pp)
@@ -923,16 +2408,27 @@ Sub SetSortBy(varSortBy As Object) As VMDataTable
 End Sub
 
 'set sort-desc
-Sub SetSortDesc(varSortDesc As Object) As VMDataTable
+Sub SetSortDesc(varSortDesc As List) As VMDataTable
+	If bStatic Then
+		SetAttrSingle("sort-desc", BANano.FromJson(varSortDesc))
+		Return Me
+	End If
 	Dim pp As String = $"${ID}SortDesc"$
 	vue.SetStateSingle(pp, varSortDesc)
 	DataTable.Bind(":sort-desc", pp)
 	Return Me
 End Sub
 
+
 'set value
-Sub SetValue(varValue As Object) As VMDataTable
-	SetAttrSingle("value", varValue)
+Sub SetValue(varValue As List) As VMDataTable
+	If bStatic Then
+		SetAttrSingle("value", BANano.FromJson(varValue))
+		Return Me
+	End If
+	Dim pp As String = $"${ID}Value"$
+	vue.SetStateSingle(pp, varValue)
+	DataTable.Bind(":value", pp)
 	Return Me
 End Sub
 
@@ -1050,85 +2546,85 @@ SetAttr(CreateMap("slot": "top"))
 Return Me
 End Sub
 
-'
+'set what will happen when the row is clicked
 Sub SetOnClickRow(methodName As String) As VMDataTable
 methodName = methodName.tolowercase
 If SubExists(Module, methodName) = False Then Return Me
 Dim e As BANanoEvent
-		Dim cb As BANanoObject = BANano.CallBack(Module, methodName, e)
-SetAttr(CreateMap("v-on:click:row": methodName))
+		Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
+SetAttr(CreateMap("@click:row": methodName))
 'add to methods
 		vue.SetCallBack(methodName, cb)
 		Return Me
 End Sub
 
-'
+'get currentitems
 Sub SetOnCurrentItems(methodName As String) As VMDataTable
 methodName = methodName.tolowercase
 If SubExists(Module, methodName) = False Then Return Me
 Dim e As BANanoEvent
-		Dim cb As BANanoObject = BANano.CallBack(Module, methodName, e)
-SetAttr(CreateMap("v-on:current-items": methodName))
+		Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
+SetAttr(CreateMap("@current-items": methodName))
 'add to methods
 		vue.SetCallBack(methodName, cb)
 		Return Me
 End Sub
 
-'
+'set on input event
 Sub SetOnInput(methodName As String) As VMDataTable
-methodName = methodName.tolowercase
-If SubExists(Module, methodName) = False Then Return Me
-Dim e As BANanoEvent
-		Dim cb As BANanoObject = BANano.CallBack(Module, methodName, e)
-SetAttr(CreateMap("v-on:input": methodName))
-'add to methods
-		vue.SetCallBack(methodName, cb)
-		Return Me
+	methodName = methodName.tolowercase
+	If SubExists(Module, methodName) = False Then Return Me
+	Dim xitems As List
+	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(xitems))
+	SetAttr(CreateMap("@input": methodName))
+	'add to methods
+	vue.SetCallBack(methodName, cb)
+	Return Me
 End Sub
 
-'
+'set when expended event
 Sub SetOnItemExpanded(methodName As String) As VMDataTable
 methodName = methodName.tolowercase
 If SubExists(Module, methodName) = False Then Return Me
 Dim e As BANanoEvent
-		Dim cb As BANanoObject = BANano.CallBack(Module, methodName, e)
-SetAttr(CreateMap("v-on:item-expanded": methodName))
+		Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
+SetAttr(CreateMap("@item-expanded": methodName))
 'add to methods
 		vue.SetCallBack(methodName, cb)
 		Return Me
 End Sub
 
-'
+'on item selected event
 Sub SetOnItemSelected(methodName As String) As VMDataTable
 methodName = methodName.tolowercase
 If SubExists(Module, methodName) = False Then Return Me
 Dim e As BANanoEvent
-		Dim cb As BANanoObject = BANano.CallBack(Module, methodName, e)
-SetAttr(CreateMap("v-on:item-selected": methodName))
+		Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
+SetAttr(CreateMap("@item-selected": methodName))
 'add to methods
 		vue.SetCallBack(methodName, cb)
 		Return Me
 End Sub
 
-'
+'page count event
 Sub SetOnPageCount(methodName As String) As VMDataTable
 methodName = methodName.tolowercase
 If SubExists(Module, methodName) = False Then Return Me
 Dim e As BANanoEvent
-		Dim cb As BANanoObject = BANano.CallBack(Module, methodName, e)
-SetAttr(CreateMap("v-on:page-count": methodName))
+		Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
+SetAttr(CreateMap("@page-count": methodName))
 'add to methods
 		vue.SetCallBack(methodName, cb)
 		Return Me
 End Sub
 
-'
+'on pagination event
 Sub SetOnPagination(methodName As String) As VMDataTable
 methodName = methodName.tolowercase
 If SubExists(Module, methodName) = False Then Return Me
 Dim e As BANanoEvent
-		Dim cb As BANanoObject = BANano.CallBack(Module, methodName, e)
-SetAttr(CreateMap("v-on:pagination": methodName))
+		Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
+SetAttr(CreateMap("@pagination": methodName))
 'add to methods
 		vue.SetCallBack(methodName, cb)
 		Return Me
@@ -1139,32 +2635,32 @@ Sub SetOnToggleSelectAll(methodName As String) As VMDataTable
 methodName = methodName.tolowercase
 If SubExists(Module, methodName) = False Then Return Me
 Dim e As BANanoEvent
-		Dim cb As BANanoObject = BANano.CallBack(Module, methodName, e)
-SetAttr(CreateMap("v-on:toggle-select-all": methodName))
+		Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
+SetAttr(CreateMap("@toggle-select-all": methodName))
 'add to methods
 		vue.SetCallBack(methodName, cb)
 		Return Me
 End Sub
 
-'
+'on update expanded event
 Sub SetOnUpdateExpanded(methodName As String) As VMDataTable
 methodName = methodName.tolowercase
 If SubExists(Module, methodName) = False Then Return Me
 Dim e As BANanoEvent
-		Dim cb As BANanoObject = BANano.CallBack(Module, methodName, e)
-SetAttr(CreateMap("v-on:update:expanded": methodName))
+		Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
+SetAttr(CreateMap("@update:expanded": methodName))
 'add to methods
 		vue.SetCallBack(methodName, cb)
 		Return Me
 End Sub
 
-'
+'on update group by
 Sub SetOnUpdateGroupBy(methodName As String) As VMDataTable
 methodName = methodName.tolowercase
 If SubExists(Module, methodName) = False Then Return Me
 Dim e As BANanoEvent
-		Dim cb As BANanoObject = BANano.CallBack(Module, methodName, e)
-SetAttr(CreateMap("v-on:update:group-by": methodName))
+		Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
+SetAttr(CreateMap("@update:group-by": methodName))
 'add to methods
 		vue.SetCallBack(methodName, cb)
 		Return Me
@@ -1175,8 +2671,8 @@ Sub SetOnUpdateGroupDesc(methodName As String) As VMDataTable
 methodName = methodName.tolowercase
 If SubExists(Module, methodName) = False Then Return Me
 Dim e As BANanoEvent
-		Dim cb As BANanoObject = BANano.CallBack(Module, methodName, e)
-SetAttr(CreateMap("v-on:update:group-desc": methodName))
+		Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
+SetAttr(CreateMap("@update:group-desc": methodName))
 'add to methods
 		vue.SetCallBack(methodName, cb)
 		Return Me
@@ -1187,8 +2683,8 @@ Sub SetOnUpdateItemsPerPage(methodName As String) As VMDataTable
 methodName = methodName.tolowercase
 If SubExists(Module, methodName) = False Then Return Me
 Dim e As BANanoEvent
-		Dim cb As BANanoObject = BANano.CallBack(Module, methodName, e)
-SetAttr(CreateMap("v-on:update:items-per-page": methodName))
+		Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
+SetAttr(CreateMap("@update:items-per-page": methodName))
 'add to methods
 		vue.SetCallBack(methodName, cb)
 		Return Me
@@ -1199,8 +2695,8 @@ Sub SetOnUpdateMultiSort(methodName As String) As VMDataTable
 methodName = methodName.tolowercase
 If SubExists(Module, methodName) = False Then Return Me
 Dim e As BANanoEvent
-		Dim cb As BANanoObject = BANano.CallBack(Module, methodName, e)
-SetAttr(CreateMap("v-on:update:multi-sort": methodName))
+		Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
+SetAttr(CreateMap("@update:multi-sort": methodName))
 'add to methods
 		vue.SetCallBack(methodName, cb)
 		Return Me
@@ -1211,8 +2707,8 @@ Sub SetOnUpdateMustSort(methodName As String) As VMDataTable
 methodName = methodName.tolowercase
 If SubExists(Module, methodName) = False Then Return Me
 Dim e As BANanoEvent
-		Dim cb As BANanoObject = BANano.CallBack(Module, methodName, e)
-SetAttr(CreateMap("v-on:update:must-sort": methodName))
+		Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
+SetAttr(CreateMap("@update:must-sort": methodName))
 'add to methods
 		vue.SetCallBack(methodName, cb)
 		Return Me
@@ -1223,8 +2719,8 @@ Sub SetOnUpdateOptions(methodName As String) As VMDataTable
 methodName = methodName.tolowercase
 If SubExists(Module, methodName) = False Then Return Me
 Dim e As BANanoEvent
-		Dim cb As BANanoObject = BANano.CallBack(Module, methodName, e)
-SetAttr(CreateMap("v-on:update:options": methodName))
+		Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
+SetAttr(CreateMap("@update:options": methodName))
 'add to methods
 		vue.SetCallBack(methodName, cb)
 		Return Me
@@ -1235,8 +2731,8 @@ Sub SetOnUpdatePage(methodName As String) As VMDataTable
 methodName = methodName.tolowercase
 If SubExists(Module, methodName) = False Then Return Me
 Dim e As BANanoEvent
-		Dim cb As BANanoObject = BANano.CallBack(Module, methodName, e)
-SetAttr(CreateMap("v-on:update:page": methodName))
+		Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
+SetAttr(CreateMap("@update:page": methodName))
 'add to methods
 		vue.SetCallBack(methodName, cb)
 		Return Me
@@ -1247,8 +2743,8 @@ Sub SetOnUpdateSortBy(methodName As String) As VMDataTable
 methodName = methodName.tolowercase
 If SubExists(Module, methodName) = False Then Return Me
 Dim e As BANanoEvent
-		Dim cb As BANanoObject = BANano.CallBack(Module, methodName, e)
-SetAttr(CreateMap("v-on:update:sort-by": methodName))
+		Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
+SetAttr(CreateMap("@update:sort-by": methodName))
 'add to methods
 		vue.SetCallBack(methodName, cb)
 		Return Me
@@ -1259,24 +2755,23 @@ Sub SetOnUpdateSortDesc(methodName As String) As VMDataTable
 methodName = methodName.tolowercase
 If SubExists(Module, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, e)
-	SetAttr(CreateMap("v-on:update:sort-desc": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
+	SetAttr(CreateMap("@update:sort-desc": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
 End Sub
 
-
 'hide the component
 Sub Hide As VMDataTable
-	DataTable.SetVisible(False)
-    Return Me
+	vcard.SetVisible(False)
+	Return Me
 End Sub
 
 'show the component
 Sub Show As VMDataTable
-	DataTable.SetVisible(True)
-    Return Me
+	vcard.SetVisible(True)
+	Return Me
 End Sub
 
 'enable the component
@@ -1347,6 +2842,7 @@ End Sub
 'set design mode
 Sub SetDesignMode(b As Boolean) As VMDataTable
 	DataTable.SetDesignMode(b)
+	vcard.SetDesignMode(b)
 	DesignMode = b
 	Return Me
 End Sub
@@ -1399,21 +2895,6 @@ Sub SetAttributes(attrs As List) As VMDataTable
 	Return Me
 End Sub
 
-'set for
-Sub SetVFor(item As String, dataSource As String) As VMDataTable
-	dataSource = dataSource.tolowercase
-	item = item.tolowercase
-	Dim sline As String = $"${item} in ${dataSource}"$
-	SetAttrSingle("v-for", sline)
-	Return Me
-End Sub
-
-Sub SetKey(k As String) As VMDataTable
-	k = k.tolowercase
-	SetAttrSingle(":key", k)
-	Return Me
-End Sub
-
 Sub AddToContainer(pCont As VMContainer, rowPos As Int, colPos As Int)
 	pCont.AddComponent(rowPos, colPos, ToString)
 End Sub
@@ -1424,7 +2905,7 @@ Sub BuildModel(mprops As Map, mstyles As Map, lclasses As List, loose As List) A
 End Sub
 
 Sub SetVisible(b As Boolean) As VMDataTable
-	DataTable.SetVisible(b)
+	vcard.SetVisible(b)
 	Return Me
 End Sub
 
@@ -1478,6 +2959,24 @@ Sub SetDateTimeColumns(dates As List) As VMDataTable
 	Return Me
 End Sub
 
+'used by designer only
+Sub SetSelectType(selType As String) As VMDataTable
+	If selType = "" Then Return Me
+	Return Me
+End Sub
+
+'used by designer only
+Sub SetSelectFields(selFields As String) As VMDataTable
+	If selFields = "" Then Return Me
+	Return Me
+End Sub
+
+'used by the designer only
+Sub SetSortFields(sortFields As String) As VMDataTable
+	If sortFields = "" Then Return Me
+	Return Me
+End Sub
+
 Sub SetColumnsFormatDateTime(dates As List) As VMDataTable
 	SetDateTimeColumns(dates)
 	Return Me
@@ -1523,18 +3022,93 @@ Sub SetMoneyColumns(dates As List) As VMDataTable
 	Return Me
 End Sub
 
-'set color intensity
-Sub SetTextColor(varColor As String) As VMDataTable
-	Dim sColor As String = $"${varColor}--text"$
-	AddClass(sColor)
+'set the column type to time for these columns
+Sub SetNumberColumns(dates As List) As VMDataTable
+	For Each k As String In dates
+		SetColumnType(k, COLUMN_NUMBER)
+	Next
 	Return Me
 End Sub
 
-'set color intensity
-Sub SetTextColorIntensity(varColor As String, varIntensity As String) As VMDataTable
-	Dim sColor As String = $"${varColor}--text"$
-	Dim sIntensity As String = $"text--${varIntensity}"$
-	Dim mcolor As String = $"${sColor} ${sIntensity}"$
-	AddClass(mcolor)
+
+Sub SetItemClass(methodName As String) As VMDataTable
+	methodName = methodName.tolowercase
+	If SubExists(Module, methodName) Then
+		SetAttrSingle(":item-class", methodName)
+		Dim Item As Map
+		Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(Item))
+		'add to methods
+		vue.SetCallBack(methodName, cb)
+	Else
+		Log("VMDataTable:SetItemClass - the item-class method has not been defined!")
+	End If
 	Return Me
+End Sub
+
+'set the format of the date in the column
+Sub SetColumnDateFormat(colName As String, colFormat As String) As VMDataTable
+	'valueFormat
+	SetColumnType(colName, COLUMN_DATE)
+	If columnsM.ContainsKey(colName) Then
+		Dim col As DataTableColumn = columnsM.Get(colName)
+		col.valueFormat = colFormat
+		columnsM.Put(colName,col)
+		'
+		Dim item As Map
+		Dim cb As BANanoObject = BANano.CallBack(Me, "getdateformat", Array(item, colFormat))
+		'add to methods
+		vue.SetCallBack("getdateformat", cb)
+	End If
+	Return Me
+End Sub
+
+'set the format of the date time in the column
+Sub SetColumnDateTimeFormat(colName As String, colFormat As String) As VMDataTable
+	'valueFormat
+	SetColumnType(colName, COLUMN_DATETIME)
+	If columnsM.ContainsKey(colName) Then
+		Dim col As DataTableColumn = columnsM.Get(colName)
+		col.valueFormat = colFormat
+		columnsM.Put(colName,col)
+		'
+		Dim item As Map
+		Dim cb As BANanoObject = BANano.CallBack(Me, "getdateformat", Array(item, colFormat))
+		'add to methods
+		vue.SetCallBack("getdateformat", cb)
+	End If
+	Return Me
+End Sub
+
+'set the format of the number in the column
+Sub SetColumnNumberFormat(colName As String, colFormat As String) As VMDataTable
+	'valueFormat
+	SetColumnType(colName, COLUMN_NUMBER)
+	If columnsM.ContainsKey(colName) Then
+		Dim col As DataTableColumn = columnsM.Get(colName)
+		col.valueFormat = colFormat
+		col.align = ALIGN_RIGHT
+		columnsM.Put(colName,col)
+		'
+		Dim item As Map
+		Dim cb As BANanoObject = BANano.CallBack(Me, "getmoneyformat", Array(item, colFormat))
+		'add to methods
+		vue.SetCallBack("getmoneyformat", cb)
+	End If
+	Return Me
+End Sub
+
+private Sub getdateformat(item As String, sFormat As String) As String
+	Dim svalue As String = vue.FormatDisplayDate(item, sFormat)
+	Return svalue
+End Sub
+
+
+private Sub getmoneyformat(item As String, sformat As String) As String
+	Dim svalue As String = vue.FormatDisplayNumber(item, sformat)
+	Return svalue
+End Sub
+
+private Sub getfilesize(item As String) As String
+	Dim svalue As String = vue.FormatFileSize(item)
+	Return svalue
 End Sub

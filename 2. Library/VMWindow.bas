@@ -10,8 +10,8 @@ Sub Class_Globals
 	Public ID As String
 	Private vue As BANanoVue
 	Private BANano As BANano  'ignore
-	Private DesignMode As Boolean
-	Private Module As Object
+	Private DesignMode As Boolean  'ignore
+	Private Module As Object   'ignore
 End Sub
 
 'initialize the Window
@@ -22,6 +22,7 @@ Public Sub Initialize(v As BANanoVue, sid As String, eventHandler As Object) As 
 	DesignMode = False
 	Module = eventHandler
 	vue = v
+	SetOnChange(Module, $"${ID}_change"$)
 	Return Me
 End Sub
 
@@ -31,11 +32,47 @@ Sub SetRC(sRow As String, sCol As String) As VMWindow
 	Return Me
 End Sub
 
+
+
+'add an element to the page content
+Sub AddElement(elm As VMElement)
+	Window.SetText(elm.ToString)
+End Sub
+
+
+Sub AddComponent(comp As String) As VMWindow
+	SetText(comp)
+	Return Me
+End Sub
+
 'set the offsets for this item
 Sub SetDeviceOffsets(OS As String, OM As String,OL As String,OX As String) As VMWindow
 	Window.SetDeviceOffsets(OS, OM, OL, OX)
 	Return Me
 End Sub
+
+Sub SetData(xprop As String, xValue As Object) As VMWindow
+	vue.SetData(xprop, xValue)
+	Return Me
+End Sub
+
+Sub SetOnChange(eventHandler As Object,methodName As String) As VMWindow
+	methodName = methodName.tolowercase
+	If SubExists(eventHandler, methodName) = False Then Return Me
+	Dim e As BANanoEvent
+	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, Array(e))
+	SetAttr(CreateMap("@change": methodName))
+	'add to methods
+	vue.SetCallBack(methodName, cb)
+	Return Me
+End Sub
+
+
+Sub AddItem(vitem As VMWindowItem) As VMWindow
+	SetText(vitem.ToString)
+	Return Me
+End Sub
+
 
 'set the sizes for this item
 Sub SetDeviceSizes(SS As String, SM As String, SL As String, SX As String) As VMWindow
@@ -50,8 +87,23 @@ Sub SetDevicePositions(srow As String, scell As String, small As String, medium 
 	Return Me
 End Sub
 
+Sub AddElement1(elID As String, elTag As String, elText As String, mprops As Map, mstyles As Map, lclasses As List) As VMWindow
+	Dim d As VMElement
+	d.Initialize(vue,elID).SetDesignMode(DesignMode).SetTag(elTag)
+	d.SetText(elText)
+	d.BuildModel(mprops, mstyles, lclasses, Null)
+	SetText(d.ToString)
+	Return Me
+End Sub
+
 'get component
 Sub ToString As String
+	If vue.ShowWarnings Then
+		Dim eName As String = $"${ID}_change"$
+		If SubExists(Module, eName) = False Then
+			Log($"VMWindow.${eName} event has not been defined!"$)
+		End If
+	End If
 	Return Window.ToString
 End Sub
 
@@ -60,12 +112,12 @@ Sub SetVModel(k As String) As VMWindow
 	Return Me
 End Sub
 
-Sub SetVIf(vif As Object) As VMWindow
+Sub SetVIf(vif As String) As VMWindow
 	Window.SetVIf(vif)
 	Return Me
 End Sub
 
-Sub SetVShow(vif As Object) As VMWindow
+Sub SetVShow(vif As String) As VMWindow
 	Window.SetVShow(vif)
 	Return Me
 End Sub
@@ -208,7 +260,7 @@ End Sub
 
 'set value
 Sub SetValue(varValue As Object) As VMWindow
-	SetAttrSingle("value", varValue)
+	Window.SetValue(varValue)
 	Return Me
 End Sub
 

@@ -10,8 +10,10 @@ Sub Class_Globals
 	Public ID As String
 	Private vue As BANanoVue
 	Private BANano As BANano  'ignore
-	Private DesignMode As Boolean
+	Private DesignMode As Boolean  'ignore
 	Private Module As Object
+	Private bStatic As Boolean
+	Private vmodel As String
 End Sub
 
 'initialize the SimpleCheckBox
@@ -22,8 +24,32 @@ Public Sub Initialize(v As BANanoVue, sid As String, eventHandler As Object) As 
 	DesignMode = False
 	Module = eventHandler
 	vue = v
+	bStatic = False
+	vmodel = ""
+	SetOnClick($"${ID}_click"$)
 	Return Me
 End Sub
+
+
+
+'add an element to the page content
+Sub AddElement(elm As VMElement)
+	SimpleCheckBox.SetText(elm.ToString)
+End Sub
+
+Sub SetData(xprop As String, xValue As Object) As VMSimpleCheckBox
+	vue.SetData(xprop, xValue)
+	Return Me
+End Sub
+
+
+
+Sub SetStatic(b As Boolean) As VMSimpleCheckBox
+	bStatic = b
+	SimpleCheckBox.SetStatic(b)
+	Return Me
+End Sub
+
 
 'set the row and column position
 Sub SetRC(sRow As String, sCol As String) As VMSimpleCheckBox
@@ -64,20 +90,27 @@ End Sub
 
 'get component
 Sub ToString As String
+	If vue.ShowWarnings Then
+	Dim eName As String = $"${ID}_click"$
+	If SubExists(Module, eName) = False Then
+		Log($"VMSimpleCheckBox.${eName} event has not been defined!"$)
+	End If
+	End If
 	Return SimpleCheckBox.ToString
 End Sub
 
 Sub SetVModel(k As String) As VMSimpleCheckBox
 	SimpleCheckBox.SetVModel(k)
+	vmodel = k.tolowercase
 	Return Me
 End Sub
 
-Sub SetVIf(vif As Object) As VMSimpleCheckBox
+Sub SetVIf(vif As String) As VMSimpleCheckBox
 	SimpleCheckBox.SetVIf(vif)
 	Return Me
 End Sub
 
-Sub SetVShow(vif As Object) As VMSimpleCheckBox
+Sub SetVShow(vif As String) As VMSimpleCheckBox
 	SimpleCheckBox.SetVShow(vif)
 	Return Me
 End Sub
@@ -131,7 +164,12 @@ Sub AddChildren(children As List)
 End Sub
 
 'set color
-Sub SetColor(varColor As Object) As VMSimpleCheckBox
+Sub SetColor(varColor As String) As VMSimpleCheckBox
+	If varColor = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("color", varColor)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Color"$
 	vue.SetStateSingle(pp, varColor)
 	SimpleCheckBox.Bind(":color", pp)
@@ -139,7 +177,12 @@ Sub SetColor(varColor As Object) As VMSimpleCheckBox
 End Sub
 
 'set dark
-Sub SetDark(varDark As Object) As VMSimpleCheckBox
+Sub SetDark(varDark As Boolean) As VMSimpleCheckBox
+	If varDark = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("dark", varDark)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Dark"$
 	vue.SetStateSingle(pp, varDark)
 	SimpleCheckBox.Bind(":dark", pp)
@@ -153,7 +196,12 @@ Sub SetDisabled(varDisabled As Boolean) As VMSimpleCheckBox
 End Sub
 
 'set indeterminate
-Sub SetIndeterminate(varIndeterminate As Object) As VMSimpleCheckBox
+Sub SetIndeterminate(varIndeterminate As Boolean) As VMSimpleCheckBox
+	If varIndeterminate = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("indeterminate", varIndeterminate)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Indeterminate"$
 	vue.SetStateSingle(pp, varIndeterminate)
 	SimpleCheckBox.Bind(":indeterminate", pp)
@@ -161,7 +209,12 @@ Sub SetIndeterminate(varIndeterminate As Object) As VMSimpleCheckBox
 End Sub
 
 'set indeterminate-icon
-Sub SetIndeterminateIcon(varIndeterminateIcon As Object) As VMSimpleCheckBox
+Sub SetIndeterminateIcon(varIndeterminateIcon As String) As VMSimpleCheckBox
+	If varIndeterminateIcon = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("indeterminate-icon", varIndeterminateIcon)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}IndeterminateIcon"$
 	vue.SetStateSingle(pp, varIndeterminateIcon)
 	SimpleCheckBox.Bind(":indeterminate-icon", pp)
@@ -169,7 +222,12 @@ Sub SetIndeterminateIcon(varIndeterminateIcon As Object) As VMSimpleCheckBox
 End Sub
 
 'set light
-Sub SetLight(varLight As Object) As VMSimpleCheckBox
+Sub SetLight(varLight As Boolean) As VMSimpleCheckBox
+	If varLight = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("light", varLight)
+		Return Me
+	End If	
 	Dim pp As String = $"${ID}Light"$
 	vue.SetStateSingle(pp, varLight)
 	SimpleCheckBox.Bind(":light", pp)
@@ -177,7 +235,12 @@ Sub SetLight(varLight As Object) As VMSimpleCheckBox
 End Sub
 
 'set off-icon
-Sub SetOffIcon(varOffIcon As Object) As VMSimpleCheckBox
+Sub SetOffIcon(varOffIcon As String) As VMSimpleCheckBox
+	If varOffIcon = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("off-icon", varOffIcon)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}OffIcon"$
 	vue.SetStateSingle(pp, varOffIcon)
 	SimpleCheckBox.Bind(":off-icon", pp)
@@ -185,7 +248,12 @@ Sub SetOffIcon(varOffIcon As Object) As VMSimpleCheckBox
 End Sub
 
 'set ripple
-Sub SetRipple(varRipple As Object) As VMSimpleCheckBox
+Sub SetRipple(varRipple As Boolean) As VMSimpleCheckBox
+	If varRipple = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("ripple", varRipple)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Ripple"$
 	vue.SetStateSingle(pp, varRipple)
 	SimpleCheckBox.Bind(":ripple", pp)
@@ -193,8 +261,13 @@ Sub SetRipple(varRipple As Object) As VMSimpleCheckBox
 End Sub
 
 'set value
-Sub SetValue(varValue As Object) As VMSimpleCheckBox
-	SetAttrSingle("value", varValue)
+Sub SetValue(varValue As Boolean) As VMSimpleCheckBox
+	If vmodel = "" Then
+		vmodel = $"${ID}value"$
+		SetVModel(vmodel)
+	End If
+	SimpleCheckBox.SetValue(varValue)
+	vue.SetData(vmodel, varValue)
 	Return Me
 End Sub
 
@@ -203,8 +276,8 @@ Sub SetOnClick(methodName As String) As VMSimpleCheckBox
 	methodName = methodName.tolowercase
 	If SubExists(Module, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, e)
-	SetAttr(CreateMap("v-on:click": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
+	SetAttr(CreateMap("@click": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -294,6 +367,7 @@ Sub BuildModel(mprops As Map, mstyles As Map, lclasses As List, loose As List) A
 SimpleCheckBox.BuildModel(mprops, mstyles, lclasses, loose)
 Return Me
 End Sub
+
 Sub SetVisible(b As Boolean) As VMSimpleCheckBox
 SimpleCheckBox.SetVisible(b)
 Return Me

@@ -10,8 +10,9 @@ Sub Class_Globals
 	Public ID As String
 	Private vue As BANanoVue
 	Private BANano As BANano  'ignore
-	Private DesignMode As Boolean
-	Private Module As Object
+	Private DesignMode As Boolean   'ignore
+	Private Module As Object   'ignore
+	Private bStatic As Boolean   'ignore
 End Sub
 
 'initialize the Item
@@ -19,9 +20,44 @@ Public Sub Initialize(v As BANanoVue, sid As String, eventHandler As Object) As 
 	ID = sid.tolowercase
 	Item.Initialize(v, ID)
 	Item.SetTag("v-item")
+	vue = v
 	DesignMode = False
 	Module = eventHandler
-	vue = v
+	bStatic = False
+	Return Me
+End Sub
+
+
+
+'add an element to the page content
+Sub AddElement(elm As VMElement)
+	Item.SetText(elm.ToString)
+End Sub
+
+Sub SetActiveToggle As VMItem
+	SetAttrSingle("v-slot:default", "{ active, toggle }")
+	Return Me
+End Sub
+
+
+Sub AddComponent(comp As String) As VMItem
+	SetText(comp)
+	Return Me
+End Sub
+
+
+Sub AddElement1(elID As String, elTag As String, elText As String, mprops As Map, mstyles As Map, lclasses As List) As VMItem
+	Dim d As VMElement
+	d.Initialize(vue,elID).SetDesignMode(DesignMode).SetTag(elTag)
+	d.SetText(elText)
+	d.BuildModel(mprops, mstyles, lclasses, Null)
+	SetText(d.ToString)
+	Return Me
+End Sub
+
+
+Sub SetText(txt As String) As VMItem
+	Item.SetText(txt)
 	Return Me
 End Sub
 
@@ -30,17 +66,24 @@ Sub ToString As String
 	Return Item.ToString
 End Sub
 
+Sub SetData(xprop As String, xValue As Object) As VMItem
+	vue.SetData(xprop, xValue)
+	Return Me
+End Sub
+
+
+
 Sub SetVModel(k As String) As VMItem
 	Item.SetVModel(k)
 	Return Me
 End Sub
 
-Sub SetVIf(vif As Object) As VMItem
+Sub SetVIf(vif As String) As VMItem
 	Item.SetVIf(vif)
 	Return Me
 End Sub
 
-Sub SetVShow(vif As Object) As VMItem
+Sub SetVShow(vif As String) As VMItem
 	Item.SetVShow(vif)
 	Return Me
 End Sub
@@ -57,11 +100,6 @@ Sub AddChild(child As VMElement) As VMItem
 	Return Me
 End Sub
 
-'set text
-Sub SetText(t As Object) As VMItem
-	Item.SetText(t)
-	Return Me
-End Sub
 
 'add to parent
 Sub Pop(p As VMElement)
@@ -75,7 +113,7 @@ Sub AddClass(c As String) As VMItem
 End Sub
 
 'set an attribute
-Sub SetAttr(attr as map) As VMItem
+Sub SetAttr(attr As Map) As VMItem
 	Item.SetAttr(attr)
 	Return Me
 End Sub
@@ -94,24 +132,41 @@ Sub AddChildren(children As List)
 End Sub
 
 'set active-class
-Sub SetActiveClass(varActiveClass As Object) As VMItem
+Sub SetActiveClass(varActiveClass As String) As VMItem
+	If varActiveClass = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("active-class", varActiveClass)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}ActiveClass"$
 	vue.SetStateSingle(pp, varActiveClass)
 	Item.Bind(":active-class", pp)
 	Return Me
 End Sub
 
-'set disabled
-Sub SetDisabled(varDisabled As Object) As VMItem
-	Dim pp As String = $"${ID}Disabled"$
-	vue.SetStateSingle(pp, varDisabled)
-	Item.Bind(":disabled", pp)
+'set value
+Sub SetValue(varValue As String) As VMItem
+	If varValue = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("value", varValue)
+		Return Me
+	End If
+	Dim pp As String = $"${ID}Value"$
+	vue.SetStateSingle(pp, varValue)
+	Item.Bind(":value", pp)
 	Return Me
 End Sub
 
-'set value
-Sub SetValue(varValue As Object) As VMItem
-	SetAttrSingle("value", varValue)
+'set disabled
+Sub SetDisabled(varDisabled As Boolean) As VMItem
+	If varDisabled = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("disabled", varDisabled)
+		Return Me
+	End If
+	Dim pp As String = $"${ID}Disabled"$
+	vue.SetStateSingle(pp, varDisabled)
+	Item.Bind(":disabled", pp)
 	Return Me
 End Sub
 
@@ -167,9 +222,14 @@ End Sub
 
 
 'set color intensity
-Sub SetColorIntensity(varColor As String, varIntensity As String) As VMItem
+Sub SetColorIntensity(color As String, intensity As String) As VMItem
+	if color = "" then Return Me
+	Dim scolor As String = $"${color} ${intensity}"$
+	If bStatic Then
+		SetAttrSingle("color", scolor)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Color"$
-	Dim scolor As String = $"${varColor} ${varIntensity}"$
 	vue.SetStateSingle(pp, scolor)
 	Item.Bind(":color", pp)
 	Return Me
@@ -200,14 +260,16 @@ Sub SetDesignMode(b As Boolean) As VMItem
 	Return Me
 End Sub
 
-'set tab index
-Sub SetTabIndex(ti As String) As VMItem
-	Item.SetTabIndex(ti)
+'set static
+Sub SetStatic(b As Boolean) As VMItem
+	Item.SetStatic(b)
+	bStatic = b
 	Return Me
 End Sub
 
+
 'The Select name. Similar To HTML5 name attribute.
-Sub SetName(varName As Object, bbind As Boolean) As VMItem
+Sub SetName(varName As String, bbind As Boolean) As VMItem
 	Item.SetName(varName, bbind)
 	Return Me
 End Sub
@@ -253,10 +315,10 @@ Sub SetAttributes(attrs As List) As VMItem
 End Sub
 
 'set for
-Sub SetVFor(sitem As String, dataSource As String) As VMItem
+Sub SetVFor(eitem As String, dataSource As String) As VMItem
 	dataSource = dataSource.tolowercase
-	sitem = sitem.tolowercase
-	Dim sline As String = $"${sitem} in ${dataSource}"$
+	eitem = eitem.tolowercase
+	Dim sline As String = $"${eitem} in ${dataSource}"$
 	SetAttrSingle("v-for", sline)
 	Return Me
 End Sub
@@ -294,12 +356,6 @@ Sub SetDeviceSizes(SS As String, SM As String, SL As String, SX As String) As VM
 End Sub
 
 
-Sub AddComponent(comp As String) As VMItem
-	Item.SetText(comp)
-	Return Me
-End Sub
-
-
 Sub SetTextCenter As VMItem
 	Item.AddClass("text-center")
 	Return Me
@@ -309,26 +365,32 @@ Sub AddToContainer(pCont As VMContainer, rowPos As Int, colPos As Int)
 	pCont.AddComponent(rowPos, colPos, ToString)
 End Sub
 
+
 Sub BuildModel(mprops As Map, mstyles As Map, lclasses As List, loose As List) As VMItem
-Item.BuildModel(mprops, mstyles, lclasses, loose)
-Return Me
-End Sub
-Sub SetVisible(b As Boolean) As VMItem
-Item.SetVisible(b)
-Return Me
+	Item.BuildModel(mprops, mstyles, lclasses, loose)
+	Return Me
 End Sub
 
-'set color intensity
-Sub SetTextColor(varColor As String) As VMItem
-	Dim sColor As String = $"${varColor}--text"$
+
+Sub SetVisible(b As Boolean) As VMItem
+	Item.SetVisible(b)
+	Return Me
+End Sub
+
+
+'set color intensity - built in
+Sub SetTextColor(textcolor As String) As VMItem
+	If textcolor = "" Then Return Me
+	Dim sColor As String = $"${textcolor}--text"$
 	AddClass(sColor)
 	Return Me
 End Sub
 
-'set color intensity
-Sub SetTextColorIntensity(varColor As String, varIntensity As String) As VMItem
-	Dim sColor As String = $"${varColor}--text"$
-	Dim sIntensity As String = $"text--${varIntensity}"$
+'set color intensity - built in
+Sub SetTextColorIntensity(textcolor As String, textintensity As String) As VMItem
+	If textcolor = "" Then Return Me
+	Dim sColor As String = $"${textcolor}--text"$
+	Dim sIntensity As String = $"text--${textintensity}"$
 	Dim mcolor As String = $"${sColor} ${sIntensity}"$
 	AddClass(mcolor)
 	Return Me

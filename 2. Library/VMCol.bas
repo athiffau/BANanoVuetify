@@ -10,8 +10,8 @@ Sub Class_Globals
 	Public ID As String
 	Private vue As BANanoVue
 	Private BANano As BANano  'ignore
-	Private DesignMode As Boolean
-	Private Module As Object
+	Private DesignMode As Boolean   'ignore
+	Private Module As Object    'ignore
 End Sub
 
 'initialize the Col
@@ -23,6 +23,13 @@ Public Sub Initialize(v As BANanoVue, sid As String, eventHandler As Object) As 
 	Module = eventHandler
 	vue = v
 	Return Me
+End Sub
+
+
+
+'add an element to the page content
+Sub AddElement(elm As VMElement)
+	Col.SetText(elm.ToString)
 End Sub
 
 
@@ -38,6 +45,12 @@ Sub SetAttributes(attrs As List) As VMCol
 	Return Me
 End Sub
 
+Sub SetData(prop As String, value As Object) As VMCol
+	vue.SetData(prop, value)
+	Return Me
+End Sub
+
+
 'get component
 Sub ToString As String	
 	Return Col.ToString
@@ -48,7 +61,7 @@ Sub SetVModel(k As String) As VMCol
 	Return Me
 End Sub
 
-Sub SetVIf(vif As Object) As VMCol
+Sub SetVIf(vif As String) As VMCol
 	Col.SetVIf(vif)
 	Return Me
 End Sub
@@ -58,7 +71,7 @@ Sub AddContentList(lst As List) As VMCol
 	Return Me
 End Sub
 
-Sub SetVShow(vif As Object) As VMCol
+Sub SetVShow(vif As String) As VMCol
 	Col.SetVShow(vif)
 	Return Me
 End Sub
@@ -75,11 +88,6 @@ Sub AddChild(child As VMElement) As VMCol
 	Return Me
 End Sub
 
-'set text
-Sub SetText(t As Object) As VMCol
-	Col.SetText(t)
-	Return Me
-End Sub
 
 'add to parent
 Sub Pop(p As VMElement)
@@ -269,8 +277,9 @@ Sub SetDesignMode(b As Boolean) As VMCol
 	Return Me
 End Sub
 
-Sub SetTabIndex(ti As String) As VMCol
-	Col.SetTabIndex(ti)
+
+Sub AddComponent(comp As String) As VMCol
+	Col.SetText(comp)
 	Return Me
 End Sub
 

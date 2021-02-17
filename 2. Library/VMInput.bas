@@ -12,6 +12,8 @@ Sub Class_Globals
 	Private BANano As BANano  'ignore
 	Private DesignMode As Boolean
 	Private Module As Object
+	Private vmodel As String
+	Private bStatic As Boolean
 End Sub
 
 'initialize the Input
@@ -22,8 +24,29 @@ Public Sub Initialize(v As BANanoVue, sid As String, eventHandler As Object) As 
 	DesignMode = False
 	Module = eventHandler
 	vue = v
+	vmodel = ""
+	bStatic = False
 	Return Me
 End Sub
+
+
+'add an element to the page content
+Sub AddElement(elm As VMElement)
+	Input.SetText(elm.ToString)
+End Sub
+
+Sub SetStatic(b As Boolean) As VMInput
+	bStatic = b
+	Input.SetStatic(b)
+	Return Me
+End Sub
+
+Sub SetData(xprop As String, xValue As Object) As VMInput
+	vue.SetData(xprop, xValue)
+	Return Me
+End Sub
+
+
 
 'set the row and column position
 Sub SetRC(sRow As String, sCol As String) As VMInput
@@ -69,15 +92,16 @@ End Sub
 
 Sub SetVModel(k As String) As VMInput
 	Input.SetVModel(k)
+	vmodel = k.tolowercase
 	Return Me
 End Sub
 
-Sub SetVIf(vif As Object) As VMInput
+Sub SetVIf(vif As String) As VMInput
 	Input.SetVIf(vif)
 	Return Me
 End Sub
 
-Sub SetVShow(vif As Object) As VMInput
+Sub SetVShow(vif As String) As VMInput
 	Input.SetVShow(vif)
 	Return Me
 End Sub
@@ -171,14 +195,14 @@ Sub SetDense(varDense As Object) As VMInput
 End Sub
 
 'set disabled
-Sub SetDisabled(varDisabled As boolean) As VMInput
+Sub SetDisabled(varDisabled As Boolean) As VMInput
 	Input.SetDisabled(varDisabled)
 	Return Me
 End Sub
 
 'set error
-Sub SetError(varError As Object) As VMInput
-	Dim pp As String = $"${ID}Error"$
+Sub SetError(varError As Boolean) As VMInput
+	Dim pp As String = $"${vmodel}Error"$
 	vue.SetStateSingle(pp, varError)
 	Input.Bind(":error", pp)
 	Return Me
@@ -186,16 +210,18 @@ End Sub
 
 'set error-count
 Sub SetErrorCount(varErrorCount As Object) As VMInput
-	Dim pp As String = $"${ID}ErrorCount"$
+	Dim pp As String = $"${vmodel}ErrorCount"$
 	vue.SetStateSingle(pp, varErrorCount)
 	Input.Bind(":error-count", pp)
 	Return Me
 End Sub
 
 'set error-messages
-Sub SetErrorMessages(varErrorMessages As Object) As VMInput
-	Dim pp As String = $"${ID}ErrorMessages"$
-	vue.SetStateSingle(pp, varErrorMessages)
+Sub SetErrorMessages(b As Boolean) As VMInput
+	If b = False Then Return Me
+	Dim nl As List = vue.NewList
+	Dim pp As String = $"${vmodel}ErrorMessages"$
+	vue.SetData(pp, nl)
 	Input.Bind(":error-messages", pp)
 	Return Me
 End Sub
@@ -209,7 +235,7 @@ Sub SetHeight(varHeight As Object) As VMInput
 End Sub
 
 'set hide-details
-Sub SetHideDetails(varHideDetails As boolean) As VMInput
+Sub SetHideDetails(varHideDetails As Boolean) As VMInput
 	Dim pp As String = $"${ID}HideDetails"$
 	vue.SetStateSingle(pp, varHideDetails)
 	Input.Bind(":hide-details", pp)
@@ -289,10 +315,13 @@ Sub SetReadonly(varReadonly As Object) As VMInput
 End Sub
 
 'set rules
-Sub SetRules(varRules As Object) As VMInput
-	Dim pp As String = $"${ID}Rules"$
-	vue.SetStateSingle(pp, varRules)
+Sub SetRules(varRules As Boolean) As VMInput
+	If varRules = False Then Return Me
+	If bStatic Then Return Me
+	If DesignMode Then Return Me
+	Dim pp As String = $"${vmodel}Rules"$
 	Input.Bind(":rules", pp)
+	vue.SetData(pp, vue.NewList)
 	Return Me
 End Sub
 
@@ -322,7 +351,8 @@ End Sub
 
 'set value
 Sub SetValue(varValue As Object) As VMInput
-	SetAttrSingle("value", varValue)
+	Input.SetValue(varValue)
+	vue.SetData(vmodel, varValue)
 	Return Me
 End Sub
 
@@ -349,8 +379,8 @@ Sub SetOnChange(EventHandler As Object, methodName As String) As VMInput
 	methodName = methodName.tolowercase
 	If SubExists(EventHandler, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(EventHandler, methodName, e)
-	SetAttr(CreateMap("v-on:change": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(EventHandler, methodName, Array(e))
+	SetAttr(CreateMap("@change": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -361,8 +391,8 @@ Sub SetOnClickAppend(methodName As String) As VMInput
 	methodName = methodName.tolowercase
 	If SubExists(Module, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, e)
-	SetAttr(CreateMap("v-on:click:append": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
+	SetAttr(CreateMap("@click:append": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -373,8 +403,8 @@ Sub SetOnClickPrepend(methodName As String) As VMInput
 	methodName = methodName.tolowercase
 	If SubExists(Module, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, e)
-	SetAttr(CreateMap("v-on:click:prepend": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
+	SetAttr(CreateMap("@click:prepend": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -385,8 +415,8 @@ Sub SetOnMousedown(methodName As String) As VMInput
 	methodName = methodName.tolowercase
 	If SubExists(Module, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, e)
-	SetAttr(CreateMap("v-on:mousedown": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
+	SetAttr(CreateMap("@mousedown": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -397,8 +427,8 @@ Sub SetOnMouseup(methodName As String) As VMInput
 	methodName = methodName.tolowercase
 	If SubExists(Module, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, e)
-	SetAttr(CreateMap("v-on:mouseup": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
+	SetAttr(CreateMap("@mouseup": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -409,8 +439,8 @@ Sub SetOnUpdateError(methodName As String) As VMInput
 	methodName = methodName.tolowercase
 	If SubExists(Module, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, e)
-	SetAttr(CreateMap("v-on:update:error": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
+	SetAttr(CreateMap("@update:error": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me

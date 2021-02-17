@@ -10,7 +10,7 @@ Sub Class_Globals
 	Public ID As String
 	Private vue As BANanoVue
 	Private BANano As BANano  'ignore
-	Private DesignMode As Boolean
+	Private DesignMode As Boolean   'ignore
 End Sub
 
 'initialize the SubHeader
@@ -27,17 +27,31 @@ Sub ToString As String
 	Return SubHeader.ToString
 End Sub
 
+
+
+'add an element to the page content
+Sub AddElement(elm As VMElement)
+	SubHeader.SetText(elm.ToString)
+End Sub
+
 Sub SetVModel(k As String) As VMSubHeader
 	SubHeader.SetVModel(k)
 	Return Me
 End Sub
 
-Sub SetVIf(vif As Object) As VMSubHeader
+Sub SetVIf(vif As String) As VMSubHeader
 	SubHeader.SetVIf(vif)
 	Return Me
 End Sub
 
-Sub SetVShow(vif As Object) As VMSubHeader
+Sub SetData(xprop As String, xValue As Object) As VMSubHeader
+	vue.SetData(xprop, xValue)
+	Return Me
+End Sub
+
+
+
+Sub SetVShow(vif As String) As VMSubHeader
 	SubHeader.SetVShow(vif)
 	Return Me
 End Sub

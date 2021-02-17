@@ -11,38 +11,19 @@ Sub Class_Globals
 	Private vue As BANanoVue
 	Private BANano As BANano  'ignore
 	Public hasContent As Boolean
-	Private showKey As String
-	Private disKey As String
-	Private reqKey As String
-	Private errKey As String
-	Private styleKey As String
+	Public showKey As String
+	Public disKey As String
+	Public reqKey As String
+	Public errKey As String
+	Public styleKey As String
 	Public DesignMode As Boolean
-	Private opt As Map
-	Private data As Map
-	Private refs As Map
-	Private methods As Map
-	Private computed As Map
-	Private watches As Map
-	Private created As BANanoObject
-	Private mounted As BANanoObject
-	Private beforeCreate As BANanoObject
-	Private destroyed As BANanoObject
-	Private beforeMount As BANanoObject
-	Private updated As BANanoObject
-	Private beforeDestroy As BANanoObject
-	Private activated As BANanoObject
-	Private deactivated As BANanoObject
-	Private beforeUpdate As BANanoObject
-	Public URL As String
-	Public name As String
-	Private props As List
-	Private propFrom As String
-	Private showKey As String
-	Private disKey As String
 	Private bUsesStyles As Boolean
 	Private bUsesRequired As Boolean
 	Private bUsedDisabled As Boolean
 	Private bUsesShow As Boolean
+	Private bUsesVModel As Boolean
+	Private bUsesClass As Boolean
+	Public ErrorMessage As String
 	'
 	Public R As String
 	Public C As String
@@ -65,7 +46,6 @@ Sub Class_Globals
 	Public fieldType As String
 	Public typeOf As String
 	Public InputType As String
-	Public defaultValue As Object
 	Public Template As String
 	Public IsVisible As Boolean 
 	Public IsDisabled As Boolean
@@ -80,6 +60,9 @@ Sub Class_Globals
 	Public Value As Object
 	Private bStatic As Boolean
 	Public CenterOnParent As Boolean
+	Private classList As List
+	Public classKey As String
+	Public password As String
 End Sub
 
 Public Sub Initialize(v As BANanoVue, sid As String) As VMElement
@@ -90,6 +73,8 @@ Public Sub Initialize(v As BANanoVue, sid As String) As VMElement
 	End If
 	
 	Element.Initialize(ID,"div")
+	classList.Initialize 
+	ErrorMessage = ""
 	vue = v
 	MT = ""
 	MB = ""
@@ -109,54 +94,31 @@ Public Sub Initialize(v As BANanoVue, sid As String) As VMElement
 	bUsedDisabled = False
 	bUsesShow = False
 	CenterOnParent = False
+	bUsesVModel = False
+	bUsesClass = False
 	vmodel = ""
-	
+		
 	showKey = $"${ID}show"$
 	disKey = $"${ID}disabled"$
 	reqKey = $"${ID}required"$
 	errKey = $"${ID}error"$
 	styleKey = $"${ID}style"$
-	
+	classKey = $"${ID}class"$
+		
 	If ID <> "" Then
-		Dim SMp As Map = CreateMap()
 		SetRef(ID)
-		vue.SetStateSingle(showKey, True)
-		vue.SetStateSingle(disKey, False)
-		vue.SetStateSingle(reqKey, False)
-		vue.SetStateSingle(errKey, False)
-		vue.SetStateSingle(styleKey, SMp)
 	End If
 	'	
-	
 	DesignMode = False
-	opt.Initialize 
-	data.Initialize
-	refs.Initialize 
-	props.Initialize
-	methods.Initialize
-	computed.Initialize
-	watches.Initialize
-	beforeMount = Null
-	beforeUpdate = Null
-	created = Null
-	mounted = Null
-	destroyed = Null
-	updated = Null
-	beforeCreate = Null
-	activated = Null
-	deactivated = Null
-	beforeDestroy = Null
-	
-	URL = $"/${ID}"$
 	SetRC(1,1)
 	SetDeviceOffsets(0,0,0,0)
 	SetDeviceSizes(12,12,12,12)
 	'
+	password = $"${ID}password"$
 	typeOf = "text"
 	fieldType = "string"
 	InputType = "text"
-	defaultValue = Null
-	name = ID
+	
 	IsVisible = True
 	IsDisabled = False
 	IsRequired = False
@@ -165,6 +127,85 @@ Public Sub Initialize(v As BANanoVue, sid As String) As VMElement
 	ActualID = ""
 	Host = ""
 	Exclude = False
+	Return Me
+End Sub
+
+'add an element to the page content
+Sub AddElement(elm As VMElement)
+	Element.SetText(elm.ToString)
+End Sub
+
+Sub SetColumn As VMElement
+	AddClass("column")
+	Return Me
+End Sub
+
+Sub SetGridListXS As VMElement
+	AddClass("grid-list-xs")
+	Return Me
+End Sub
+
+Sub SetGridListSM As VMElement
+	AddClass("grid-list-sm")
+	Return Me
+End Sub
+
+Sub SetGridListMD As VMElement
+	AddClass("grid-list-md")
+	Return Me
+End Sub
+
+Sub SetGridListLG As VMElement
+	AddClass("grid-list-lg")
+	Return Me
+End Sub
+
+Sub SetGridListXL As VMElement
+	AddClass("grid-list-xl")
+	Return Me
+End Sub
+
+
+Sub AddCustomElement(eltag As String, elid As String, props As Map, eltext As String)
+	AddElement1(eltag, elid, eltext, props, Null, Null, Null)
+End Sub
+
+'active class for router links
+Sub SetActiveClass(sClass As String) As VMElement
+	SetAttrSingle("active-class", sClass)
+	Return Me
+End Sub
+
+Sub SetHideOnLeave(b As Boolean) As VMElement
+	SetAttrSingle("hide-on-leave", b)
+	Return Me
+End Sub
+
+Sub SetMode(sMode As String) As VMElement
+	SetAttrSingle("mode", sMode)
+	Return Me
+End Sub
+
+Sub CreateMETA() As VMElement
+	Dim el As VMElement
+	el.Initialize(vue, "").SetTag("meta")
+	Return el
+End Sub
+
+Sub MoveUp(sTop As String) As VMElement
+	SetAttrSingle("margin-top", sTop)
+	SetStyleSingle("z-index","9999")
+	Return Me
+End Sub
+
+
+Sub AddSpace() As VMElement
+	SetText("{NBSP}")
+	Return Me
+End Sub
+
+Sub SetErrorText(eTxt As String) As VMElement
+	ErrorMessage = eTxt
 	Return Me
 End Sub
 
@@ -179,6 +220,23 @@ Sub IsValidID(idName As String) As Boolean
 		End If
 	Next
 	Return True
+End Sub
+
+Sub SetData(xprop As String, xValue As Object) As VMElement
+	vue.SetData(xprop, xValue)
+	Return Me
+End Sub
+
+
+Sub AddElement1(elTag As String, elID As String, elText As String, mprops As Map, mstyles As Map, lclasses As List, loose As List) As VMElement
+	Dim d As VMElement
+	d.Initialize(vue, elID).SetTag(elTag)
+	d.SetStatic(bStatic)
+	d.SetDesignMode(DesignMode)
+	d.BuildModel(mprops, mstyles, lclasses, loose)
+	d.SetText(elText)
+	SetText(d.ToString)
+	Return Me
 End Sub
 
 
@@ -219,6 +277,24 @@ Sub SetDeviceSizes(sSizeSmall As String, sSizeMedium As String, sSizeLarge As St
 	Return Me
 End Sub
 
+'set attribute sizes
+Sub AddSizes(sSizeSmall As String, sSizeMedium As String, sSizeLarge As String, sSizeXLarge As String) As VMElement
+	AddAttr("sm", sSizeSmall)
+	AddAttr("xl", sSizeXLarge)
+	AddAttr("md", sSizeMedium)
+	AddAttr("lg", sSizeLarge)
+	Return Me
+End Sub
+
+'set attribute offsets
+Sub AddOffsets(sOffsetSmall As String, sOffsetMedium As String,sOffsetLarge As String,sOffsetXLarge As String) As VMElement
+	AddAttr("offset-sm", sOffsetSmall)
+	AddAttr("offset-xl", sOffsetXLarge)
+	AddAttr("offset-md", sOffsetMedium)
+	AddAttr("offset-lg", sOffsetLarge)
+	Return Me
+End Sub
+
 Sub SetUncheckedValue(suncheckedValue As Object) As VMElement
 	UncheckedValue = suncheckedValue
 	Return Me
@@ -242,6 +318,35 @@ End Sub
 
 Sub SetInt As VMElement
 	fieldType = "int"
+	Return Me
+End Sub
+
+'set lazy-validation
+Sub SetLazyValidation As VMElement
+	If bStatic Then
+		SetAttrSingle("lazy-validation", True)
+		Return Me
+	End If
+	Dim pp As String = $"${ID}LazyValidation"$
+	vue.SetStateSingle(pp, True)
+	Bind(":lazy-validation", pp)
+	Return Me
+End Sub
+
+Sub Validate
+	vue.refs.GetField(ID).RunMethod("validate", Null)
+End Sub
+
+Sub Reset
+	vue.refs.GetField(ID).RunMethod("reset", Null)
+End Sub
+
+Sub ResetValidation
+	vue.refs.GetField(ID).RunMethod("resetValidation", Null)
+End Sub
+
+Sub SetFillHeight As VMElement
+	AddClass("fill-height")
 	Return Me
 End Sub
 
@@ -284,13 +389,14 @@ Sub SetAttrLoose(loose As String) As VMElement
 End Sub
 
 'apply a theme to an element
-Sub UseTheme(themeName As String)
+Sub UseTheme(themeName As String) As VMElement
 	themeName = themeName.ToLowerCase
 	Dim themes As Map = vue.themes
 	If themes.ContainsKey(themeName) Then
 		Dim sclass As String = themes.Get(themeName)
 		AddClass(sclass)
 	End If
+	Return Me
 End Sub
 
 Sub AddContentList(lst As List) As VMElement
@@ -304,55 +410,67 @@ Sub AddSubHeader(Text As String) As VMElement
 	Return Me
 End Sub
 
+Sub AddVerticalDivider(className As String) As VMElement
+	'create a spacer And add it To the appbar
+	Dim elx As VMElement
+	elx.Initialize(vue, "").SetTag("v-divider")
+	elx.AddAttr("vertical", True)
+	elx.AddClass(className)
+	SetText(elx.ToString)
+	Return Me
+End Sub
+
 Sub AddDivider As VMElement
-	Dim strLine As String = $"<v-divider></v-divider>"$
-	SetText(strLine)
+	Dim el As VMElement
+	el.Initialize(vue, "").SetTag("v-divider")
+	SetText(el.tostring)
+	Return Me
+End Sub
+
+Sub AddDivider1(className As String) As VMElement
+	Dim el As VMElement
+	el.Initialize(vue, "").SetTag("v-divider")
+	el.AddClass(className)
+	SetText(el.tostring)
 	Return Me
 End Sub
 
 Sub AddSpacer As VMElement
-	Dim strLine As String = $"<v-spacer></v-spacer>"$
-	SetText(strLine)
+	Dim el As VMElement
+	el.Initialize(vue, "").SetTag("v-spacer")
+	SetText(el.tostring)
 	Return Me
 End Sub
 
+Sub AddSpacer1(className As String) As VMElement
+	Dim el As VMElement
+	el.Initialize(vue, "").SetTag("v-spacer")
+	el.AddClass(className)
+	SetText(el.tostring)
+	Return Me
+End Sub
+
+Sub SetFlat(b As Boolean) As VMElement
+	SetAttrSingle("text", True)
+	Return Me
+End Sub
 
 Sub SetFluid As VMElement
-	Element.SetAttrSingle("fluid", True)
+	SetAttrSingle("fluid", True)
 	Return Me
 End Sub
 
 Sub SetDense As VMElement
-	Element.SetAttrSingle("dense", True)
+	SetAttrSingle("dense", True)
 	Return Me
 End Sub
 
 Sub SetElevation(elNum As String) As VMElement
 	AddClass($"elevation-${elNum}"$)
-	Element.SetAttrSingle("elevation", BANano.parseInt(elNum))
+	SetAttrSingle("elevation", BANano.parseInt(elNum))
 	Return Me
 End Sub
 
-
-Sub SetFunctional(b As Boolean) As VMElement
-	opt.Put("functional", b)
-	Return Me
-End Sub
-
-Sub TemplateFromProperty(propName As String) As VMElement
-	propName = propName.ToLowerCase
-	propFrom = propName
-	Dim cb As BANanoObject = BANano.CallBack(Me, "RenderIt", Null)
-	opt.Put("render", cb)
-	Return Me
-End Sub
-
-
-Sub RenderIt As BANanoObject
-	Dim option As Map = CreateMap("template" : $"{{ ${propFrom} }}"$)
-	Dim bo As BANanoObject = BANano.RunJavascriptMethod("createElement",Array(option))
-	Return bo
-End Sub
 
 'set onchange event
 Sub SetOnChange(eventHandler As Object, source As String) As VMElement
@@ -361,7 +479,7 @@ Sub SetOnChange(eventHandler As Object, source As String) As VMElement
 	If SubExists(eventHandler, methodName) = False Then Return Me
 	Dim sval As String
 	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, Array(sval))
-	SetAttr(CreateMap("v-on:change": methodName))
+	SetAttr(CreateMap("@change": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -373,24 +491,28 @@ Sub SetStyleRound(size As String) As VMElement
 	Return Me
 End Sub
 
-Sub EnableItem(elID As String)
+Sub EnableItem(elID As String) As VMElement
 	elID = elID.tolowercase
 	vue.SetStateSingle($"${elID}disabled"$, False)
+	Return Me
 End Sub
 
-Sub DisableItem(elID As String)
+Sub DisableItem(elID As String) As VMElement
 	elID = elID.tolowercase
 	vue.SetStateSingle($"${elID}disabled"$, True)
+	Return Me
 End Sub
 
 
-Sub HideItem(elID As String)
+Sub HideItem(elID As String) As VMElement
 	elID = elID.tolowercase
 	vue.SetStateSingle($"${elID}show"$, False)
+	Return Me
 End Sub
 
-Sub ShowItem(elID As String)
+Sub ShowItem(elID As String) As VMElement
 	vue.SetStateSingle($"${elID}show"$, True)
+	Return Me
 End Sub
 
 Sub SetContainer(b As Boolean) As VMElement
@@ -405,11 +527,12 @@ Sub CenterAlign As VMElement
 	Return Me
 End Sub
 
-Sub AddChildDiv(divID As String, divClass As String)
+Sub AddChildDiv(divID As String, divClass As String) As VMElement
 	Dim childDiv As VMElement
 	childDiv.Initialize(vue, divID).AddClass(divClass)
 	childDiv.SetDesignMode(DesignMode)
 	AddChild(childDiv)
+	Return Me
 End Sub
 
 Sub SetDesignMode(b As Boolean) As VMElement
@@ -418,12 +541,25 @@ Sub SetDesignMode(b As Boolean) As VMElement
 	Return Me
 End Sub
 
+
 Sub SetStyleSingle(prop As String, vals As Object) As VMElement
 	Dim attr As Map = CreateMap()
 	attr.Put(prop, vals)
 	SetStyle(attr)
 	Return Me
 End Sub
+
+Sub SetDark(b As Boolean) As VMElement
+	If bStatic Then
+		SetAttrSingle("dark", b)
+		Return Me
+	End If
+	Dim pp As String = $"${ID}dark"$
+	vue.SetStateSingle(pp, b)
+	Bind(":dark", pp)
+	Return Me
+End Sub
+
 
 Sub SetAttrSingle(prop As String, vals As String) As VMElement
 	Dim attr As Map = CreateMap()
@@ -433,53 +569,60 @@ Sub SetAttrSingle(prop As String, vals As String) As VMElement
 End Sub
 
 Sub Required(b As Boolean) As VMElement
-	If bStatic Then
-		SetAttrSingle("required", b)
-		Return Me
-	End If
 	If ID = "" Then Return Me
 	IsRequired = b
+	bUsesRequired = True
+	If bStatic Then
+		SetAttrSingle("required", b)
+		vue.SetStateSingle(errKey, False)
+		Return Me
+	End If
 	vue.SetStateSingle(reqKey, b)
+	vue.SetStateSingle(errKey, False)
 	Bind(":required", reqKey)
 	Return Me
 End Sub
 
 Sub Enable(b As Boolean) As VMElement
+	If ID = "" Then Return Me
 	Dim n As Boolean = Not(b)
+	IsDisabled = n
+	bUsedDisabled = True
 	If bStatic Then
 		SetAttrSingle("disabled", n)
 		Return Me
 	End If
-	If ID = "" Then Return Me
-	IsDisabled = n
 	vue.SetStateSingle(disKey, n)
 	Bind(":disabled", disKey)
 	Return Me
 End Sub
 
 Sub Disable(b As Boolean) As VMElement
+	If ID = "" Then Return Me
+	IsDisabled = b
+	bUsedDisabled = True
 	If bStatic Then
 		SetAttrSingle("disabled", b)
 		Return Me
 	End If
-	IsDisabled = b
 	vue.SetStateSingle(disKey, b)
 	Bind(":disabled", disKey)
 	Return Me
 End Sub
 
-
 'show using id
 Sub Show As VMElement
 	IsVisible = True
-	vue.SetStateSingle(ID, True)
+	SetVShow(showKey)
+	vue.SetStateSingle(showKey, True)
 	Return Me
 End Sub
 
 'hide using id
 Sub Hide As VMElement
 	IsVisible = False
-	vue.SetStateSingle(ID, False)
+	SetVShow(showKey)
+	vue.SetStateSingle(showKey, False)
 	Return Me
 End Sub
 
@@ -508,7 +651,7 @@ Sub MakePx(sValue As String) As String
 End Sub
 
 Sub SetFor(f As String) As VMElement
-	Element.SetAttr("for", f)
+	SetAttrSingle("for", f)
 	Return Me
 End Sub
 
@@ -569,6 +712,18 @@ Sub SetBorder(width As String, color As String, bstyle As String) As VMElement
 	Return Me
 End Sub
 
+Sub SetJustify(just As String) As VMElement
+	Dim skey As String = $"justify-${just}"$
+	SetAttrSingle(skey, skey)
+	Return Me
+End Sub
+
+Sub SetAlign(align As String) As VMElement
+	Dim skey As String = $"align-${align}"$
+	SetAttrSingle(skey, skey)
+	Return Me
+End Sub
+
 'set cursor move
 Sub SetCursorMove As VMElement
 	SetStyle(CreateMap("cursor": "move"))
@@ -592,17 +747,17 @@ Sub Clear As VMElement
 End Sub
 
 Sub SetSlot(sltValue As String) As VMElement
-	Element.SetAttr("slot", sltValue)
+	SetAttrSingle("slot", sltValue)
 	Return Me
 End Sub
 
 Sub SetSlotScope(sltValue As String) As VMElement
-	Element.SetAttr("slot-scope", sltValue)
+	SetAttrSingle("slot-scope", sltValue)
 	Return Me
 End Sub
 
 Sub SetType(stypeOf As String) As VMElement
-	Element.SetAttr("type", stypeOf)
+	SetAttrSingle("type", stypeOf)
 	Return Me
 End Sub
 
@@ -611,11 +766,17 @@ Sub RemoveClass(className As String) As VMElement
 	Return Me
 End Sub
 
+Sub SetEvent(eventName As String, methodName As String) As VMElement
+	methodName = methodName.tolowercase
+	SetAttrSingle(eventName, methodName)
+	Return Me
+End Sub
+
 
 Sub SetOnMouseOut(module As Object, methodName As String) As VMElement
 	methodName = methodName.tolowercase
 	If SubExists(module, methodName) = False Then Return Me
-	SetAttr(CreateMap("v-on:mouseout": methodName))
+	SetAttr(CreateMap("@mouseout": methodName))
 	Dim e As BANanoEvent
 	Dim cb As BANanoObject = BANano.CallBack(module, methodName, Array(e))
 	vue.SetCallBack(methodName, cb)
@@ -625,7 +786,7 @@ End Sub
 Sub SetOnMouseOver(module As Object, methodName As String) As VMElement
 	methodName = methodName.tolowercase
 	If SubExists(module, methodName) = False Then Return Me
-	SetAttr(CreateMap("v-on:mouseover": methodName))
+	SetAttr(CreateMap("@mouseover": methodName))
 	Dim e As BANanoEvent
 	Dim cb As BANanoObject = BANano.CallBack(module, methodName, Array(e))
 	vue.SetCallBack(methodName, cb)
@@ -636,10 +797,10 @@ Sub SetKey(k As Object, bBind As Boolean) As VMElement
 	If bBind Then
 		If vue.StateExists(k) = False Then vue.SetStateSingle(k, DateTime.now)
 		RemoveAttr("key")
-		Element.SetAttr(":key", k)
+		SetAttrSingle(":key", k)
 	Else
 		RemoveAttr(":key")
-		Element.SetAttr("key", k)
+		SetAttrSingle("key", k)
 	End If
 	Return Me
 End Sub
@@ -690,17 +851,26 @@ Sub SetVBindIs(t As String) As VMElement
 	Return Me
 End Sub
 
-Sub SetVOnce(t As Object) As VMElement
-	SetAttr(CreateMap("v-once": t))
+Sub SetVOnce(t As Boolean) As VMElement
+	If t = False Then Return Me
+	SetAttrLoose("v-once")
 	Return Me
 End Sub
 
+'bind dynamic component
+Sub BindDynamicComponent(viewID As String, compID As String) As VMElement
+	viewID = viewID.ToLowerCase
+	compID = compID.tolowercase
+	SetVBindIs(viewID)
+	vue.SetData(viewID, compID)
+	Return Me
+End Sub
 
 'set for
 Sub SetVFor(item As String, dataSource As String) As VMElement
 	dataSource = dataSource.tolowercase
 	item = item.tolowercase
-	If vue.StateExists(dataSource) = False Then vue.SetStateSingle(dataSource, Array())
+	If vue.StateExists(dataSource) = False Then vue.SetStateSingle(dataSource, vue.newlist)
 	Dim sline As String = $"${item} in ${dataSource}"$
 	SetAttr(CreateMap("v-for": sline))
 	RemoveAttr("ref")
@@ -708,16 +878,17 @@ Sub SetVFor(item As String, dataSource As String) As VMElement
 End Sub
 
 'set value
-Sub SetValue(valueName As String, bbind As Boolean) As VMElement
-	If bbind Then
-		RemoveAttr("value")
-		valueName = valueName.tolowercase
-		SetAttr(CreateMap(":value":valueName))
-	Else
-		Value = valueName
-		RemoveAttr(":value")	
-		SetAttr(CreateMap("value":valueName))
+Sub SetValue(svalue As String) As VMElement
+	If bStatic Then
+		SetAttrSingle("value", svalue)
+		Return Me
 	End If
+	If vmodel = "" Then
+		vmodel = $"${ID}value"$
+		SetVModel(vmodel)
+	End If
+	vue.setdata(vmodel, svalue)
+	SetAttrSingle("value", svalue)
 	Return Me
 End Sub
 
@@ -725,7 +896,6 @@ End Sub
 Sub SetTemplate(tmp As String) As VMElement
 	Element.Clear
 	SetText(tmp)
-	hasContent = True
 	Return Me
 End Sub
 
@@ -733,7 +903,7 @@ Sub SetVHtml(h As String) As VMElement
 	If h = "" Then Return Me
 	h = h.tolowercase
 	If vue.StateExists(h) = False Then vue.SetStateSingle(h, Null)
-	Element.SetAttr("v-html", h)
+	SetAttrSingle("v-html", h)
 	Return Me
 End Sub
 
@@ -778,6 +948,7 @@ End Sub
 
 Sub SetVShow(vif As String) As VMElement
 	vif = vif.ToLowerCase
+	bUsesShow = False
 	If vif <> "show" Then
 		bUsesShow = True
 		If vue.HasState(vif) = False Then vue.SetStateFalse(vif)
@@ -790,6 +961,10 @@ Sub BindStyle(optm As Map) As VMElement
 	If ID = "" Then Return Me
 	bUsesStyles = True
 	Dim nm As Map = CreateMap()
+	If vue.HasState(styleKey) = False Then
+		Dim SMp As Map = CreateMap()
+		vue.SetData(styleKey, SMp)
+	End If
 	Dim oldm As Map = vue.GetState(styleKey, nm)
 	For Each k As String In optm.Keys
 		Dim v As Object = optm.Get(k)
@@ -809,13 +984,15 @@ Sub BindStyleSingle(prop As String, optm As String) As VMElement
 End Sub
 
 'add break
-Sub AddBR
+Sub AddBR As VMElement
 	SetText("<br>")
+	Return Me
 End Sub
 
 'add hr
-Sub AddHR
+Sub AddHR As VMElement
 	SetText("<hr>")
+	Return Me
 End Sub
 
 'add a class
@@ -825,9 +1002,56 @@ Sub AddClass(className As String) As VMElement
 	Return Me
 End Sub
 
+'add a class
+Sub AddDynamicClass(className As String) As VMElement
+	If vue.hasstate(classKey) = False Then
+		vue.SetData(classKey, vue.NewList)
+	End If
+	classList = vue.GetData(classKey)
+	Dim cpos As Int = classList.IndexOf(className)
+	cpos = BANano.parseInt(cpos)
+	If cpos = -1 Then classList.Add(className)
+	vue.SetData(classKey, classList)
+	hasContent = True
+	bUsesClass = True
+	Return Me
+End Sub
+
+Sub BindClass(className As String) As VMElement
+	AddDynamicClass(className)
+	Return Me
+End Sub
+
+'add a class
+Sub AddClassDynamic(className As String) As VMElement
+	AddDynamicClass(className)
+	Return Me
+End Sub
+
+Sub RemoveClassDynamic(className As String) As VMElement
+	RemoveDynamicClass(className)
+	Return Me
+End Sub
+
+
+Sub RemoveDynamicClass(className As String) As VMElement
+	If vue.hasstate(classKey) = False Then
+		vue.SetData(classKey, vue.NewList)
+	End If
+	classList = vue.GetData(classKey)
+	Dim cpos As Int = classList.IndexOf(className)
+	cpos = BANano.parseInt(cpos)
+	If cpos <> -1 Then classList.RemoveAt(cpos)
+	vue.SetData(classKey, classList)
+	hasContent = True
+	bUsesClass = True
+	Return Me
+End Sub
+
+
 'render the element to parent element
-Sub Render1(parent As String)
-	BANano.GetElement(parent).Append(ToString)
+Sub Render1(Parent As String)
+	BANano.GetElement(Parent).Append(ToString)
 End Sub
 
 'add to parent
@@ -835,12 +1059,50 @@ Sub Pop1(p As VMElement)
 	p.AddChild(Me)
 End Sub
 
+
 'set color
-Sub SetColor(color As Object) As VMElement
-	SetStyle(CreateMap("color": color))
+Sub SetColor(varColor As String) As VMElement
+	If varColor = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("color", varColor)
+		Return Me
+	End If
+	Dim pp As String = $"${ID}Color"$
+	vue.SetStateSingle(pp, varColor)
+	Bind(":color", pp)
 	Return Me
 End Sub
-'
+
+'set color intensity
+Sub SetColorIntensity(varColor As String, varIntensity As String) As VMElement
+	If varColor = "" Then Return Me
+	Dim scolor As String = $"${varColor} ${varIntensity}"$
+	If bStatic Then
+		SetAttrSingle("color", scolor)
+		Return Me
+	End If
+	Dim pp As String = $"${ID}Color"$
+	vue.SetStateSingle(pp, scolor)
+	Bind(":color", pp)
+	Return Me
+End Sub
+
+'set color intensity
+Sub SetTextColor(varColor As String) As VMElement
+	Dim sColor As String = $"${varColor}--text"$
+	AddClass(sColor)
+	Return Me
+End Sub
+
+'set color intensity
+Sub SetTextColorIntensity(varColor As String, varIntensity As String) As VMElement
+	Dim sColor As String = $"${varColor}--text"$
+	Dim sIntensity As String = $"text--${varIntensity}"$
+	Dim mcolor As String = $"${sColor} ${sIntensity}"$
+	AddClass(mcolor)
+	Return Me
+End Sub
+
 Sub SetStyle(m As Map) As VMElement
 	Element.SetStyles(m)
 	Return Me
@@ -850,15 +1112,15 @@ End Sub
 Sub AddChild(child As VMElement) As VMElement
 	Dim childHTML As String = child.ToString
 	SetText(childHTML)
-	hasContent = True
 	Return Me
 End Sub
 
 'add children
-Sub AddChildren(children As List)
+Sub AddChildren(children As List) As VMElement
 	For Each childx As VMElement In children
 		AddChild(childx)
 	Next
+	Return Me
 End Sub
 
 'set padding
@@ -882,13 +1144,19 @@ Sub SetMaxWidth(mw As String) As VMElement
 	Return Me
 End Sub
 
+
 Sub SetMaxHeight(mw As String) As VMElement
 	Element.SetStyle("max-height",mw)
 	Return Me
 End Sub
 
-Sub SetTo(t As Object) As VMElement
-	Element.SetAttr("to", t)
+Sub SetOutlined() As VMElement
+	SetAttrSingle("outlined",True)
+	Return Me
+End Sub
+
+Sub SetTo(t As String) As VMElement
+	SetAttrSingle("to", t)
 	Return Me
 End Sub
 
@@ -900,21 +1168,24 @@ End Sub
 Sub SetDisabled(b As Boolean) As VMElement
 	If ID = "" Then Return Me
 	bUsedDisabled = b
+	IsDisabled = b
 	vue.SetStatesingle(disKey, b)
-	Element.SetAttr(":disabled", disKey)
+	SetAttrSingle(":disabled", disKey)
 	Return Me
 End Sub
 
 Sub SetRequired(b As Boolean) As VMElement
+	IsRequired = b
+	bUsesRequired = True
 	If bStatic Then
-		Element.SetAttr("required", b)
+		SetAttrSingle("required", b)
 		Return Me
 	End If
 	If ID = "" Then Return Me
-	IsRequired = b
-	bUsesRequired = True
+	vue.SetStateSingle(errKey, False)
 	vue.SetStateSingle(reqKey, b)
-	Element.SetAttr(":required", reqKey)
+	SetAttrSingle(":required", reqKey)
+	vue.SetStateSingle(errKey, False)
 	Return Me
 End Sub
 
@@ -931,6 +1202,10 @@ Sub SetAttr(m As Map) As VMElement
 			bUsesStyles = True
 		Case "v-show"
 			bUsesShow = True
+		Case "v-model"
+			bUsesVModel = True
+		Case ":class"
+			bUsesClass = True
 		End Select
 		Element.SetAttr(k, v)
 	Next
@@ -983,75 +1258,23 @@ Sub Bind(prop As String, stateprop As String) As VMElement
 	prop = prop.tolowercase
 	stateprop = stateprop.ToLowerCase
 	SetAttrSingle(prop, stateprop)
-	'
-	Select Case prop
-	Case ":disabled"
-		bUsedDisabled = True
-	Case ":required"
-		bUsesRequired = True
-	End Select
 	Return Me
 End Sub
 
-
-'add a property
-Sub AddProp(propName As String) As VMElement
-	props.Add(propName)
-	Return Me
-End Sub
-
-Sub AddProps(propsList As List) As VMElement
-	For Each k As String In propsList
-		AddProp(k)
-	Next
-	Return Me
-End Sub
 
 Sub SetVModel(k As String) As VMElement
 	k = k.tolowercase
+	bUsesVModel = False
+	If k = "value" Then Return Me
 	vmodel = k
 	If vue.HasState(k) = False Then
 		vue.SetData(k, Null)
 	End If
-	Element.SetAttr("v-model", k)
+	SetAttrSingle("v-model", k)
+	bUsesVModel = True
 	Return Me
 End Sub
 
-
-'set state object
-Sub SetStateMap(mapKey As String, mapValues As Map) As VMElement
-	Dim opt As Map = CreateMap()
-	opt.Put(mapKey, mapValues)
-	SetState(opt)
-	Return Me
-End Sub
-
-'set state list
-Sub SetStateList(mapKey As String, mapValues As List) As VMElement
-	Dim opt As Map = CreateMap()
-	opt.Put(mapKey, mapValues)
-	SetState(opt)
-	Return Me
-End Sub
-
-Sub SetStateListValues(mapValues As List) As VMElement
-	For Each lstValue As String In mapValues
-		Dim opt As Map = CreateMap()
-		opt.Put(lstValue, "")
-		SetState(opt)
-	Next
-	Return Me
-End Sub
-
-Sub GetStates(lst As List) As Map
-	Dim smm As Map = CreateMap()
-	For Each lstrec As String In lst
-		lstrec = lstrec.tolowercase
-		Dim state As Object = GetState(lstrec, Null)
-		smm.Put(lstrec, state)
-	Next
-	Return smm
-End Sub
 
 Sub SetChecked(b As Boolean) As VMElement
 	SetAttr(CreateMap(":checked":b))
@@ -1063,19 +1286,21 @@ Sub SetTag(t As String) As VMElement
 	Return Me
 End Sub
 
-Sub AddElements(lst As List)
+Sub AddElements(lst As List) As VMElement
 	For Each li As VMElement In lst
 		SetText(li.tostring)
 	Next
-End Sub
-
-Sub AddElement(el As VMElement)
-	SetText(el.ToString)
+	Return Me
 End Sub
 
 Sub SetText(t As String) As VMElement
 	Element.SetText(t)
 	hasContent = True
+	Return Me
+End Sub
+
+Sub AddComponent(comp As String) As VMElement
+	SetText(comp)
 	Return Me
 End Sub
 
@@ -1086,27 +1311,68 @@ End Sub
 
 Sub ToString As String
 	If bUsesStyles = False Then
-		vue.RemoveData(styleKey)
 		RemoveAttr(":style")
+		vue.RemoveData(styleKey)
 	End If
 	If bUsesRequired = False Then
-		vue.RemoveData(reqKey)
 		RemoveAttr(":required")
+		vue.removedata(reqKey)
+		vue.RemoveData(errKey)
 	End If
 	If bUsedDisabled = False Then
-		vue.RemoveData(disKey)
 		RemoveAttr(":disabled")
+		vue.RemoveData(disKey)
 	End If
 	If bUsesShow = False Then
-		vue.RemoveData(showKey)
-		
+		RemoveAttr("v-show")
+	End If
+	If bUsesVModel = False Then
+		RemoveAttr("v-model")
+	End If
+	If classList.Size = 0 Then
+		bUsesClass = False
+	Else
+		vue.SetData(classKey, classList)
+		SetAttrSingle(":class", classKey)
+		bUsesClass = True
+	End If
+	If bUsesClass = False Then
+		RemoveAttr(":class")
+		vue.RemoveData(classKey)
 	End If
 	If DesignMode Then
-		RemoveAttributes(Array("v-show", ":disabled", ":required", ":class", "v-model", "tabindex", ":style"))
+		RemoveAttributes(Array("v-show", "v-if", ":disabled", ":required", ":class", "v-model", "tabindex", ":style"))
+		vue.RemoveData(styleKey)
+		vue.removedata(reqKey)
+		vue.RemoveData(disKey)
+		vue.RemoveData(classKey)
+		vue.RemoveData(errKey)
 	End If
 	'save the template
 	Template = Element.tostring
 	Return Template
+End Sub
+
+Sub HasAttribute(attrName As String) As Boolean
+	Return Element.HasAttribute(attrName)
+End Sub
+
+Sub RemoveVShow As VMElement
+	RemoveAttr("v-show")
+	bUsesShow = False
+	Return Me
+End Sub
+
+Sub RemoveVIf As VMElement
+	RemoveAttr("v-if")
+	bUsesShow = False
+	Return Me
+End Sub
+
+Sub RemoveVModel As VMElement
+	RemoveAttr("v-model")
+	bUsesVModel = False
+	Return Me
 End Sub
 
 'remove mutliple attributes
@@ -1115,31 +1381,6 @@ Sub RemoveAttributes(attrs As List) As VMElement
 		RemoveAttr(s)
 	Next
 	Return Me
-End Sub
-
-Sub Component() As Map
-	RemoveAttributes(Array("v-show", ":disabled", ":required", ":class", "v-model", "tabindex", ":style"))
-	Dim tmp As String = Element.tostring
-	If data.Size > 0 Then 
-		Dim cb As BANanoObject = BANano.CallBack(Me, "returnData", Null)
-		opt.Put("data", cb)
-	End If
-	If methods.Size > 0 Then opt.Put("methods", methods)
-	If computed.Size > 0 Then opt.Put("computed", computed)
-	If watches.Size > 0 Then opt.Put("watch", watches)
-	If props.Size <> 0 Then opt.Put("props", props)
-	If updated <> Null Then opt.Put("updated", updated)
-	If destroyed <> Null Then opt.Put("destroyed", destroyed)
-	If mounted <> Null Then	opt.Put("mounted", mounted)
-	If beforeCreate <> Null Then opt.Put("beforeCreate", beforeCreate)
-	If created <> Null Then opt.Put("created", created)
-	If beforeMount <> Null Then opt.Put("beforeMount", beforeMount)
-	If beforeUpdate <> Null Then opt.Put("beforeUpdate", beforeUpdate)
-	If activated <> Null Then opt.Put("activated", activated)
-	If deactivated <> Null Then opt.Put("deactivated", deactivated)
-	If beforeDestroy <> Null Then opt.Put("beforeDestroy", beforeDestroy)
-	opt.Put("template", tmp)
-	Return opt
 End Sub
 
 'add to app template
@@ -1153,7 +1394,7 @@ Sub SetOnInput(module As Object, methodName As String) As VMElement
 	If SubExists(module, methodName) = False Then Return Me
 	Dim e As BANanoEvent
 	Dim cb As BANanoObject = BANano.CallBack(module, methodName, Array(e))
-	SetAttr(CreateMap("v-on:input": methodName))
+	SetAttr(CreateMap("@input": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -1165,7 +1406,7 @@ Sub SetOnFocus(module As Object, methodName As String) As VMElement
 	If SubExists(module, methodName) = False Then Return Me
 	Dim e As BANanoEvent
 	Dim cb As BANanoObject = BANano.CallBack(module, methodName, Array(e))
-	SetAttr(CreateMap("v-on:focus": methodName))
+	SetAttr(CreateMap("@focus": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -1176,7 +1417,7 @@ Sub SetOnClear(module As Object, methodName As String) As VMElement
 	If SubExists(module, methodName) = False Then Return Me
 	Dim e As BANanoEvent
 	Dim cb As BANanoObject = BANano.CallBack(module, methodName, Array(e))
-	SetAttr(CreateMap("v-on:md-clear": methodName))
+	SetAttr(CreateMap("@md-clear": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -1188,7 +1429,7 @@ Sub SetOnBlur(module As Object, methodName As String) As VMElement
 	If SubExists(module, methodName) = False Then Return Me
 	Dim e As BANanoEvent
 	Dim cb As BANanoObject = BANano.CallBack(module, methodName, Array(e))
-	SetAttr(CreateMap("v-on:blur": methodName))
+	SetAttr(CreateMap("@blur": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -1200,11 +1441,28 @@ Sub SetPointer(b As Boolean) As VMElement
 	Return Me
 End Sub
 
+Sub SetHiddenMdAndUp As VMElement
+	AddClass("hidden-md-and-up")
+	RemoveVShow
+	RemoveVIf
+	Return Me
+End Sub
+
 'set onclick event
 Sub SetOnClick(module As Object, methodName As String) As VMElement
 	methodName = methodName.tolowercase
 	If SubExists(module, methodName) = False Then Return Me
-	SetAttrSingle("v-on:click", methodName)
+	SetAttrSingle("@click", methodName)
+	vue.SetMethod(module, methodName)
+	Return Me
+End Sub
+
+'link an event to the element
+Sub SetOnEvent(module As Object, eventName As String,methodName As String, args As String) As VMElement
+	methodName = methodName.tolowercase
+	eventName = eventName.tolowercase
+	If SubExists(module, methodName) = False Then Return Me
+	SetAttrSingle($"v-on:${eventName}"$, methodName & $"(${args})"$)
 	vue.SetMethod(module, methodName)
 	Return Me
 End Sub
@@ -1213,7 +1471,7 @@ End Sub
 Sub SetOnClickStop(module As Object, methodName As String) As VMElement
 	methodName = methodName.tolowercase
 	If SubExists(module, methodName) = False Then Return Me
-	SetAttrSingle("v-on:click.stop", methodName)
+	SetAttrSingle("@click.stop", methodName)
 	vue.SetMethod(module, methodName)
 	Return Me
 End Sub
@@ -1224,7 +1482,7 @@ Sub SetOnTouchStart(module As Object, methodName As String) As VMElement
 	If SubExists(module, methodName) = False Then Return Me
 	Dim e As BANanoEvent
 	Dim cb As BANanoObject = BANano.CallBack(module, methodName, Array(e))
-	SetAttr(CreateMap("v-on:touchstart": methodName))
+	SetAttr(CreateMap("@touchstart": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -1235,7 +1493,7 @@ Sub SetOnDragOver(module As Object, methodName As String) As VMElement
 	If SubExists(module, methodName) = False Then Return Me
 	Dim e As BANanoEvent
 	Dim cb As BANanoObject = BANano.CallBack(module, methodName, Array(e))
-	SetAttr(CreateMap("v-on:dragover": methodName))
+	SetAttr(CreateMap("@dragover": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -1247,7 +1505,7 @@ Sub SetOnDragStart(module As Object, methodName As String) As VMElement
 	SetDraggable(True)
 	Dim e As BANanoEvent
 	Dim cb As BANanoObject = BANano.CallBack(module, methodName, Array(e))
-	SetAttr(CreateMap("v-on:dragstart": methodName))
+	SetAttr(CreateMap("@dragstart": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -1258,7 +1516,7 @@ Sub SetOnDragEnd(module As Object, methodName As String) As VMElement
 	If SubExists(module, methodName) = False Then Return Me
 	Dim e As BANanoEvent
 	Dim cb As BANanoObject = BANano.CallBack(module, methodName, Array(e))
-	SetAttr(CreateMap("v-on:dragend": methodName))
+	SetAttr(CreateMap("@dragend": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -1269,7 +1527,7 @@ Sub SetOnDragEnter(module As Object, methodName As String) As VMElement
 	If SubExists(module, methodName) = False Then Return Me
 	Dim e As BANanoEvent
 	Dim cb As BANanoObject = BANano.CallBack(module, methodName, Array(e))
-	SetAttr(CreateMap("v-on:dragenter": methodName))
+	SetAttr(CreateMap("@dragenter": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -1280,7 +1538,7 @@ Sub SetOnDrop(module As Object, methodName As String) As VMElement
 	If SubExists(module, methodName) = False Then Return Me
 	Dim e As BANanoEvent
 	Dim cb As BANanoObject = BANano.CallBack(module, methodName, Array(e))
-	SetAttr(CreateMap("v-on:drop": methodName))
+	SetAttr(CreateMap("@drop": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -1311,248 +1569,6 @@ Sub SetPadding(sPT As String, sPB As String, sPL As String, sPR As String) As VM
 	Return Me
 End Sub
 
-'generate another vue instance
-Sub RenderTo(elID As String)
-	elID = elID.tolowercase
-	BANano.GetElement($"#${elID}"$).empty
-	'
-	Dim boVUE As BANanoObject
-	opt.Put("el", $"#${elID}"$)
-	Component
-	boVUE.Initialize2("Vue", opt)
-	'get the state
-	Dim dKey As String = "$data"
-	data = boVUE.GetField(dKey).Result
-	'get the refs
-	Dim rKey As String = "$refs"
-	refs = boVUE.GetField(rKey).result
-End Sub
-
-
-Sub SetStateTrue(k As String) As VMElement
-	SetStateSingle(k,True)
-	Return Me
-End Sub
-
-Sub SetStateFalse(k As String) As VMElement
-	SetStateSingle(k,False)
-	Return Me
-End Sub
-
-Sub SetStateIncrement(k As String) As VMElement
-	Dim oldV As String = GetState(k, "0")
-	oldV = BANano.parseInt(oldV) + 1
-	SetStateSingle(k, oldV)
-	Return Me
-End Sub
-
-Sub SetStateDecrement(k As String) As VMElement
-	Dim oldV As String = GetState(k, "0")
-	oldV = BANano.parseInt(oldV) - 1
-	SetStateSingle(k, oldV)
-	Return Me
-End Sub
-
-
-'a single state change
-Sub SetStateSingle(k As String, v As Object) As VMElement
-	k = k.tolowercase
-	Dim optx As Map = CreateMap()
-	optx.Put(k, v)
-	SetState(optx)
-	Return Me
-End Sub
-
-Sub ToggleState(stateName As String) As VMElement
-	Dim bcurrent As Boolean = GetState(stateName,"")
-	bcurrent = Not(bcurrent)
-	Dim optx As Map = CreateMap()
-	optx.Put(stateName, bcurrent)
-	SetState(optx)
-	Return Me
-End Sub
-
-'return if state exists
-Sub HasState(k As String) As Boolean
-	Return data.ContainsKey(k)
-End Sub
-
-'get the state
-Sub GetState(k As String, v As Object) As Object
-	k = k.tolowercase
-	If data.ContainsKey(k) Then
-		Dim out As Object = data.GetDefault(k,v)
-		Return out
-	Else
-		Log("GetState: First set the v-model for " & k)
-		Return ""
-	End If
-End Sub
-
-'check if we have state
-Sub StateExists(stateName As String) As Boolean
-	stateName = stateName.tolowercase
-	Return data.ContainsKey(stateName)
-End Sub
-
-'set the state
-Sub SetState(m As Map) As VMElement
-	For Each k As String In m.Keys
-		Dim v As Object = m.Get(k)
-		k = k.tolowercase
-		data.Put(k, v)
-	Next
-	Return Me
-End Sub
-
-'set a call back
-Sub SetCallBack(methodName As String, cb As BANanoObject)
-	methodName = methodName.ToLowerCase
-	methods.Put(methodName, cb)
-End Sub
-
-
-'set onselected event
-Sub SetOnSelected(module As Object, methodName As String) As VMElement
-	methodName = methodName.tolowercase
-	If SubExists(module, methodName) Then
-		Dim e As BANanoEvent
-		Dim cb As BANanoObject = BANano.CallBack(module, methodName, Array(e))
-		SetAttr(CreateMap("v-on:selected": methodName))
-		'add to methods
-		methods.Put(methodName, cb)
-	End If
-	Return Me
-End Sub
-
-
-private Sub ReturnData As Map
-	Return data
-End Sub
-
-'set computed
-Sub SetComputed(module As Object, k As String, methodName As String) As VMElement
-	methodName = methodName.ToLowerCase
-	If SubExists(module, methodName) Then
-		k = k.tolowercase
-		If data.ContainsKey(k) Then
-			SetStateSingle(k, Null)
-		End If
-		Dim e As BANanoEvent
-		Dim cb As BANanoObject = BANano.CallBack(module, methodName, Array(e))
-		computed.Put(k, cb)
-	End If
-	Return Me
-End Sub
-
-'set watches 
-Sub SetWatch(module As Object, k As String, bImmediate As Boolean, bDeep As Boolean, methodName As String) As VMElement
-	methodName = methodName.tolowercase
-	If SubExists(module, methodName) Then
-		k = k.tolowercase
-		If data.ContainsKey(k) Then
-			SetStateSingle(k, Null)
-		End If
-		Dim newVal As Object
-		Dim cb As BANanoObject = BANano.CallBack(module, methodName, Array(newVal))
-		Dim deepit As Map = CreateMap()
-		deepit.Put("handler", methodName)
-		deepit.Put("deep", bDeep)
-		deepit.Put("immediate", bImmediate)
-		watches.Put(k, deepit)
-		methods.Put(methodName, cb)
-	End If
-	Return Me
-End Sub
-
-
-'set before created
-Sub SetBeforeCreate(module As Object,methodName As String) As VMElement
-	methodName = methodName.ToLowerCase
-	beforeCreate = BANano.CallBack(module, methodName, Null)
-	Return Me
-End Sub
-
-
-'set created
-Sub SetCreated(module As Object,methodName As String) As VMElement
-	methodName = methodName.ToLowerCase
-	created = BANano.CallBack(module, methodName, Null)
-	Return Me
-End Sub
-
-'set direct method
-Sub SetMethod(module As Object,methodName As String) As VMElement
-	methodName = methodName.ToLowerCase
-	If SubExists(module, methodName) Then
-		Dim e As BANanoEvent
-		Dim cb As BANanoObject = BANano.CallBack(module, methodName, Array(e))
-		methods.Put(methodName, cb)
-	End If
-	Return Me
-End Sub
-
-'set before destroy
-Sub SetBeforeDestroy(module As Object,methodName As String) As VMElement
-	methodName = methodName.ToLowerCase
-	beforeDestroy = BANano.CallBack(module, methodName, Null)
-	Return Me
-End Sub
-
-'set activated
-Sub SetActivated(module As Object,methodName As String) As VMElement
-	methodName = methodName.ToLowerCase
-	activated = BANano.CallBack(module, methodName, Null)
-	Return Me
-End Sub
-
-
-'set deactivated
-Sub SetDeActivated(module As Object,methodName As String) As VMElement
-	methodName = methodName.ToLowerCase
-	deactivated = BANano.CallBack(module, methodName, Null)
-	Return Me
-End Sub
-
-
-'set updated
-Sub SetUpdated(module As Object,methodName As String) As VMElement
-	methodName = methodName.ToLowerCase
-	updated = BANano.CallBack(module, methodName, Null)
-	Return Me
-End Sub
-
-'set beforemount
-Sub SetBeforeMount(module As Object,methodName As String) As VMElement
-	methodName = methodName.ToLowerCase
-	beforeMount = BANano.CallBack(module, methodName, Null)
-	Return Me
-End Sub
-
-'set beforeupdate
-Sub SetBeforeUpdate(module As Object,methodName As String) As VMElement
-	methodName = methodName.ToLowerCase
-	beforeMount = BANano.CallBack(module, methodName, Null)
-	Return Me
-End Sub
-
-
-'set mounted
-Sub SetMounted(module As Object,methodName As String) As VMElement
-	methodName = methodName.ToLowerCase
-	mounted = BANano.CallBack(module, methodName, Null)
-	Return Me
-End Sub
-
-
-'set destroyed
-Sub SetDestroyed(module As Object,methodName As String) As VMElement
-	methodName = methodName.ToLowerCase
-	destroyed = BANano.CallBack(module, methodName, Null)
-	Return Me
-End Sub
-
-
 Sub AddToContainer(pCont As VMContainer, rowPos As Int, colPos As Int)
 	pCont.AddComponent(rowPos, colPos, ToString)
 End Sub
@@ -1562,18 +1578,706 @@ Sub BuildModel(mprops As Map, mstyles As Map, lclasses As List, loose As List) A
 	Return Me
 End Sub
 
-'set color intensity
-Sub SetTextColor(varColor As String) As VMElement
-	Dim sColor As String = $"${varColor}--text"$
-	AddClass(sColor)
+
+'set position
+Sub SetPosition(sposition As String) As VMElement
+	If sposition = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("position", sposition)
+		Return Me
+	End If
+	Dim pp As String = $"${ID}position"$
+	vue.SetStateSingle(pp, sposition)
+	Bind(":position", pp)
 	Return Me
 End Sub
 
-'set color intensity
-Sub SetTextColorIntensity(varColor As String, varIntensity As String) As VMElement
-	Dim sColor As String = $"${varColor}--text"$
-	Dim sIntensity As String = $"text--${varIntensity}"$
-	Dim mcolor As String = $"${sColor} ${sIntensity}"$
-	AddClass(mcolor)
+
+'set top
+Sub SetTop(stop As String) As VMElement
+	If stop = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("top", stop)
+		Return Me
+	End If
+	Dim pp As String = $"${ID}top"$
+	vue.SetStateSingle(pp, stop)
+	Bind(":top", pp)
+	Return Me
+End Sub
+
+
+'set bottom
+Sub SetBottom(sbottom As String) As VMElement
+	If sbottom = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("bottom", sbottom)
+		Return Me
+	End If
+	Dim pp As String = $"${ID}bottom"$
+	vue.SetStateSingle(pp, sbottom)
+	Bind(":bottom", pp)
+	Return Me
+End Sub
+
+
+'set left
+Sub SetLeft(sleft As String) As VMElement
+	If sleft = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("left", sleft)
+		Return Me
+	End If
+	Dim pp As String = $"${ID}left"$
+	vue.SetStateSingle(pp, sleft)
+	Bind(":left", pp)
+	Return Me
+End Sub
+
+
+'set right
+Sub SetRight(sright As String) As VMElement
+	If sright = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("right", sright)
+		Return Me
+	End If
+	Dim pp As String = $"${ID}right"$
+	vue.SetStateSingle(pp, sright)
+	Bind(":right", pp)
+	Return Me
+End Sub
+
+'add this element to parent
+Sub AddToParent(parent As VMElement) As VMElement
+	parent.SetText(ToString)
+	Return Me
+End Sub
+
+Sub AddAttr(attr As String, attrValue As String) As VMElement
+	SetAttrSingle(attr, attrValue)
+	Return Me
+End Sub
+
+Sub AddStyle(styleName As String, styleValue As String) As VMElement
+	SetStyleSingle(styleName, styleValue)
+	Return Me
+End Sub
+
+'add multiple styles
+Sub AddStyles(m As Map) As VMElement
+	For Each k As String In m.Keys
+		Dim v As String = m.Get(k)
+		AddStyle(k,v)
+	Next
+	Return Me
+End Sub
+
+'add multiple attributes
+Sub AddAttributes(m As Map) As VMElement
+	For Each k As String In m.Keys
+		Dim v As Object = m.Get(k)
+		SetAttrSingle(k, v)
+	Next
+	Return Me
+End Sub
+
+Sub SetOnKeydownEnter(eventHandler As Object, methodName As String) As VMElement
+	methodName = methodName.tolowercase
+	If SubExists(eventHandler, methodName) = False Then Return Me
+	Dim e As BANanoEvent
+	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, Array(e))
+	SetAttr(CreateMap("@keydown.enter": methodName))
+	'add to methods
+	vue.SetCallBack(methodName, cb)
+	Return Me
+End Sub
+
+Sub SetRounded As VMElement
+	AddClass("rounded")
+	Return Me
+End Sub
+
+Sub SetRounded_SM As VMElement
+	AddClass("rounded-sm")
+	Return Me
+End Sub
+
+Sub SetRounded_LG As VMElement
+	AddClass("rounded-lg")
+	Return Me
+End Sub
+
+Sub SetRounded_XL As VMElement
+	AddClass("rounded-xl")
+	Return Me
+End Sub
+
+
+Sub SetRounded_Pill As VMElement
+	AddClass("rounded-pill")
+	Return Me
+End Sub
+
+Sub SetRounded_Circle As VMElement
+	AddClass("rounded-circle")
+	Return Me
+End Sub
+
+Sub SetRounded_Top(Size As String) As VMElement
+	If Size = "" Then
+		AddClass("rounded-t")
+	Else
+		AddClass($"rounded-t-${Size}"$)
+	End If
+	Return Me
+End Sub
+
+Sub SetRounded_Bottom(Size As String) As VMElement
+	If Size = "" Then
+		AddClass("rounded-b")
+	Else
+		AddClass($"rounded-b-${Size}"$)
+	End If
+	Return Me
+End Sub
+
+Sub SetRounded_Right(Size As String) As VMElement
+	If Size = "" Then
+		AddClass("rounded-r")
+	Else
+		AddClass($"rounded-r-${Size}"$)
+	End If
+	Return Me
+End Sub
+
+Sub SetRounded_Left(Size As String) As VMElement
+	If Size = "" Then
+		AddClass("rounded-l")
+	Else
+		AddClass($"rounded-l-${Size}"$)
+	End If
+	Return Me
+End Sub
+
+Sub SetRounded_TopLeft(Size As String) As VMElement
+	If Size = "" Then
+		AddClass("rounded-tl")
+	Else
+		AddClass($"rounded-tl-${Size}"$)
+	End If
+	Return Me
+End Sub
+
+Sub SetRounded_TopRight(Size As String) As VMElement
+	If Size = "" Then
+		AddClass("rounded-tr")
+	Else
+		AddClass($"rounded-tr-${Size}"$)
+	End If
+	Return Me
+End Sub
+
+Sub SetRounded_BottomLeft(Size As String) As VMElement
+	If Size = "" Then
+		AddClass("rounded-bl")
+	Else
+		AddClass($"rounded-bl-${Size}"$)
+	End If
+	Return Me
+End Sub
+
+Sub SetRounded_BottomRight(Size As String) As VMElement
+	If Size = "" Then
+		AddClass("rounded-br")
+	Else
+		AddClass($"rounded-br-${Size}"$)
+	End If
+	Return Me
+End Sub
+
+Sub SetTypeEmail As VMElement
+	SetType("email")
+	Return Me
+End Sub
+
+Sub SetTypePassword As VMElement
+	SetType("password")
+	Return Me
+End Sub
+
+'this textbox accepts passwords
+Sub SetPassword(b As Boolean, toggle As Boolean) As VMElement
+	vue.SetData(password, False)
+	Dim sline As String = $"${password} ? 'mdi-eye' : 'mdi-eye-off'"$
+	If toggle Then Bind(":append-icon", sline)
+	Bind(":type", $"${password} ? 'text' : 'password'"$)
+	If toggle Then SetAttrSingle("@click:append", $"${password} = !${password}"$)
+	typeOf = "password"
+	SetAutoComplete("off")
+	Return Me
+End Sub
+
+Sub SetAutoCompleteOff As VMElement
+	SetAutoComplete("off")
+	Return Me
+End Sub
+
+Sub SetAutoCompleteOn As VMElement
+	SetAutoComplete("on")
+	Return Me
+End Sub
+
+'get the value
+Sub GetValue As String
+	Dim svalue As String = vue.GetData(vmodel)
+	Return svalue
+End Sub
+
+Sub SetShaped(varShaped As Boolean) As VMElement
+	If bStatic Then
+		SetAttrSingle("shaped", varShaped)
+	Else
+		Dim pp As String = $"${ID}Shaped"$
+		vue.SetStateSingle(pp, varShaped)
+		Bind(":shaped", pp)
+	End If
+	Return Me
+End Sub
+
+'set single-line
+Sub SetSingleLine(varSingleLine As Boolean) As VMElement
+	If bStatic Then
+		SetAttrSingle("single-line", varSingleLine)
+	Else
+		Dim pp As String = $"${ID}SingleLine"$
+		vue.SetStateSingle(pp, varSingleLine)
+		Bind(":single-line", pp)
+	End If
+	Return Me
+End Sub
+
+'set solo
+Sub SetSolo(varSolo As Boolean) As VMElement
+	If bStatic Then
+		SetAttrSingle("solo", varSolo)
+	Else
+		Dim pp As String = $"${ID}Solo"$
+		vue.SetStateSingle(pp, varSolo)
+		Bind(":solo", pp)
+	End If
+	Return Me
+End Sub
+
+'set solo-inverted
+Sub SetSoloInverted(varSoloInverted As Boolean) As VMElement
+	If bStatic Then
+		SetAttrSingle("solo-inverted", varSoloInverted)
+	Else
+		Dim pp As String = $"${ID}SoloInverted"$
+		vue.SetStateSingle(pp, varSoloInverted)
+		Bind(":solo-inverted", pp)
+	End If
+	Return Me
+End Sub
+
+
+'set prepend-icon
+Sub SetPrependIcon(varPrependIcon As String) As VMElement
+	If bStatic Then
+		SetAttrSingle("prepend-icon", varPrependIcon)
+	Else
+		Dim pp As String = $"${ID}PrependIcon"$
+		vue.SetStateSingle(pp, varPrependIcon)
+		Bind(":prepend-icon", pp)
+	End If
+	Return Me
+End Sub
+
+'set prepend-inner-icon
+Sub SetPrependInnerIcon(varPrependInnerIcon As String) As VMElement
+	If bStatic Then
+		SetAttrSingle("prepend-inner-icon", varPrependInnerIcon)
+	Else
+		Dim pp As String = $"${ID}PrependInnerIcon"$
+		vue.SetStateSingle(pp, varPrependInnerIcon)
+		Bind(":prepend-inner-icon", pp)
+	End If
+	Return Me
+End Sub
+
+'set readonly
+Sub SetReadonly(varReadonly As Boolean) As VMElement
+	If bStatic Then
+		SetAttrSingle("readonly", varReadonly)
+	Else
+		Dim pp As String = $"${ID}Readonly"$
+		vue.SetStateSingle(pp, varReadonly)
+		Bind(":readonly", pp)
+	End If
+	Return Me
+End Sub
+
+'set prefix
+Sub SetPrefix(varPrefix As String) As VMElement
+	If bStatic Then
+		SetAttrSingle("prefix", varPrefix)
+	Else
+		Dim pp As String = $"${ID}Prefix"$
+		vue.SetStateSingle(pp, varPrefix)
+		Bind(":prefix", pp)
+	End If
+	Return Me
+End Sub
+
+'set persistent-hint
+Sub SetPersistentHint(varPersistentHint As Boolean) As VMElement
+	If bStatic Then
+		SetAttrSingle("persistent-hint", varPersistentHint)
+	Else
+	Dim pp As String = $"${ID}PersistentHint"$
+	vue.SetStateSingle(pp, varPersistentHint)
+	Bind(":persistent-hint", pp)
+	End If
+	Return Me
+End Sub
+
+Sub SetTextArea As VMElement
+	SetTag("v-textarea")
+	typeOf = "textarea"
+	Return Me
+End Sub
+
+Sub SetMaxLength(varMaxLen As String) As VMElement
+	If bStatic Then
+		SetAttrSingle("maxlength", varMaxLen)
+	Else
+		Dim pp As String = $"${ID}varMaxLen"$
+		vue.SetStateSingle(pp, varMaxLen)
+		Bind(":maxlength", pp)
+	End If
+	Return Me
+End Sub
+
+'set the conver image for the container
+Sub SetCoverImage(url As String) As VMElement
+	SetStyleSingle("background", $"url('${url}')"$)
+	SetStyleSingle("background-size", "cover")
+	SetStyleSingle("width", "100%")
+	SetStyleSingle("height", "100%")
+	Return Me
+End Sub
+
+Sub SetMinWidth(w As String) As VMElement
+	If w = "" Then Return Me
+	SetStyleSingle("min-width", w)
+	Return Me
+End Sub
+
+Sub SetMinHeight(h As String) As VMElement
+	If h = "" Then Return Me
+	SetStyleSingle("min-height", h)
+	Return Me
+End Sub
+
+'set transition
+Sub SetTransition(varTransition As String) As VMElement
+	If varTransition = "" Then Return Me
+	SetAttrSingle("transition", varTransition)
+	Return Me
+End Sub
+
+'set the border
+Sub SetBorderStyle(bstyle As String) As VMElement
+	If bstyle = "" Then Return Me
+	SetStyleSingle("border-style", bstyle)
+	Return Me
+End Sub
+
+Sub SetBorderWidth(bwidth As String) As VMElement
+	If bwidth = "" Then Return Me
+	SetStyleSingle("border-width", bwidth)
+	Return Me
+End Sub
+
+'set the border
+Sub SetBorderColor(bcolor As String) As VMElement
+	If bcolor = "" Then Return Me
+	SetStyleSingle("border-color", bcolor)
+	Return Me
+End Sub
+
+Sub SetCenterContent As VMElement
+	SetJustify("center")
+	SetAlign("center")
+	AddClass("mx-auto")
+	Return Me
+End Sub
+
+
+'set append-icon
+Sub SetAppendIcon(varAppendIcon As String) As VMElement
+	If varAppendIcon = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("append-icon", varAppendIcon)
+	Else
+		Dim pp As String = $"${ID}AppendIcon"$
+		vue.SetStateSingle(pp, varAppendIcon)
+		Bind(":append-icon", pp)
+	End If
+	Return Me
+End Sub
+
+'set append-outer-icon
+Sub SetAppendOuterIcon(varAppendOuterIcon As String) As VMElement
+	If varAppendOuterIcon = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("append-outer-icon", varAppendOuterIcon)
+	Else
+		Dim pp As String = $"${ID}AppendOuterIcon"$
+		vue.SetStateSingle(pp, varAppendOuterIcon)
+		Bind(":append-outer-icon", pp)
+	End If
+	Return Me
+End Sub
+
+'set autofocus
+Sub SetAutofocus(varAutofocus As Boolean) As VMElement
+	If varAutofocus = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("autofocus", varAutofocus)
+	Else
+		Dim pp As String = $"${ID}Autofocus"$
+		vue.SetStateSingle(pp, varAutofocus)
+		Bind(":autofocus", pp)
+	End If
+	Return Me
+End Sub
+
+
+'set clearable
+Sub SetClearable(varClearable As Boolean) As VMElement
+	If varClearable = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("clearable", varClearable)
+	Else
+		Dim pp As String = $"${ID}Clearable"$
+		vue.SetStateSingle(pp, varClearable)
+		Bind(":clearable", pp)
+	End If
+	Return Me
+End Sub
+
+
+'set counter
+Sub SetCounter(varCounter As Boolean) As VMElement
+	If varCounter = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("counter", varCounter)
+	Else
+		Dim pp As String = $"${ID}Counter"$
+		vue.SetStateSingle(pp, varCounter)
+		Bind(":counter", pp)
+	End If
+	Return Me
+End Sub
+
+'set counter-value
+Sub SetCounterValue(varCounterValue As String) As VMElement
+	If varCounterValue = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("counter-value", varCounterValue)
+	Else
+		Dim pp As String = $"${ID}CounterValue"$
+		vue.SetStateSingle(pp, varCounterValue)
+		Bind(":counter-value", pp)
+	End If
+	Return Me
+End Sub
+
+
+'set filled
+Sub SetFilled(varFilled As Boolean) As VMElement
+	If varFilled = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("filled", varFilled)
+	Else
+	Dim pp As String = $"${ID}Filled"$
+	vue.SetStateSingle(pp, varFilled)
+	Bind(":filled", pp)
+	End If
+	Return Me
+End Sub
+
+
+'set hide-details
+Sub SetHideDetails(varHideDetails As Boolean) As VMElement
+	If varHideDetails = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("hide-details", varHideDetails)
+	Else
+	Dim pp As String = $"${ID}HideDetails"$
+	vue.SetStateSingle(pp, varHideDetails)
+	Bind(":hide-details", pp)
+	End If
+	Return Me
+End Sub
+
+'set hint
+Sub SetHint(varHint As String) As VMElement
+	If varHint = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("hint", varHint)
+	Else
+	Dim pp As String = $"${ID}Hint"$
+	vue.SetStateSingle(pp, varHint)
+	Bind(":hint", pp)
+	End If
+	Return Me
+End Sub
+
+'set label
+Sub SetLabel(varLabel As String) As VMElement
+	If varLabel = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("label", varLabel)
+	Else
+	Dim pp As String = $"${ID}Label"$
+	vue.SetStateSingle(pp, varLabel)
+	Bind(":label", pp)
+	End If
+	Return Me
+End Sub
+
+'set validate-on-blur
+Sub SetValidateOnBlur(varValidateOnBlur As Boolean) As VMElement
+	If varValidateOnBlur = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("validate-on-blur", varValidateOnBlur)
+		Return Me
+	End If
+	Dim pp As String = $"${ID}ValidateOnBlur"$
+	vue.SetBoolean(pp, varValidateOnBlur)
+	Bind(":validate-on-blur", pp)
+	Return Me
+End Sub
+
+'
+Sub SetOnClickAppend(eventHandler As Object, methodName As String) As VMElement
+	methodName = methodName.tolowercase
+	If SubExists(eventHandler, methodName) = False Then Return Me
+	Dim e As BANanoEvent
+	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, Array(e))
+	SetAttr(CreateMap("@click:append": methodName))
+	'add to methods
+	vue.SetCallBack(methodName, cb)
+	Return Me
+End Sub
+
+'
+Sub SetOnClickAppendOuter(eventHandler As Object, methodName As String) As VMElement
+	methodName = methodName.tolowercase
+	If SubExists(eventHandler, methodName) = False Then Return Me
+	Dim e As BANanoEvent
+	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, Array(e))
+	SetAttr(CreateMap("@click:append-outer": methodName))
+	'add to methods
+	vue.SetCallBack(methodName, cb)
+	Return Me
+End Sub
+
+'
+Sub SetOnClickClear(eventHandler As Object, methodName As String) As VMElement
+	methodName = methodName.tolowercase
+	If SubExists(eventHandler, methodName) = False Then Return Me
+	Dim e As BANanoEvent
+	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, Array(e))
+	SetAttr(CreateMap("@click:clear": methodName))
+	'add to methods
+	vue.SetCallBack(methodName, cb)
+	Return Me
+End Sub
+
+'
+Sub SetOnClickPrepend(eventHandler As Object, methodName As String) As VMElement
+	methodName = methodName.tolowercase
+	If SubExists(eventHandler, methodName) = False Then Return Me
+	Dim e As BANanoEvent
+	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, Array(e))
+	SetAttr(CreateMap("@click:prepend": methodName))
+	'add to methods
+	vue.SetCallBack(methodName, cb)
+	Return Me
+End Sub
+
+'
+Sub SetOnClickPrependInner(eventHandler As Object, methodName As String) As VMElement
+	methodName = methodName.tolowercase
+	If SubExists(eventHandler, methodName) = False Then Return Me
+	Dim e As BANanoEvent
+	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, Array(e))
+	SetAttr(CreateMap("@click:prepend-inner": methodName))
+	'add to methods
+	vue.SetCallBack(methodName, cb)
+	Return Me
+End Sub
+
+'
+Sub SetOnKeydown(eventHandler As Object, methodName As String) As VMElement
+	methodName = methodName.tolowercase
+	If SubExists(eventHandler, methodName) = False Then Return Me
+	Dim e As BANanoEvent
+	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, Array(e))
+	SetAttr(CreateMap("@keydown": methodName))
+	'add to methods
+	vue.SetCallBack(methodName, cb)
+	Return Me
+End Sub
+
+'set chips
+Sub SetChips(varChips As Boolean) As VMElement
+	If varChips = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("chips", varChips)
+		Return Me
+	End If	
+	Dim pp As String = $"${ID}Chips"$
+	vue.SetStateSingle(pp, varChips)
+	Bind(":chips", pp)
+	Return Me
+End Sub
+
+
+'set multiple
+Sub SetMultiple(varMultiple As Boolean) As VMElement
+	If varMultiple = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("multiple", varMultiple)
+		Return Me
+	End If
+	Dim pp As String = $"${ID}Multiple"$
+	vue.SetStateSingle(pp, varMultiple)
+	Bind(":multiple", pp)
+	Return Me
+End Sub
+
+
+'set small-chips
+Sub SetSmallChips(varSmallChips As Boolean) As VMElement
+	If varSmallChips = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("small-chips", varSmallChips)
+		Return Me
+	End If
+	Dim pp As String = $"${ID}SmallChips"$
+	vue.SetStateSingle(pp, varSmallChips)
+	Bind(":small-chips", pp)
+	Return Me
+End Sub
+
+'add placeholder to VAPP
+Sub AddPlaceholder() As VMElement
+	Dim stemplate As String = vue.BANanoGetHTML("placeholder")
+	SetText(stemplate)
 	Return Me
 End Sub

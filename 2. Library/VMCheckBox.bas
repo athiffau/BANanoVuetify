@@ -13,6 +13,7 @@ Sub Class_Globals
 	Private DesignMode As Boolean
 	Private Module As Object
 	Private bStatic As Boolean
+	Private vmodel As String
 End Sub
 
 'initialize the CheckBox
@@ -26,9 +27,29 @@ Public Sub Initialize(v As BANanoVue, sid As String, eventHandler As Object) As 
 	CheckBox.typeOf = "checkbox"
 	CheckBox.fieldType = "bool"
 	bStatic = False
+	vmodel = ""
+	SetOnChange(Module, $"${ID}_change"$)
+	SetOnClick(Module, $"${ID}_click"$)
 	Return Me
 End Sub
 
+Sub SetData(prop As String, value As Object) As VMCheckBox
+	vue.SetData(prop, value)
+	Return Me
+End Sub
+
+
+
+'add an element to the page content
+Sub AddElement(elm As VMElement)
+	CheckBox.SetText(elm.ToString)
+End Sub
+
+
+Sub SetFieldType(ft As String) As VMCheckBox
+	CheckBox.fieldType = ft
+	Return Me
+End Sub
 
 'set inset
 Sub SetInset(varInset As Boolean) As VMCheckBox
@@ -47,6 +68,11 @@ Sub SetSwitch As VMCheckBox
 	CheckBox.SetTag("v-switch")
 	CheckBox.typeOf = "switchbox"
 	CheckBox.fieldType = "bool"
+	Return Me
+End Sub
+
+Sub SetTag(sTag As String) As VMCheckBox
+	CheckBox.SetTag(sTag)
 	Return Me
 End Sub
 
@@ -163,10 +189,21 @@ End Sub
 
 'get component
 Sub ToString As String
+	If vue.ShowWarnings Then
+	Dim eName As String = $"${ID}_click"$
+	If SubExists(Module, eName) = False Then
+		Log($"VMCheckBox.${eName} event has not been defined!"$)
+	End If
+	eName = $"${ID}_change"$
+	If SubExists(Module, eName) = False Then
+		Log($"VMCheckBox.${eName} event has not been defined!"$)
+	End If
+	End If
 	Return CheckBox.ToString
 End Sub
 
 Sub SetVModel(k As String) As VMCheckBox
+	vmodel = k.tolowercase
 	CheckBox.SetVModel(k)
 	Return Me
 End Sub
@@ -302,14 +339,13 @@ End Sub
 
 'set error
 Sub SetError(varError As Boolean) As VMCheckBox
-	If varError = False Then Return Me
 	If bStatic Then
 		SetAttrSingle("error", varError)
-	Else
-	Dim pp As String = $"${ID}Error"$
+		Return Me
+	End If
+	Dim pp As String = $"${vmodel}Error"$
 	vue.SetStateSingle(pp, varError)
 	CheckBox.Bind(":error", pp)
-	End If
 	Return Me
 End Sub
 
@@ -318,29 +354,27 @@ Sub SetErrorCount(varErrorCount As String) As VMCheckBox
 	If varErrorCount = "" Then Return Me
 	If bStatic Then
 		SetAttrSingle("error-count", varErrorCount)
-	Else
-	Dim pp As String = $"${ID}ErrorCount"$
+		Return Me
+	End If
+	Dim pp As String = $"${vmodel}ErrorCount"$
 	vue.SetStateSingle(pp, varErrorCount)
 	CheckBox.Bind(":error-count", pp)
-	End If
 	Return Me
 End Sub
 
 'set error-messages
-Sub SetErrorMessages(varErrorMessages As Object) As VMCheckBox
-	If bStatic Then
-		SetAttrSingle("error-messages", varErrorMessages)
-	Else
-	Dim pp As String = $"${ID}ErrorMessages"$
-	vue.SetStateSingle(pp, varErrorMessages)
+Sub SetErrorMessages(b As Boolean) As VMCheckBox
+	If b = False Then Return Me
+	Dim nl As List = vue.NewList
+	Dim pp As String = $"${vmodel}ErrorMessages"$
+	vue.SetData(pp, nl)
 	CheckBox.Bind(":error-messages", pp)
-	End If
 	Return Me
 End Sub
 
 'set false-value
-Sub SetFalseValue(varFalseValue As Object) As VMCheckBox
-	CheckBox.Bind("false-value", varFalseValue)
+Sub SetFalseValue(varFalseValue As String) As VMCheckBox
+	SetAttrSingle("false-value", varFalseValue)
 	Return Me
 End Sub
 
@@ -410,7 +444,7 @@ End Sub
 
 'set input-value
 Sub SetInputValue(varInputValue As Object) As VMCheckBox
-	CheckBox.Bind("input-value", varInputValue)
+	SetAttrSingle("input-value", varInputValue)
 	Return Me
 End Sub
 
@@ -572,8 +606,13 @@ Sub SetRipple(varRipple As Boolean) As VMCheckBox
 End Sub
 
 'set rules
-Sub SetRules(varRules As Object) As VMCheckBox
-	CheckBox.Bind("rules", varRules)
+Sub SetRules(varRules As Boolean) As VMCheckBox
+	If varRules = False Then Return Me
+	If bStatic Then Return Me
+	If DesignMode Then Return Me
+	Dim pp As String = $"${vmodel}Rules"$
+	CheckBox.Bind(":rules", pp)
+	vue.SetData(pp, vue.NewList)
 	Return Me
 End Sub
 
@@ -603,8 +642,8 @@ Sub SetSuccessMessages(varSuccessMessages As Object) As VMCheckBox
 End Sub
 
 'set true-value
-Sub SetTrueValue(varTrueValue As Object) As VMCheckBox
-	CheckBox.Bind("true-value", varTrueValue)
+Sub SetTrueValue(varTrueValue As String) As VMCheckBox
+	SetAttrSingle("true-value", varTrueValue)
 	Return Me
 End Sub
 
@@ -622,9 +661,23 @@ Sub SetValidateOnBlur(varValidateOnBlur As Boolean) As VMCheckBox
 End Sub
 
 'set value
-Sub SetValue(varValue As Object) As VMCheckBox
-	CheckBox.SetValue(varValue,False)
+Sub SetValue(varValue As String) As VMCheckBox
+	If bStatic Then
+		SetAttrSingle("value", varValue)
+		Return Me
+	End If
+	If vmodel = "" Then
+		vmodel = $"${ID}value"$
+		SetVModel(vmodel)
+	End If
+	CheckBox.SetValue(varValue)
+	vue.SetData(vmodel, varValue)
 	Return Me
+End Sub
+
+Sub GetValue As String
+	Dim svalue As String = vue.GetData(vmodel)
+	Return svalue
 End Sub
 
 'set value-comparator
@@ -669,7 +722,7 @@ Sub SetOnClick(eventHandler As Object, methodName As String) As VMCheckBox
 	If SubExists(eventHandler, methodName) = False Then Return Me
 	Dim e As BANanoEvent
 	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, Array(e))
-	SetAttr(CreateMap("v-on:click": methodName))
+	SetAttr(CreateMap("@click": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -681,7 +734,7 @@ Sub SetOnClickAppend(eventHandler As Object, methodName As String) As VMCheckBox
 	If SubExists(eventHandler, methodName) = False Then Return Me
 	Dim e As BANanoEvent
 	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, Array(e))
-	SetAttr(CreateMap("v-on:click:append": methodName))
+	SetAttr(CreateMap("@click:append": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -693,7 +746,7 @@ Sub SetOnClickPrepend(methodName As String) As VMCheckBox
 	If SubExists(Module, methodName) = False Then Return Me
 	Dim e As BANanoEvent
 	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
-	SetAttr(CreateMap("v-on:click:prepend": methodName))
+	SetAttr(CreateMap("@click:prepend": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -705,7 +758,7 @@ Sub SetOnMousedown(methodName As String) As VMCheckBox
 	If SubExists(Module, methodName) = False Then Return Me
 	Dim e As BANanoEvent
 	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
-	SetAttr(CreateMap("v-on:mousedown": methodName))
+	SetAttr(CreateMap("@mousedown": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -717,7 +770,7 @@ Sub SetOnMouseup(methodName As String) As VMCheckBox
 	If SubExists(Module, methodName) = False Then Return Me
 	Dim e As BANanoEvent
 	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
-	SetAttr(CreateMap("v-on:mouseup": methodName))
+	SetAttr(CreateMap("@mouseup": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -728,8 +781,8 @@ Sub SetOnUpdateError(methodName As String) As VMCheckBox
 	methodName = methodName.tolowercase
 	If SubExists(Module, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, e)
-	SetAttr(CreateMap("v-on:update:error": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
+	SetAttr(CreateMap("@update:error": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -740,8 +793,8 @@ Sub SetOnUpdateIndeterminate(methodName As String) As VMCheckBox
 	methodName = methodName.tolowercase
 	If SubExists(Module, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, e)
-	SetAttr(CreateMap("v-on:update:indeterminate": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
+	SetAttr(CreateMap("@update:indeterminate": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -856,7 +909,7 @@ Sub SetOnChange(eventHandler As Object, methodName As String) As VMCheckBox
 	If SubExists(eventHandler, methodName) = False Then Return Me
 	Dim value As Object
 	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, Array(value))
-	SetAttr(CreateMap("v-on:change": methodName))
+	SetAttr(CreateMap("@change": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me

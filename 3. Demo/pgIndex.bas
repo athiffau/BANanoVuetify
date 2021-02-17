@@ -8,46 +8,26 @@ Version=7.8
 #IgnoreWarnings:12
 Sub Process_Globals
 	Dim vm As BANanoVM
+	Dim vue As BANanoVue
+	Private BANano As BANano
 End Sub
 
 Sub Init
 	vm.Initialize(Me, Main.appname)
+	vue = vm.vue
+	vue.DateDisplayFormat = "DD, MMM YYYY"
+	vm.ShowWarnings = False
+	vue.ShowWarnings = False		
 	'vm.Dark = True
 	'vm.SetLocale("ar")
 	vm.RTL = False
 	vm.SnackBar.SetColor("green")
 	vm.SnackBar.SetTop(True)
-	vm.NavBar.SetModeFixed(True)
-	vm.NavBar.SetHasMenuButton(True)
-	vm.NavBar.UpdateLogo("./assets/sponge.png")
-	vm.NavBar.UpdateTitle("BANanoVuetify 3")
-	vm.NavBar.Logo.SetBorderRadius("50%")
-	vm.NavBar.Logo.SetBorder("1px", vm.COLOR_BLACK, vm.BORDER_DOTTED)
+	vm.SnackBar.SetShaped(True) 
 	
-	vm.NavBar.SetColorIntensity(vm.COLOR_DEEPPURPLE, vm.INTENSITY_ACCENT4)
-	vm.NavBar.SetDark(True)
-	'
-	'vm.NavBar.AddSearch("txtsearch")
-	vm.NavBar.AddIcon("btnHeart", "mdi-heart", "My heart", "")
-	vm.NavBar.AddIcon("btnButton", "mdi-magnify", "My button", "")
-	'
-	'vm.NavBar.SetSrc("https://picsum.photos/1920/1080?random")
-	'
-
-	'
-	'vm.Drawer.SetMiniVariant(True)
-	'vm.Drawer.SetExpandOnHover(True)
-	
+	BuildNavBar
 	BuildDrawer
 	'
-	'vm.Drawer.SetSrc("./assets/bg-2.jpg")
-	'
-	'Dim btnLogOff As VMButton = vm.CreateButton("logOff", Me).SetLabel("Log Off").SetBlock(True)
-	'vm.Drawer.AddOnBottomSection(btnLogOff.tostring)
-	
-	'vm.Drawer.SetDark(True)
-	'vm.Drawer.SetColorIntensity(vm.COLOR_DEEPPURPLE, vm.INTENSITY_ACCENT4)
-	
 	
 	vm.Container.SetFluid(True)
 	'
@@ -57,93 +37,153 @@ Sub Init
 	vm.AddTheme("white-text-only", vm.vue.COLOR_WHITE, vm.vue.INTENSITY_NORMAL, vm.vue.COLOR_NONE, vm.vue.INTENSITY_NORMAL)
 	'
 	AddPages
-	'
-	'footer links
-	Dim footerLinks As List = Array("Home", "About Us", "Team", "Services", "Blog", "Contact Us")
-	vm.SetData("footerlinks", footerLinks)
+	BuildFooter
 	
-	vm.Footer.SetAbsolute(True).SetPadless(True).SetColorIntensity(vm.COLOR_PRIMARY, vm.INTENSITY_LIGHTEN1)
-	'
-	vm.Footer.Container.AddRows(2).AddColumns12
-	vm.Footer.Container.SetColorIntensityRC(2, 0, vm.COLOR_PRIMARY, vm.INTENSITY_LIGHTEN2)
-	vm.Footer.Container.SetJustifyRC(2, 0, vm.JUSTIFY_CENTER)
-	vm.Footer.Container.SetAlignRC(2, 0, vm.JUSTifY_CENTER)
-	vm.Footer.Container.AddLabel(2, 2, "lbl2", vm.SIZE_P, "2020")
-	'
 	vm.UX
-	vm.showpage(modInfoBox.name)
+	
+	vm.showpage(modDataTable.name)
+End Sub
+
+Sub BuildNavBar
+	'add a hamburger
+	vm.NavBar.AddHamburger
+	vm.NavBar.Hamburger.SetVisible(True)
+	'vm.NavBar.SetClippedLeft(True)
+		
+	'add a logo
+	vm.NavBar.Logo.SetBorderRadius("50%")
+	vm.NavBar.Logo.SetBorderWidth("1px")
+	vm.NavBar.Logo.SetBorderColor("black")
+	vm.NavBar.Logo.SetBorderStyle("solid")
+	vm.NavBar.Logo.SetSize("46px","46px")
+	vm.NavBar.AddLogo("./assets/sponge.png")
+	vm.NavBar.Logo.Show
+	vm.NavBar.AddTitle(Main.AppTitle,"")
+	vm.NavBar.AddSubHeading1(Main.Version)
+	vm.NavBar.AddSpacer
+	vm.NavBar.SetVisible(True)
+	vm.NavBar.SetModeFixed(True)
+	vm.NavBar.SetColorIntensity(vm.COLOR_DEEPPURPLE, vm.INTENSITY_ACCENT4)
+	vm.NavBar.SetDark(True)
+	'
+	vm.NavBar.AddSearch("txtsearch")
+	vm.NavBar.AddIcon("btnHeart", "mdi-heart", "My heart", "")
+	vm.NavBar.AddIcon("btnButton", "mdi-magnify", "My button", "")
+	'
+	'vm.NavBar.SetSrc("https://picsum.photos/1920/1080?random")
+	'
+
+End Sub
+
+Sub BuildFooter
+	vm.Footer.SHow
+	vm.Footer.SetFixed(True)
+	vm.Footer.SetColor("indigo")
+	vm.footer.Container.SetTag("div")
+	vm.footer.Container.AddRows(1).AddColumns12
+	vm.Footer.AddMadeWithLove(1, 1, "with B4J, BANanano & BANanoVuetify by", "TheMash", "mbanga.anele@gmail.com")
 End Sub
 
 Sub BuildDrawer
+	'vm.Drawer.SetClipped(True)
+	vm.Drawer.Show
+	'
+	'vm.Drawer.SetMiniVariant(True)
+	'vm.Drawer.SetExpandOnHover(True)
+	
+	'
+	'Dim btnLogOff As VMButton = vm.CreateButton("logOff", Me).SetLabel("Log Off").SetBlock(True)
+	'vm.Drawer.AddOnBottomSection(btnLogOff.tostring)
+	
+	'vm.Drawer.SetDark(True)
+	'vm.Drawer.SetColorIntensity(vm.COLOR_DEEPPURPLE, vm.INTENSITY_ACCENT4)
+	
+	
+	vm.Drawer.SetOpenOnMediumLarge(True)
+	'vm.Drawer.SetSrc("https://picsum.photos/1920/1080?random")
 	vm.Drawer.List.SetDense(True)
 	vm.Drawer.SetWidth("300")
-	vm.Drawer.AddTitleSubTitle("BANanoVuetify", "Version 3.00")
+	vm.Drawer.AddTitleSubTitle("BANanoVuetifyCore", $"Version ${Main.version}"$)
 	vm.Drawer.AddDivider
-	vm.Drawer.AddItem("designer", "", "Designer")
-	vm.Drawer.AddItem("alerts", "", "Alerts")
-	vm.Drawer.AddItem("toolbars", "", "Toolbars")
-	vm.Drawer.AddItem("grids", "", "Grids")
-	vm.Drawer.AddItem("avatars", "", "Avatars")
-	vm.Drawer.AddItem("badges", "", "Badges")
-	vm.Drawer.AddItem("banners", "", "Banners")
-	vm.Drawer.AddItem("bottomnavigation", "", "Bottom Navigation")
-	vm.Drawer.AddItem("bottomsheets", "", "Bottom Sheets")
-	'vm.Drawer.AddItem("breadcrumbs", "", "Breadcrumbs")
-	vm.Drawer.AddItem("buttons", "", "Buttons")
-	'vm.Drawer.AddItem("calendars", "", "Calendars")
-	'vm.Drawer.AddItem("cards", "", "Cards")
-	vm.Drawer.AddItem("chips", "", "Chips")
-	vm.Drawer.AddItem("dialogs", "", "Dialogs")
-	vm.Drawer.AddItem("autocomplete", "", "Auto Complete")
-	vm.Drawer.AddItem("checkbox", "", "Check Box")
-	vm.Drawer.AddItem("combo", "", "Combo Box")
-	vm.Drawer.AddItem("datepicker", "", "Date Picker")
-	vm.Drawer.AddItem("fileinput", "", "File Input")
-	vm.Drawer.AddItem("form", "", "Form")
-	vm.Drawer.AddItem("radiogroups", "", "Radio Groups")
-	vm.Drawer.AddItem("selects", "", "Selects")
-	vm.Drawer.AddItem("slider", "", "Slider")
-	vm.Drawer.AddItem("switch", "", "Switch")
-	vm.Drawer.AddItem("textarea", "", "Text Area")
-	vm.Drawer.AddItem("textfield", "", "Text Field")
-	vm.Drawer.AddItem("timepicker", "", "Time Picker")
-	'vm.Drawer.AddItem("groups", "", "Groups")
-	'vm.Drawer.AddItem("hover", "", "Hover")
-	vm.Drawer.AddItem("icons", "", "Icons")
-	vm.Drawer.AddItem("images", "", "Images")
-	'vm.Drawer.AddItem("lazy", "", "Lazy")
-	vm.Drawer.AddItem("lists", "", "Lists")
-	vm.Drawer.AddItem("menus", "", "Menus")
-	vm.Drawer.AddItem("overlays", "", "Overlays")
-	'vm.Drawer.AddItem("pagination", "", "Paginations")
-	'vm.Drawer.AddItem("progress", "", "Progress")
-	'vm.Drawer.AddItem("sheets", "", "Sheets")
-	vm.Drawer.AddItem("modLoadingSkeleton", "", "Skeleton Loaders")
-	vm.Drawer.AddItem("snackbars", "", "Snackbars")
-	'vm.Drawer.AddItem("sparklines", "", "Sparklines")
-	vm.Drawer.AddItem("steppers", "", "Steppers")
-	'vm.Drawer.AddItem("subheads", "", "Subheads")
-	vm.Drawer.AddItem("tables", "", "Tables")
-	vm.Drawer.AddItem("tabs", "", "Tabs")
-	'vm.Drawer.AddItem("timelines", "", "Timelines")
-	'vm.Drawer.AddItem("tooltips", "", "Tooltips")
-	vm.Drawer.AddItem("treeview", "", "TreeView")
-	vm.Drawer.AddItem("design", "", "Grid Design")
-	vm.Drawer.AddItem("chartkick", "", "Chart Kick")
-	vm.Drawer.AddItem("device", "", "Device")
-	vm.drawer.AddItem("gmap", "", "Google Map")
-	vm.drawer.AddItem("quill", "", "Quill")
-	vm.drawer.AddItem("infobox", "", "Info Box")
-	vm.drawer.AddItem("prism", "", "Prism")
-	vm.drawer.AddItem("carousel", "", "Carousel")
-	vm.drawer.AddItem("messageboard", "", "Message Board")
-	vm.Drawer.AddItem("expansionpanel", "", "Expansion Panel")
-	vm.Drawer.AddItem("parallax", "", "Parallax")
-	vm.Drawer.AddItem("colorpicker", "", "Color Picker")
-	vm.drawer.AddItem("rating", "", "Rating")
-	vm.drawer.additem("echarts", "", "ECharts")
-	vm.drawer.additem("arccounter", "", "Arc Counter")
-	'vm.drawer.Additem("selectsides", "", "Select Sides")
+	'
+	vm.Drawer.AddParentChild("","styles", "", "", "Styles & Animations","")
+	vm.Drawer.AddParentChild("styles","borders", "", "", "Borders & Radius","")
+	vm.Drawer.AddParentChild("styles","itemgroups", "", "", "Item Groups","")
+	vm.Drawer.AddParentChild("styles","slidegroups", "", "", "Slide Groups","")
+	vm.Drawer.AddParentChild("styles","windows", "", "", "Windows","")
+	'vm.Drawer.AddParentChild("styles","dynamic", "", "", "Dynamic Input Controls","")
+	'vm.drawer.AddParentChild("styles", "gridselect", "", "", "Grid Select", "")
+	'
+	vm.Drawer.AddParentChild("","ui", "", "", "UI Components","")
+	vm.Drawer.AddParentChild("ui","alerts", "", "", "Alerts","")
+	vm.Drawer.AddParentChild("ui", "avatars", "", "", "Avatars","")
+	vm.Drawer.AddParentChild("ui", "badges", "", "", "Badges","")
+	vm.Drawer.AddParentChild("ui", "banners", "", "", "Banners","")
+	vm.Drawer.AddParentChild("ui", "bottomnavigation", "", "", "Bottom Navigation","")
+	vm.Drawer.AddParentChild("ui", "bottomsheets", "", "", "Bottom Sheets","")
+	vm.Drawer.AddParentChild("ui", "breadcrumbs", "", "", "Breadcrumbs","")
+	vm.Drawer.AddParentChild("ui", "buttons", "", "", "Buttons","")
+	vm.Drawer.AddParentChild("ui", "calendar", "", "", "Calendar","")
+	vm.Drawer.AddParentChild("ui", "cards", "", "", "Cards","")
+	vm.drawer.AddParentChild("ui", "carousel", "","", "Carousel","")
+	vm.Drawer.AddParentChild("ui", "chips", "", "", "Chips","")
+	vm.Drawer.AddParentChild("ui", "dialogs", "", "", "Dialogs", "")
+	vm.Drawer.AddParentChild("ui", "expansionpanel", "", "", "Expansion Panel","")
+	'
+	vm.Drawer.AddParentChild("ui", "icons", "", "", "Icons","")
+	vm.Drawer.AddParentChild("ui", "images", "","", "Images","")
+	'vm.Drawer.AddParentChild("lazy", "", "Lazy")
+	vm.Drawer.AddParentChild("ui", "lists", "", "", "Lists","")
+	vm.Drawer.AddParentChild("ui", "menus", "", "", "Menus","")
+	vm.Drawer.AddParentChild("ui", "overlays", "", "", "Overlays","")
+	vm.Drawer.AddParentChild("ui", "pagination", "", "", "Paginations","")
+	vm.Drawer.AddParentChild("ui", "parallax", "", "", "Parallax","")
+	vm.Drawer.AddParentChild("ui", "progress", "", "", "Progress", "")
+	vm.Drawer.AddParentChild("ui", "modLoadingSkeleton", "", "", "Skeleton Loaders","")
+	vm.Drawer.AddParentChild("ui", "snackbars", "","", "Snackbars","")
+	vm.Drawer.AddParentChild("ui", "sparklines", "", "", "Sparklines","")
+	vm.Drawer.AddParentChild("ui", "steppers", "", "", "Steppers","")
+	vm.Drawer.AddParentChild("ui", "tables", "", "", "Tables","")
+	vm.Drawer.AddParentChild("ui", "simpletable", "", "", "Simple Table","")
+	vm.Drawer.AddParentChild("ui", "tabs", "", "", "Tabs","")
+	vm.Drawer.AddParentChild("ui", "timelines", "", "", "Timelines","")
+	vm.Drawer.AddParentChild("ui", "toolbars", "", "", "Toolbars","")
+	vm.Drawer.AddParentChild("ui", "treeview", "", "", "TreeView","")
+	'
+	vm.Drawer.AddParentChild("", "forms", "", "", "Form Inputs", "")
+	vm.Drawer.AddParentChild("forms", "autocomplete", "", "", "Auto Complete","")
+	vm.Drawer.AddParentChild("forms", "checkbox", "", "", "Check Box","")
+	vm.Drawer.AddParentChild("forms", "combo", "", "", "Combo Box","")
+	vm.Drawer.AddParentChild("forms", "colorpicker", "", "", "Color Picker","")
+	vm.Drawer.AddParentChild("forms", "datepicker", "", "", "Date Picker","")
+	vm.Drawer.AddParentChild("forms", "fileinput", "", "", "File Input","")
+	vm.Drawer.AddParentChild("forms", "form", "","", "Form","")
+	vm.Drawer.AddParentChild("forms", "radiogroups", "", "", "Radio Groups","")
+	vm.drawer.AddParentChild("forms", "rating", "", "", "Rating","")
+	vm.Drawer.AddParentChild("forms", "selects", "","", "Selects","")
+	vm.Drawer.AddParentChild("forms", "switch", "", "", "Switch","")
+	vm.Drawer.AddParentChild("forms", "slider", "","", "Slider","")
+	vm.Drawer.AddParentChild("forms", "textarea", "","", "Text Area","")
+	vm.Drawer.AddParentChild("forms", "textfield", "","", "Text Field","")
+	vm.Drawer.AddParentChild("forms", "timepicker", "", "", "Time Picker","")
+	'
+	vm.Drawer.AddParentChild("", "grid", "", "", "Grid Design", "")
+	vm.Drawer.AddParentChild("grid", "grids", "", "", "Grids","")
+	vm.Drawer.AddParentChild("grid", "design", "", "", "Grid Design","")
+	
+	vm.Drawer.AddParentChild("", "examples", "", "", "Examples", "")
+	'vm.drawer.AddParentChild("examples", "pages", "", "", "Creating Pages","")
+	vm.drawer.AddParentChild("examples", "messageboard", "", "", "Message Board","")
+	vm.drawer.AddParentChild("examples", "reallogs", "", "", "Realtime Logging","")
+	
+	'vm.Drawer.AddParentChild("", "extensions", "", "", "Extensions", "")
+	'vm.Drawer.AddParentChild("extensions", "toolkit", "", "", "Toolkit", "")
+	
+	
+	'* IMPORTANT
+	vm.drawer.Refresh
+	
+	
 End Sub
 
 'when the ok button is clicked for a confirm dialog
@@ -173,28 +213,69 @@ Sub alert_ok(e As BANanoEvent)
 	Case "alertuser"
 		vm.ShowSnackBar("Selected alert user!")
 	Case Else
-		vm.ShowSnackBar(sproc)
-	End Select		
+			vm.ShowSnackBar(sproc)
+	End Select
 End Sub
 
+
 '*IMPORTANT
-Sub draweritems_click(e As BANanoEvent)
-	'get the id from the event
-	Dim elID As String = vm.GetIDFromEvent(e)
+Sub draweritems_click(elID As Object)
 	vm.pageresume
+	vm.BottomNav.Hide
+	modSnackBar.HideSnacks
+	'stop logs
+	vm.callmethod("stop")
 	Select Case elID
-	Case "selectsides"
-		'vm.NavBar.UpdateTitle(modSelectSides.title)
-		'vm.ShowPage(modSelectSides.name)
-	Case "arccounter"
-		vm.NavBar.UpdateTitle(modArcCounter.title)
-		vm.ShowPage(modArcCounter.name)
-	Case "designer"
-		vm.pagepause
-		modDesigner.init
-	Case "echarts"
-		vm.NavBar.UpdateTitle(modECharts.title)
-		vm.ShowPage(modECharts.name)
+	Case "pages"
+		'vm.NavBar.UpdateTitle(modPages.title)
+		'vm.showpage(modPages.name)
+	Case "gridselect"
+		'vm.NavBar.UpdateTitle(modGridSelect.title)
+		'vm.showpage(modGridSelect.name)
+	Case "dynamic"
+		'vm.NavBar.UpdateTitle(modDynamic.title)
+		'vm.showpage(modDynamic.name)
+		'modDynamic.BuildDynamicForm
+	Case "windows"
+		vm.NavBar.UpdateTitle(modWindow.title)
+		vm.ShowPage(modWindow.name)
+	Case "slidegroups"
+		vm.NavBar.UpdateTitle(modSlideGroups.title)
+		vm.ShowPage(modSlideGroups.name)
+	Case "itemgroups"
+		vm.NavBar.UpdateTitle(modItemGroups.title)
+		vm.ShowPage(modItemGroups.name)
+	Case "borders"
+		vm.NavBar.UpdateTitle(pgBRs.title)
+		vm.ShowPage(pgBRs.name)
+	Case "toolkit"
+		vm.NavBar.UpdateTitle(modToolkit.title)
+		vm.ShowPage(modToolkit.name)
+		modToolkit.Show
+	Case "calendar"
+		vm.NavBar.UpdateTitle(modCalendar.title)
+		vm.ShowPage(modCalendar.name)
+	Case "reallogs"
+		vm.NavBar.UpdateTitle(modRealtimeLogging.title)
+		vm.ShowPage(modRealtimeLogging.name)
+	Case "progress"
+		vm.NavBar.UpdateTitle(modProgress.title)
+		vm.ShowPage(modProgress.name)
+	Case "pagination"
+		vm.NavBar.UpdateTitle(modPagination.title)
+		vm.ShowPage(modPagination.name)
+	Case "breadcrumbs"
+		vm.NavBar.UpdateTitle(modBreadCrumbs.title)
+		vm.ShowPage(modBreadCrumbs.name)
+	Case "cards"
+		vm.NavBar.UpdateTitle(modCard.title)
+		vm.ShowPage(modCard.name)
+	Case "sparklines"
+		vm.NavBar.UpdateTitle(modSparkLine.title)
+		vm.ShowPage(modSparkLine.name)
+	Case "timelines"
+		vm.NavBar.UpdateTitle(modTimeLine.title)
+		vm.ShowPage(modTimeLine.name)
 	Case "modloadingskeleton"
 		vm.NavBar.UpdateTitle(modLoadingSkeleton.title)
 		vm.ShowPage(modLoadingSkeleton.name)
@@ -216,25 +297,6 @@ Sub draweritems_click(e As BANanoEvent)
 	Case "carousel"
 		vm.NavBar.UpdateTitle(modCarousel.title)
 		vm.ShowPage(modCarousel.name)
-	Case "prism"
-		vm.NavBar.UpdateTitle(modPrism.title)
-		vm.ShowPage(modPrism.name)
-	Case "quill"
-		vm.NavBar.UpdateTitle(modQuill.title)
-		vm.ShowPage(modQuill.name)
-	Case "infobox"
-		vm.NavBar.UpdateTitle(modInfoBox.title)
-		vm.ShowPage(modInfoBox.name)
-		modInfoBox.refresh
-	Case "gmap"
-		vm.NavBar.UpdateTitle(modGMap.title)
-		vm.ShowPage(modGMap.name)
-	Case "device"
-		vm.NavBar.UpdateTitle(modDevice.title)
-		vm.ShowPage(modDevice.name)
-	Case "chartkick"
-		vm.NavBar.UpdateTitle(modChartKick.title)
-		vm.ShowPage(modChartKick.name)
 	Case "alerts"
 		vm.NavBar.UpdateTitle(modAlert.title)
 		vm.ShowPage(modAlert.name)
@@ -242,6 +304,7 @@ Sub draweritems_click(e As BANanoEvent)
 		vm.NavBar.UpdateTitle(modBottomSheet.title)
 		vm.ShowPage(modBottomSheet.name)
 	Case "bottomnavigation"
+		vm.BottomNav.Show
 		vm.NavBar.UpdateTitle(modBottomNavigation.title)
 		vm.ShowPage(modBottomNavigation.name)
 	Case "banners"
@@ -250,6 +313,9 @@ Sub draweritems_click(e As BANanoEvent)
 	Case "design"
 		vm.NavBar.UpdateTitle(modDesign.title)
 		vm.ShowPage(modDesign.name)
+	Case "simpletable"
+		vm.NavBar.UpdateTitle(modSimpleTable.title)
+		vm.ShowPage(modSimpleTable.name)
 	Case "tables"
 		vm.NavBar.UpdateTitle(modDataTable.title)
 		vm.ShowPage(modDataTable.name)
@@ -257,9 +323,9 @@ Sub draweritems_click(e As BANanoEvent)
 		vm.NavBar.UpdateTitle(modTreeView.title)
 		vm.ShowPage(modTreeView.name)
 	Case "overlays"
-		vm.NavBar.UpdateTitle("Overlay")
-		vm.ShowPage("")
-		vm.PagePause		
+		vm.NavBar.UpdateTitle(modOverlay.title)
+		vm.ShowPage(modOverlay.name)
+			vm.PagePause
 	Case "images"
 		vm.NavBar.UpdateTitle(modImages.title)
 		vm.ShowPage(modImages.name)
@@ -288,8 +354,9 @@ Sub draweritems_click(e As BANanoEvent)
 			vm.NavBar.UpdateTitle(modDialog.title)
 		vm.ShowPage(modDialog.name)
 	Case "snackbars"
-			vm.NavBar.UpdateTitle(modSnackBar.title)
+		vm.NavBar.UpdateTitle(modSnackBar.title)
 		vm.ShowPage(modSnackBar.name)
+		modSnackBar.ShowSnacks
 	Case "checkbox"
 			vm.NavBar.UpdateTitle(modCheckBox.title)
 		vm.ShowPage(modCheckBox.name)
@@ -330,7 +397,7 @@ Sub draweritems_click(e As BANanoEvent)
 			vm.NavBar.UpdateTitle(modMenus.title)
 		vm.ShowPage(modMenus.name)		
 	Case "autocomplete"
-			vm.NavBar.UpdateTitle(modAutoComplete.title)
+		vm.NavBar.UpdateTitle(modAutoComplete.title)
 		modAutoComplete.reset
 		vm.ShowPage(modAutoComplete.name)		
 	Case "lists"
@@ -413,12 +480,6 @@ Sub AddPages
 	vm.AddPage(modBottomNavigation.name, modBottomNavigation)
 	vm.AddPage(modBottomSheet.name, modBottomSheet)
 	vm.AddPage(modAlert.name, modAlert)
-	vm.addpage(modChartKick.name, modChartKick)
-	vm.addpage(modDevice.name, modDevice)
-	vm.addpage(modGMap.name, modGMap)
-	vm.addpage(modInfoBox.name, modInfoBox)
-	vm.AddPage(modQuill.name, modQuill)
-	vm.addpage(modPrism.name, modPrism)
 	vm.AddPage(modCarousel.name, modCarousel)
 	vm.AddPage(modMessageBoard.name, modMessageBoard)
 	vm.AddPage(modExpansionPanels.name, modExpansionPanels)
@@ -426,7 +487,37 @@ Sub AddPages
 	vm.addpage(modColorPicker.name, modColorPicker)
 	vm.addpage(modRating.name, modRating)
 	vm.AddPage(modLoadingSkeleton.name, modLoadingSkeleton)
-	vm.addpage(modECharts.name, modECharts)
-	vm.AddPage(modArcCounter.name, modArcCounter)
-	'vm.addpage(modSelectSides.name, modSelectSides)
+	vm.AddPage(modTimeLine.name, modTimeLine)
+	vm.AddPage(modSparkLine.name, modSparkLine)
+	vm.AddPage(modCard.name, modCard)
+	vm.AddPage(modBreadCrumbs.name, modBreadCrumbs)
+	vm.AddPage(modPagination.name, modPagination)
+	vm.AddPage(modProgress.name, modProgress)
+	vm.AddPage(modOverlay.name, modOverlay)
+	vm.AddPage(modRealtimeLogging.name, modRealtimeLogging)
+	vm.AddPage(modCalendar.name, modCalendar)
+	'vm.AddPage(modToolkit.name, modToolkit)
+	vm.AddPage(pgBRs.name, pgBRs)
+	vm.AddPage(modItemGroups.name, modItemGroups)
+	vm.AddPage(modSlideGroups.name, modSlideGroups)
+	vm.AddPage(modWindow.name, modWindow)
+	'vm.addpage(modDynamic.name, modDynamic)
+	'vm.AddPage(modGridSelect.Name, modGridSelect)
+	'vm.AddPage(modPages.name, modPages)
+	vm.AddPage(modSimpleTable.name, modSimpleTable)
 End Sub
+
+Private Sub bottomnav_change(value As Object)
+	vm.ShowSnackBarSuccess(value)
+End Sub
+
+Sub CreateVBCode(vuex As BANanoVue, module As Object, codeID As String, sTitle As String, scode As String) As VMPrism
+	scode = scode.Replace("~", "$")
+	Dim pri As VMPrism
+	pri.Initialize(vuex, codeID, module)
+	pri.SetLanguage("vb")
+	pri.SetTitle(sTitle)
+	pri.SetCode(scode)
+	Return pri
+End Sub
+  

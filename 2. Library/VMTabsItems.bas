@@ -10,7 +10,7 @@ Sub Class_Globals
 	Public ID As String
 	Private vue As BANanoVue
 	Private BANano As BANano  'ignore
-	Private DesignMode As Boolean
+	Private DesignMode As Boolean   'ignore
 	Private Module As Object
 	Private bStatic As Boolean
 End Sub
@@ -24,7 +24,15 @@ Public Sub Initialize(v As BANanoVue, sid As String, eventHandler As Object) As 
 	Module = eventHandler
 	vue = v
 	bStatic = False
+	SetOnChange($"${ID}_change"$)
 	Return Me
+End Sub
+
+
+
+'add an element to the page content
+Sub AddElement(elm As VMElement)
+	TabsItems.SetText(elm.ToString)
 End Sub
 
 Sub SetStatic(b As Boolean) As VMTabsItems
@@ -37,6 +45,13 @@ Sub AddComponent(comp As String) As VMTabsItems
 	TabsItems.SetText(comp)
 	Return Me
 End Sub
+
+Sub SetData(xprop As String, xValue As Object) As VMTabsItems
+	vue.SetData(xprop, xValue)
+	Return Me
+End Sub
+
+
 
 Sub SetAttrLoose(loose As String) As VMTabsItems
 	TabsItems.SetAttrLoose(loose)
@@ -53,7 +68,12 @@ End Sub
 
 'get component
 Sub ToString As String
-	
+	If vue.ShowWarnings Then
+	Dim eName As String = $"${ID}_change"$
+	If SubExists(Module, eName) = False Then
+		Log($"VMTabsItems.${eName} event has not been defined!"$)
+	End If
+	End If
 	Return TabsItems.ToString
 End Sub
 
@@ -62,12 +82,12 @@ Sub SetVModel(k As String) As VMTabsItems
 	Return Me
 End Sub
 
-Sub SetVIf(vif As Object) As VMTabsItems
+Sub SetVIf(vif As String) As VMTabsItems
 	TabsItems.SetVIf(vif)
 	Return Me
 End Sub
 
-Sub SetVShow(vif As Object) As VMTabsItems
+Sub SetVShow(vif As String) As VMTabsItems
 	TabsItems.SetVShow(vif)
 	Return Me
 End Sub
@@ -121,7 +141,12 @@ Sub AddChildren(children As List)
 End Sub
 
 'set active-class
-Sub SetActiveClass(varActiveClass As Object) As VMTabsItems
+Sub SetActiveClass(varActiveClass As String) As VMTabsItems
+	If varActiveClass = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("active-class", varActiveClass)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}ActiveClass"$
 	vue.SetStateSingle(pp, varActiveClass)
 	TabsItems.Bind(":active-class", pp)
@@ -129,7 +154,12 @@ Sub SetActiveClass(varActiveClass As Object) As VMTabsItems
 End Sub
 
 'set continuous
-Sub SetContinuous(varContinuous As Object) As VMTabsItems
+Sub SetContinuous(varContinuous As Boolean) As VMTabsItems
+	If varContinuous = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("continuous",varContinuous)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Continuous"$
 	vue.SetStateSingle(pp, varContinuous)
 	TabsItems.Bind(":continuous", pp)
@@ -137,7 +167,12 @@ Sub SetContinuous(varContinuous As Object) As VMTabsItems
 End Sub
 
 'set dark
-Sub SetDark(varDark As Object) As VMTabsItems
+Sub SetDark(varDark As Boolean) As VMTabsItems
+	If varDark = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("dark", varDark)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Dark"$
 	vue.SetStateSingle(pp, varDark)
 	TabsItems.Bind(":dark", pp)
@@ -145,7 +180,12 @@ Sub SetDark(varDark As Object) As VMTabsItems
 End Sub
 
 'set light
-Sub SetLight(varLight As Object) As VMTabsItems
+Sub SetLight(varLight As Boolean) As VMTabsItems
+	If varLight = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("light", varLight)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Light"$
 	vue.SetStateSingle(pp, varLight)
 	TabsItems.Bind(":light", pp)
@@ -153,7 +193,12 @@ Sub SetLight(varLight As Object) As VMTabsItems
 End Sub
 
 'set mandatory
-Sub SetMandatory(varMandatory As Object) As VMTabsItems
+Sub SetMandatory(varMandatory As Boolean) As VMTabsItems
+	If varMandatory = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("mandatory", varMandatory)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Mandatory"$
 	vue.SetStateSingle(pp, varMandatory)
 	TabsItems.Bind(":mandatory", pp)
@@ -161,7 +206,12 @@ Sub SetMandatory(varMandatory As Object) As VMTabsItems
 End Sub
 
 'set max
-Sub SetMax(varMax As Object) As VMTabsItems
+Sub SetMax(varMax As String) As VMTabsItems
+	If varMax = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("max", varMax)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Max"$
 	vue.SetStateSingle(pp, varMax)
 	TabsItems.Bind(":max", pp)
@@ -169,7 +219,12 @@ Sub SetMax(varMax As Object) As VMTabsItems
 End Sub
 
 'set multiple
-Sub SetMultiple(varMultiple As Object) As VMTabsItems
+Sub SetMultiple(varMultiple As Boolean) As VMTabsItems
+	If varMultiple = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("multiple", varMultiple)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Multiple"$
 	vue.SetStateSingle(pp, varMultiple)
 	TabsItems.Bind(":multiple", pp)
@@ -177,7 +232,12 @@ Sub SetMultiple(varMultiple As Object) As VMTabsItems
 End Sub
 
 'set next-icon
-Sub SetNextIcon(varNextIcon As Object) As VMTabsItems
+Sub SetNextIcon(varNextIcon As String) As VMTabsItems
+	If varNextIcon = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("next-icon", varNextIcon)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}NextIcon"$
 	vue.SetStateSingle(pp, varNextIcon)
 	TabsItems.Bind(":next-icon", pp)
@@ -185,7 +245,12 @@ Sub SetNextIcon(varNextIcon As Object) As VMTabsItems
 End Sub
 
 'set prev-icon
-Sub SetPrevIcon(varPrevIcon As Object) As VMTabsItems
+Sub SetPrevIcon(varPrevIcon As String) As VMTabsItems
+	If varPrevIcon = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("prev-icon", varPrevIcon)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}PrevIcon"$
 	vue.SetStateSingle(pp, varPrevIcon)
 	TabsItems.Bind(":prev-icon", pp)
@@ -193,7 +258,12 @@ Sub SetPrevIcon(varPrevIcon As Object) As VMTabsItems
 End Sub
 
 'set reverse
-Sub SetReverse(varReverse As Object) As VMTabsItems
+Sub SetReverse(varReverse As Boolean) As VMTabsItems
+	If varReverse = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("reverse", varReverse)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Reverse"$
 	vue.SetStateSingle(pp, varReverse)
 	TabsItems.Bind(":reverse", pp)
@@ -201,15 +271,25 @@ Sub SetReverse(varReverse As Object) As VMTabsItems
 End Sub
 
 'set show-arows
-Sub SetShowArows(varShowArows As Object) As VMTabsItems
-	Dim pp As String = $"${ID}ShowArows"$
+Sub SetShowArrows(varShowArows As Boolean) As VMTabsItems
+	If varShowArows = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("show-arrows", varShowArows)
+		Return Me
+	End If
+	Dim pp As String = $"${ID}ShowArrows"$
 	vue.SetStateSingle(pp, varShowArows)
-	TabsItems.Bind(":show-arows", pp)
+	TabsItems.Bind(":show-arrows", pp)
 	Return Me
 End Sub
 
 'set show-arrows-on-hover
-Sub SetShowArrowsOnHover(varShowArrowsOnHover As Object) As VMTabsItems
+Sub SetShowArrowsOnHover(varShowArrowsOnHover As Boolean) As VMTabsItems
+	If varShowArrowsOnHover = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("show-arrows-on-hover", varShowArrowsOnHover)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}ShowArrowsOnHover"$
 	vue.SetStateSingle(pp, varShowArrowsOnHover)
 	TabsItems.Bind(":show-arrows-on-hover", pp)
@@ -225,7 +305,12 @@ Sub SetTouch(varTouch As Object) As VMTabsItems
 End Sub
 
 'set touchless
-Sub SetTouchless(varTouchless As Object) As VMTabsItems
+Sub SetTouchless(varTouchless As Boolean) As VMTabsItems
+	If varTouchless = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("touchless", varTouchless)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Touchless"$
 	vue.SetStateSingle(pp, varTouchless)
 	TabsItems.Bind(":touchless", pp)
@@ -233,13 +318,18 @@ Sub SetTouchless(varTouchless As Object) As VMTabsItems
 End Sub
 
 'set value
-Sub SetValue(varValue As Object) As VMTabsItems
-	SetAttrSingle("value", varValue)
+Sub SetValue(varValue As String) As VMTabsItems
+	TabsItems.SetValue(varValue)
 	Return Me
 End Sub
 
 'set vertical
-Sub SetVertical(varVertical As Object) As VMTabsItems
+Sub SetVertical(varVertical As Boolean) As VMTabsItems
+	If varVertical = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("vertical", varVertical)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Vertical"$
 	vue.SetStateSingle(pp, varVertical)
 	TabsItems.Bind(":vertical", pp)
@@ -251,8 +341,8 @@ Sub SetOnChange(methodName As String) As VMTabsItems
 	methodName = methodName.tolowercase
 	If SubExists(Module, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, e)
-	SetAttr(CreateMap("v-on:change": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
+	SetAttr(CreateMap("@change": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me

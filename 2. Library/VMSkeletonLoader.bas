@@ -10,8 +10,8 @@ Sub Class_Globals
 	Public ID As String
 	Private vue As BANanoVue
 	Private BANano As BANano  'ignore
-	Private DesignMode As Boolean
-	Private Module As Object
+	Private DesignMode As Boolean   'ignore
+	Private Module As Object    'ignore
 End Sub
 
 'initialize the SkeletonLoader
@@ -24,6 +24,19 @@ Public Sub Initialize(v As BANanoVue, sid As String, eventHandler As Object) As 
 	vue = v
 	Return Me
 End Sub
+
+Sub SetData(xprop As String, xValue As Object) As VMSkeletonLoader
+	vue.SetData(xprop, xValue)
+	Return Me
+End Sub
+
+
+
+'add an element to the page content
+Sub AddElement(elm As VMElement)
+	SkeletonLoader.SetText(elm.ToString)
+End Sub
+
 
 'set the row and column position
 Sub SetRC(sRow As String, sCol As String) As VMSkeletonLoader
@@ -60,12 +73,12 @@ Sub SetVModel(k As String) As VMSkeletonLoader
 	Return Me
 End Sub
 
-Sub SetVIf(vif As Object) As VMSkeletonLoader
+Sub SetVIf(vif As String) As VMSkeletonLoader
 	SkeletonLoader.SetVIf(vif)
 	Return Me
 End Sub
 
-Sub SetVShow(vif As Object) As VMSkeletonLoader
+Sub SetVShow(vif As String) As VMSkeletonLoader
 	SkeletonLoader.SetVShow(vif)
 	Return Me
 End Sub

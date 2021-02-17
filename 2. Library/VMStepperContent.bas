@@ -10,8 +10,9 @@ Sub Class_Globals
 	Public ID As String
 	Private vue As BANanoVue
 	Private BANano As BANano  'ignore
-	Private DesignMode As Boolean
-	Private Module As Object
+	Private DesignMode As Boolean   'ignore
+	Private Module As Object  'ignore 
+	Private bStatic As Boolean   'ignore
 End Sub
 
 'initialize the StepperContent
@@ -22,6 +23,26 @@ Public Sub Initialize(v As BANanoVue, sid As String, eventHandler As Object) As 
 	DesignMode = False
 	Module = eventHandler
 	vue = v
+	bStatic = False
+	Return Me
+End Sub
+
+Sub SetData(xprop As String, xValue As Object) As VMStepperContent
+	vue.SetData(xprop, xValue)
+	Return Me
+End Sub
+
+
+
+'add an element to the page content
+Sub AddElement(elm As VMElement)
+	StepperContent.SetText(elm.ToString)
+End Sub
+
+
+Sub SetStatic(b As Boolean) As VMStepperContent
+	bStatic = b
+	StepperContent.SetStatic(b)
 	Return Me
 End Sub
 
@@ -43,8 +64,7 @@ Sub SetAttributes(attrs As List) As VMStepperContent
 End Sub
 
 'get component
-Sub ToString As String
-	
+Sub ToString As String	
 	Return StepperContent.ToString
 End Sub
 
@@ -53,12 +73,12 @@ Sub SetVModel(k As String) As VMStepperContent
 	Return Me
 End Sub
 
-Sub SetVIf(vif As Object) As VMStepperContent
+Sub SetVIf(vif As String) As VMStepperContent
 	StepperContent.SetVIf(vif)
 	Return Me
 End Sub
 
-Sub SetVShow(vif As Object) As VMStepperContent
+Sub SetVShow(vif As String) As VMStepperContent
 	StepperContent.SetVShow(vif)
 	Return Me
 End Sub
@@ -195,23 +215,8 @@ Sub BuildModel(mprops As Map, mstyles As Map, lclasses As List, loose As List) A
 StepperContent.BuildModel(mprops, mstyles, lclasses, loose)
 Return Me
 End Sub
+
 Sub SetVisible(b As Boolean) As VMStepperContent
 StepperContent.SetVisible(b)
 Return Me
-End Sub
-
-'set color intensity
-Sub SetTextColor(varColor As String) As VMStepperContent
-	Dim sColor As String = $"${varColor}--text"$
-	AddClass(sColor)
-	Return Me
-End Sub
-
-'set color intensity
-Sub SetTextColorIntensity(varColor As String, varIntensity As String) As VMStepperContent
-	Dim sColor As String = $"${varColor}--text"$
-	Dim sIntensity As String = $"text--${varIntensity}"$
-	Dim mcolor As String = $"${sColor} ${sIntensity}"$
-	AddClass(mcolor)
-	Return Me
 End Sub

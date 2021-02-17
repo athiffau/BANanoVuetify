@@ -18,12 +18,15 @@ Sub Class_Globals
 	Private stepCount As Int
 	Private content As Map
 	Private bVertical As Boolean
+	Private bStatic As Boolean
+	Private vmodel As String
 End Sub
 
 'initialize the Stepper
 Public Sub Initialize(v As BANanoVue, sid As String, eventHandler As Object) As VMStepper
 	ID = sid.tolowercase
-	Stepper.Initialize(v, ID).SetTag("v-stepper").SetVModel(ID)
+	Stepper.Initialize(v, ID).SetTag("v-stepper")
+	SetVModel($"${ID}value"$)
 	DesignMode = False
 	Module = eventHandler
 	vue = v
@@ -34,6 +37,47 @@ Public Sub Initialize(v As BANanoVue, sid As String, eventHandler As Object) As 
 	content.Initialize 
 	bVertical = False
 	steps.Initialize
+	bStatic = False
+	SetStep(1)
+	SetOnChange(Module, $"${ID}_change"$)
+	Return Me
+End Sub
+
+
+
+'add an element to the page content
+Sub AddElement(elm As VMElement)
+	Stepper.SetText(elm.ToString)
+End Sub
+
+'change to this step
+Sub SetStep(iStep As Int) As VMStepper
+	vue.SetData(vmodel, iStep)
+	Return Me
+End Sub
+
+Sub SetVModel(smodel As String) As VMStepper
+	vmodel = smodel
+	Stepper.SetVModel(vmodel)
+	Return Me
+End Sub
+
+Sub SetData(xprop As String, xValue As Object) As VMStepper
+	vue.SetData(xprop, xValue)
+	Return Me
+End Sub
+
+Sub SetStatic(b As Boolean) As VMStepper
+	bStatic = b
+	Stepper.SetStatic(b)
+	Header.SetStatic(b)
+	Items.setstatic(b)
+	Return Me
+End Sub
+
+
+Sub RemoveVModel As VMStepper
+	RemoveAttr("v-model")
 	Return Me
 End Sub
 
@@ -62,26 +106,27 @@ Sub SetDevicePositions(srow As String, scell As String, small As String, medium 
 	Return Me
 End Sub
 
+Sub AddStep1(stepID As String, stepLabel As String, stepDescription As String, stepContent As String)
+	AddStep(stepID, stepLabel, stepDescription, True, stepContent)
+End Sub
+
 'the stepLabelVModel is the vmodel to have the caption
 Sub AddStep(stepID As String, stepLabel As String, stepDescription As String, stepEditable As Boolean, stepContent As String) As VMStepper
 	stepCount = stepCount + 1
 	stepID = stepID.tolowercase
+	'
 	Dim stepitem As VMStepperStep
-	stepitem.Initialize(vue, stepID, Module)
-	stepitem.SetColor("primary")
+	stepitem.Initialize(vue, stepID, Module).SetStatic(True).SetDesignMode(DesignMode)
 	stepitem.SetComplete(False)
-	stepitem.SetCompleteIcon("$complete")
-	stepitem.SetEditIcon("$edit")
 	stepitem.SetEditable(stepEditable)
-	stepitem.SetErrorIcon("$error")
-	stepitem.SetStep(stepCount)
+	stepitem.SetStep(vue.CStr(stepCount))
 	stepitem.Content = stepContent
 	stepitem.Setlabel(stepLabel, stepDescription)
 	steps.put(stepID, stepitem)
 	'
 	Dim stpContent As VMStepperContent
-	stpContent.initialize(vue, $"${stepID}content"$, Module)
-	stpContent.SetStep(stepCount)
+	stpContent.initialize(vue, $"${stepID}content"$, Module).SetStatic(True).SetDesignMode(DesignMode)
+	stpContent.SetStep(vue.CStr(stepCount))
 	If stepContent <> Null Then
 		stpContent.AddComponent(stepContent)
 	End If
@@ -115,14 +160,14 @@ Private Sub Build
 				sb.Append($"<v-divider></v-divider>"$)
 			End If
 		Next
+		Header.AddComponent(sb.ToString)
 	'
 		Dim sbc As StringBuilder
 		sbc.Initialize
 		For Each k As String In content.Keys
 			Dim vstep As VMStepperContent = content.Get(k)
 			sbc.Append(vstep.ToString)
-		Next
-		Header.AddComponent(sb.ToString)
+		Next		
 		Items.AddComponent(sbc.ToString)
 	Else
 		Dim sb1 As StringBuilder
@@ -140,6 +185,7 @@ End Sub
 
 
 Sub SetStepEditable(stepID As String, stepEditable As Boolean) As VMStepper
+	If stepID = "" Then Return Me
 	stepID = stepID.tolowercase
 	Dim stepShow As String = $"${stepID}editable"$
 	vue.SetStateSingle(stepShow, stepEditable)
@@ -147,6 +193,7 @@ Sub SetStepEditable(stepID As String, stepEditable As Boolean) As VMStepper
 End Sub
 
 Sub SetStepDescription(stepID As String, stepEditable As String) As VMStepper
+	If stepID = "" Then Return Me
 	stepID = stepID.tolowercase
 	Dim stepShow As String = $"${stepID}description"$
 	vue.SetStateSingle(stepShow, stepEditable)
@@ -154,6 +201,7 @@ Sub SetStepDescription(stepID As String, stepEditable As String) As VMStepper
 End Sub
 
 Sub SetStepLabel(stepID As String, stepLabel As String) As VMStepper
+	If stepID = "" Then Return Me
 	stepID = stepID.tolowercase
 	Dim stepShow As String = $"${stepID}label"$
 	vue.SetStateSingle(stepShow, stepLabel)
@@ -162,6 +210,7 @@ End Sub
 
 
 Sub SetStepError(stepID As String, stepError As String) As VMStepper
+	If stepID = "" Then Return Me
 	stepID = stepID.tolowercase
 	Dim dd As String = $"${stepID}error"$
 	vue.SetStateSingle(dd, stepError)
@@ -169,6 +218,7 @@ Sub SetStepError(stepID As String, stepError As String) As VMStepper
 End Sub
 
 Sub SetStepComplete(stepDone As String, b As Boolean) As VMStepper
+	If stepDone = "" Then Return Me
 	stepDone = stepDone.tolowercase
 	Dim dd As String = $"${stepDone}Complete"$
 	vue.SetStateSingle(dd, b)
@@ -177,6 +227,7 @@ End Sub
 
 'The id of the Step To be set As the current one.
 Sub SetStepActive(varActiveStep As String) As VMStepper
+	If varActiveStep = "" Then Return Me
 	varActiveStep = varActiveStep.tolowercase
 	vue.SetStateSingle(ID, varActiveStep)
 	For Each stepa As String In steps.keys
@@ -191,7 +242,12 @@ End Sub
 
 'get component
 Sub ToString As String
-	
+	If vue.ShowWarnings Then
+	Dim eName As String = $"${ID}_change"$
+	If SubExists(Module, eName) = False Then
+		Log($"VMStepper.${eName} event has not been defined!"$)
+	End If
+	End If
 	Build
 	'add the header
 	If bVertical = False Then
@@ -201,17 +257,12 @@ Sub ToString As String
 	Return Stepper.ToString
 End Sub
 
-Sub SetVModel(k As String) As VMStepper
-	Stepper.SetVModel(k)
-	Return Me
-End Sub
-
-Sub SetVIf(vif As Object) As VMStepper
+Sub SetVIf(vif As String) As VMStepper
 	Stepper.SetVIf(vif)
 	Return Me
 End Sub
 
-Sub SetVShow(vif As Object) As VMStepper
+Sub SetVShow(vif As String) As VMStepper
 	Stepper.SetVShow(vif)
 	Return Me
 End Sub
@@ -267,6 +318,10 @@ End Sub
 'set alt-labels
 Sub SetAltLabels(varAltLabels As Boolean) As VMStepper
 	If varAltLabels = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("alt-labels", varAltLabels)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}AltLabels"$
 	vue.SetStateSingle(pp, varAltLabels)
 	Stepper.Bind(":alt-labels", pp)
@@ -275,7 +330,12 @@ Sub SetAltLabels(varAltLabels As Boolean) As VMStepper
 End Sub
 
 'set dark
-Sub SetDark(varDark As Object) As VMStepper
+Sub SetDark(varDark As Boolean) As VMStepper
+	If varDark = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("dark", varDark)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Dark"$
 	vue.SetStateSingle(pp, varDark)
 	Stepper.Bind(":dark", pp)
@@ -283,7 +343,12 @@ Sub SetDark(varDark As Object) As VMStepper
 End Sub
 
 'set light
-Sub SetLight(varLight As Object) As VMStepper
+Sub SetLight(varLight As Boolean) As VMStepper
+	If varLight = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("light", varLight)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Light"$
 	vue.SetStateSingle(pp, varLight)
 	Stepper.Bind(":light", pp)
@@ -291,7 +356,12 @@ Sub SetLight(varLight As Object) As VMStepper
 End Sub
 
 'set non-linear
-Sub SetNonLinear(varNonLinear As Object) As VMStepper
+Sub SetNonLinear(varNonLinear As Boolean) As VMStepper
+	If varNonLinear = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("non-linear", varNonLinear)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}NonLinear"$
 	vue.SetStateSingle(pp, varNonLinear)
 	Stepper.Bind(":non-linear", pp)
@@ -299,16 +369,23 @@ Sub SetNonLinear(varNonLinear As Object) As VMStepper
 End Sub
 
 'set value
-Sub SetValue(varValue As Object) As VMStepper
-	SetAttrSingle("value", varValue)
+Sub SetValue(varValue As String) As VMStepper
+	If varValue = "" Then Return Me
+	Stepper.SetValue(varValue)
 	Return Me
 End Sub
 
 'set vertical
 Sub SetVertical(varVertical As Boolean) As VMStepper
 	If varVertical = False Then Return Me
-	Stepper.SetAttrLoose("vertical")
 	bVertical = True
+	If bStatic Then
+		SetAttrSingle("vertical", varVertical)
+		Return Me
+	End If
+	Dim pp As String = $"${ID}Vertical"$
+	vue.SetStateSingle(pp, varVertical)
+	Stepper.Bind(":vertical", pp)
 	Return Me
 End Sub
 
@@ -318,7 +395,7 @@ Sub SetOnChange(eventHandler As Object, methodName As String) As VMStepper
 	If SubExists(eventHandler, methodName) = False Then Return Me
 	Dim num As Int  'ignore
 	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, Array(num))
-	SetAttr(CreateMap("v-on:change": methodName))
+	SetAttr(CreateMap("@change": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -326,12 +403,12 @@ End Sub
 
 
 Sub Hide As VMStepper
-	Stepper.SetVisible(False)
+	Stepper.Hide
 	Return Me
 End Sub
 
 Sub Show As VMStepper
-	Stepper.SetVisible(True)
+	Stepper.Show
 	Return Me
 End Sub
 
@@ -348,7 +425,7 @@ End Sub
 
 'bind a property to state
 Sub Bind(prop As String, stateprop As String) As VMStepper
-	stepper.Bind(prop, stateprop)
+	Stepper.Bind(prop, stateprop)
 	Return Me
 End Sub
 
@@ -410,20 +487,4 @@ End Sub
 Sub SetVisible(b As Boolean) As VMStepper
 Stepper.SetVisible(b)
 Return Me
-End Sub
-
-'set color intensity
-Sub SetTextColor(varColor As String) As VMStepper
-	Dim sColor As String = $"${varColor}--text"$
-	AddClass(sColor)
-	Return Me
-End Sub
-
-'set color intensity
-Sub SetTextColorIntensity(varColor As String, varIntensity As String) As VMStepper
-	Dim sColor As String = $"${varColor}--text"$
-	Dim sIntensity As String = $"text--${varIntensity}"$
-	Dim mcolor As String = $"${sColor} ${sIntensity}"$
-	AddClass(mcolor)
-	Return Me
 End Sub

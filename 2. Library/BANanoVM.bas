@@ -4,25 +4,25 @@ ModulesStructureVersion=1
 Type=Class
 Version=8.1
 @EndOfDesignText@
-#IgnoreWarnings:12
+#IgnoreWarnings:12, 9
 Sub Class_Globals
-	Public JQuery As BANanoObject
-	Private BANano As BANano
+	Public Modules As Map
+	Private BANano As BANano   'ignore
 	Public vue As BANanoVue
 	Private Pages As List
 	Public VApp As VMElement
 	Public VContent As VMElement
+	Public RouterView As VMElement
 	Public Container As VMContainer
 	Public BOVuetify As BANanoObject
+	Public Animate As VMTransition
 	Public Drawer As VMNavigationDrawer
 	Public NavBar As VMToolBar
 	Public Footer As VMFooter
-	Private module As Object
+	Private Module As Object
 	Public Elevation As Map
 	Public Transition As Map
-	Private Chartkick As BANanoObject
-	Private Chart As BANanoObject
-	Private VueGoogleMaps As BANanoObject
+	Public Transitions As Map
 	Public IntensityOptions As Map
 	Public ColorOptions As Map
 	Public BorderOptions As Map
@@ -30,15 +30,17 @@ Sub Class_Globals
 	Public vuetify As BANanoObject
 	Public Confirm As VMDialog
 	Public Alert As VMDialog
-	Private arcCounter As BANanoObject
-	Private circleCounter As BANanoObject
-	'Private vueSelectSides As BANanoObject
 	Public DisplayOptions As Map
 	Public TextAlignmentOptions As Map
 	Public FontWeightOptions As Map
-	
-	'Public zircleBO As BANanoObject
-	'Public zircle As BANanoObject
+	Public TargetOptions As Map
+	Public ColumnTypes As Map
+	Public Direction As Map
+	Public ColumnAlign As Map
+	Public DataTypes As Map
+	Public ControlTypes As Map
+	Public BottomNav As VMBottomNavigation
+	Public Notification As VMAlert
 	'
 	Public const COLOR_AMBER As String = "amber"
 	Public const COLOR_BLACK As String = "black"
@@ -63,7 +65,7 @@ Sub Class_Globals
 	Public const COLOR_WHITE As String = "white"
 	Public const COLOR_YELLOW As String = "yellow"
 	Public const COLOR_NONE As String = ""
-	Public const COLOR_PRIMARY As String = "primary"	
+	Public const COLOR_PRIMARY As String = "primary"
 	Public const COLOR_SECONDARY As String = "secondary"
 	Public const COLOR_ACCENT As String = "accent"
 	Public const COLOR_ERROR As String = "error"
@@ -71,8 +73,38 @@ Sub Class_Globals
 	Public const COLOR_SUCCESS As String = "success"
 	Public const COLOR_WARNING As String = "warning"
 	Public const COLOR_NONE As String = ""
-	
 	'
+	
+	Public const COLOR_AMBER_TEXT As String = "amber--text"
+	Public const COLOR_BLACK_TEXT As String = "black--text"
+	Public const COLOR_BLUE_TEXT As String = "blue--text"
+	Public const COLOR_BLUEGREY_TEXT As String = "blue-grey--text"
+	Public const COLOR_BROWN_TEXT As String = "brown--text"
+	Public const COLOR_CYAN_TEXT As String = "cyan--text"
+	Public const COLOR_DEEPORANGE_TEXT As String = "deep-orange--text"
+	Public const COLOR_DEEPPURPLE_TEXT As String = "deep-purple--text"
+	Public const COLOR_GREEN_TEXT As String = "green--text"
+	Public const COLOR_GREY_TEXT As String = "grey--text"
+	Public const COLOR_INDIGO_TEXT As String = "indigo--text"
+	Public const COLOR_LIGHTBLUE_TEXT As String = "light-blue--text"
+	Public const COLOR_LIGHTGREEN_TEXT As String = "light-green--text"
+	Public const COLOR_LIME_TEXT As String = "lime--text"
+	Public const COLOR_ORANGE_TEXT As String = "orange--text"
+	Public const COLOR_PINK_TEXT As String = "pink--text"
+	Public const COLOR_PURPLE_TEXT As String = "purple--text"
+	Public const COLOR_RED_TEXT As String = "red--text"
+	Public const COLOR_TEAL_TEXT As String = "teal--text"
+	Public const COLOR_TRANSPARENT_TEXT As String = "transparent--text"
+	Public const COLOR_WHITE_TEXT As String = "white--text"
+	Public const COLOR_YELLOW_TEXT As String = "yellow--text"
+	Public const COLOR_PRIMARY_TEXT As String = "primary--text"
+	Public const COLOR_SECONDARY_TEXT As String = "secondary--text"
+	Public const COLOR_ACCENT_TEXT As String = "accent--text"
+	Public const COLOR_ERROR_TEXT As String = "error--text"
+	Public const COLOR_INFO_TEXT As String = "info--text"
+	Public const COLOR_SUCCESS_TEXT As String = "success--text"
+	Public const COLOR_WARNING_TEXT As String = "warning--text"
+	
 	Public const INTENSITY_NORMAL As String = ""
 	Public const INTENSITY_LIGHTEN5 As String = "lighten-5"
 	Public const INTENSITY_LIGHTEN4 As String = "lighten-4"
@@ -130,7 +162,8 @@ Sub Class_Globals
 	Public const TRANSITION_SCROLL_Y As String = "scroll-y-transition"
 	Public const TRANSITION_SCROLL_Y_REVERSE As String = "scroll-y-reverse-transition"
 	Public const TRANSITION_SCALE As String = "scale-transition"
-	Public const TRANSITION_PADE As String = "fade-transition"
+	Public const TRANSITION_FADE As String = "fade-transition"
+	Public const TRANSITION_FAB As String = "fab-transition"
 	'
 	Public const JUSTIFY_CENTER As String = "center"
 	Public const JUSTIFY_START As String = "start"
@@ -154,80 +187,213 @@ Sub Class_Globals
 	Public const TEXT_LOWERCASE As String = "text-lowercase"
 	Public const TEXT_UPPERCASE As String = "text-uppercase"
 	Public const TEXT_CAPITALIZE As String = "text-capitalize"
-	
-		
+			
 	Public SnackBar As VMSnackBar
 	Public RTL As Boolean
 	Public Dark As Boolean
 	Private Options As Map
 	Private lang As String
-	Public Fake As VMFake
 	Private drawers As List
 	Private placeHolder As Int
-	Private PrismComponent As BANanoObject
+	Public Floats As Map
+	Public FontSizes As Map
+	Private bUseRouter As Boolean
+	Public Position As Map
+	Public ShowWarnings As Boolean
+	Public ScrollBarWidth As Int
+	'
+	Public CONST BREAKPOINT_XS As String = "xs"
+	Public CONST BREAKPOINT_SM As String = "sm"
+	Public CONST BREAKPOINT_MD As String = "md"
+	Public CONST BREAKPOINT_LG As String = "lg"
+	Public CONST BREAKPOINT_XL As String = "xl"
+	
+	Public CONST BREAKPOINT_xsOnly As String = "xsOnly"
+	Public CONST BREAKPOINT_smOnly As String = "smOnly"
+	Public CONST BREAKPOINT_smAndDown As String = "smAndDown"
+	Public CONST BREAKPOINT_smAndUp As String = "smAndUp"
+	Public CONST BREAKPOINT_mdOnly As String = "mdOnly"
+	Public CONST BREAKPOINT_mdAndDown As String = "mdAndDown"
+	Public CONST BREAKPOINT_mdAndUp As String = "mdAndUp"
+	Public CONST BREAKPOINT_lgOnly As String = "lgOnly"
+	Public CONST BREAKPOINT_lgAndDown As String = "lgAndDown"
+	Public CONST BREAKPOINT_lgAndUp As String = "lgAndUp"
+	Public CONST BREAKPOINT_xlOnly As String = "xlOnly"
+	Public Breakpoint As Object
+	Public BreakpointName As String
+	Public Config As BANanoObject
+	Public UsesDrawer As Boolean
+	Public UsesNavBar As Boolean
+	Public UsesFooter As Boolean
+	Public UsesBottomNav As Boolean
+	Public UsesOverlay As Boolean
+	Public UsesSnackBar As Boolean
+	Public UsesDialog As Boolean
+	Public UsesNotification As Boolean
+	Public UsesContainer As Boolean
+	'
+	Public const LOCALE_Afrikaans As String = "af" 
+	Public const LOCALE_Arabic As String = "ar"
+	Public const LOCALE_Catalan As String = "ca"
+	Public const LOCALE_Czech As String = "cs"
+	Public const LOCALE_German As String = "de"
+	Public const LOCALE_Greek As String = "el"
+	Public const LOCALE_English	As String = "en"
+	Public const LOCALE_Spanish As String = "es"
+	Public const LOCALE_Estonian As String = "et"
+	Public const LOCALE_Persian As String = "fa"
+	Public const LOCALE_Finnish	As String = "fi"
+	Public const LOCALE_French 	As String = "fr"
+	Public const LOCALE_Hebrew 	As String = "he"
+	Public const LOCALE_Croatian As String = "hr"
+	Public const LOCALE_Hungarian As String = "hu"
+	Public const LOCALE_Indonesian As String = "id"
+	Public const LOCALE_Italian As String = "it"
+	Public const LOCALE_Japanese As String = "ja"
+	Public const LOCALE_Korean As String = "ko"
+	Public const LOCALE_Lithuanian As String = "lt"
+	Public const LOCALE_Latvian As String = "lv"
+	Public const LOCALE_Dutch As String = "nl"
+	Public const LOCALE_Norwegian As String = "no"
+	Public const LOCALE_Polish As String = "pl"
+	Public const LOCALE_Portuguese As String = "pt"
+	Public const LOCALE_Romanian As String = "ro"
+	Public const LOCALE_Russian As String = "ru"
+	Public const LOCALE_Slovak As String = "sk"
+	Public const LOCALE_Slovene As String = "sl"
+	Public const LOCALE_Serbian As String = "srCyrl"
+	Public const LOCALE_Swedish As String = "sv"
+	Public const LOCALE_Thai As String = "th"
+	Public const LOCALE_Turkish As String = "tr"
+	Public const LOCALE_Ukrainian As String = "uk"
+	Public const LOCALE_Chinese As String = "zhHans"
+	Public const LOCALE_Chinese1 As String = "zhHant"
+	'
+	Public const VISIBILITY_PrintOnly As String = "print-only"
+	Public const VISIBILITY_ScreenOnly As String = "screen-only"
+	Public const VISIBILITY_XsOnly As String = "xs-only"
+	Public const VISIBILITY_SmOnly As String = "sm-only"
+	Public const VISIBILITY_SmAndDown As String = "sm-and-down"
+	Public const VISIBILITY_SmAndUp As String = "sm-and-up"
+	Public const VISIBILITY_MdOnly As String = "md-only"
+	Public const VISIBILITY_MdAndDown As String = "md-and-down"
+	Public const VISIBILITY_MdAndUp As String = "md-and-up"
+	Public const VISIBILITY_LgOnly As String = "lg-only"
+	Public const VISIBILITY_LgAndDown As String = "lg-and-down"
+	Public const VISIBILITY_LgAndUp As String = "lg-and-up"
+	Public const VISIBILITY_XlOnly As String = "xl-only"
+	Public const VISIBILITY_ALL As String = ""
+	Public const VISIBILITY_HIDDEN_MD_AND_UP As String = "hidden-md-and-up"
+	Public const VISIBILITY_HIDDEN_SM_AND_DOWN As String = "hidden-sm-and-down"
+	Public const VISIBILITY_HIDDEN_MD_AND_DOWN As String = "hidden-md-and-down"
+	Public const VISIBILITY_HIDDEN_XL_AND_DOWN As String = "hidden-xl-and-down"
+	Public const VISIBILITY_HIDDEN_SM_AND_UP As String = "hidden-sm-and-up"
+	Public const VISIBILITY_HIDDEN_XL_AND_UP As String = "hidden-xl-and-up"
+	Public const VISIBILITY_HIDDEN_XS_ONLY As String = "hidden-xs-only"
+	Public const VISIBILITY_HIDDEN_XL_ONLY As String = "hidden-xl-only"
+	
+	Public const ALERT_BORDER_LEFT As String = "left"
+	Public const ALERT_BORDER_RIGHT As String = "right"
+	Public const ALERT_BORDER_BOTTOM As String = "bottom"
+	Public const ALERT_BORDER_TOP As String = "top"
+	'
+	Public const ALERT_TYPE_SUCCESS As String = "success"
+	Public const ALERT_TYPE_INFO As String = "info"
+	Public const ALERT_TYPE_WARNING As String = "warning"
+	Public const ALERT_TYPE_ERROR As String = "error"
 End Sub
 
 'Initializes the object. You can add parameters to this method if needed.
 Public Sub Initialize(eventHandler As Object, appName As String)
 	'initialize vue
-	Fake.Initialize
-	vue.Initialize
+	vue.Initialize(eventHandler)
+	Modules.Initialize 
+	Modules = vue.modules
 	placeHolder = 0
-	Options.Initialize 
-	drawers.Initialize 
+	ShowWarnings = True
+	vue.ShowWarnings = True
+	Options.Initialize
+	drawers.Initialize
+	Position.initialize
+	Position.Put("static","static")
+	Position.Put("relative","relative")
+	Position.Put("fixed","fixe")
+	Position.Put("absolute","absolute")
+	Position.Put("sticky", "sticky")
+	Position.Put("", "none")
 	RTL = False
 	Dark = False
-	JQuery = vue.jquery
-	module = eventHandler
+	Module = eventHandler
 	lang = "en"
+	Floats.Initialize
+	FontSizes.Initialize
+	bUseRouter = False 
+	'
+	RouterView.Initialize(vue, "routerview").SetTag("router-view").SetStatic(True)
 	
-	Chartkick.initialize("Chartkick")
-	Chart.Initialize("Chart")
-	vue.Use(Chartkick.RunMethod("use", Chart))
-	'zircleBO.Initialize("zircle")
-	'vue.Use(zircleBO)
-	'
-	PrismComponent.Initialize("PrismComponent")
-	vue.AddComponentBO("prism", PrismComponent)
-	'
-	arcCounter.Initialize("arcCounter")
-	vue.AddComponentBO("arc-counter", arcCounter)
-	'
-	circleCounter.Initialize("circleCounter")
-	vue.AddComponentBO("circle-counter", circleCounter)
-	'
-	'vueSelectSides.Initialize("vueSelectSides")
-	'vue.AddComponentBO("vue-select-sides", vueSelectSides)
-	'
 	'initialize the pages
 	Pages.initialize
 	'
 	VApp.Initialize(vue, appName).SetTag("v-app")
-	VContent.Initialize(vue, $"${appName}content"$).SetTag("v-content")
-	Container.Initialize(vue, $"${appName}container"$, eventHandler)
+	VContent.Initialize(vue, "main").SetTag("v-main")
+	'
+	Container.Initialize(vue, "appcontainer", eventHandler)
+	Container.SetFluid(True)
+	Container.SetStatic(True)
+	'
 	Drawer.Initialize(vue, "drawer", eventHandler)
+	Drawer.SetApp(True)
+	Drawer.SetVModel("drawer")
+	'
 	NavBar.Initialize(vue, "appbar", eventHandler)
 	NavBar.SetAppBar(True)
-	NavBar.AddHamburger
-	NavBar.AddLogo("")
-	NavBar.AddTitle(appName,"")
-	NavBar.AddSpacer
+	NavBar.SetVShow("appbarshow")
 	NavBar.Show
 	'
-	Footer.Initialize(vue, $"${appName}footer"$, eventHandler).SetAttrSingle("app", True)
+	Footer.Initialize(vue, "appfooter", eventHandler)
+	Footer.SetVShow("appfootershow")
+	Footer.SetApp(True)
 	'
-	SnackBar = CreateSnackBar("snack", eventHandler).SetColor("").SetBottom(False).SetRight(False)
-	SnackBar.Pop(VContent)
+	BottomNav.Initialize(vue, "appbottomnav", eventHandler)
+	BottomNav.SetApp(True)
+	BottomNav.SetVShow("appbottomnavshow")
+	BottomNav.Hide
+	
+	SnackBar = CreateSnackBar("appsnack", eventHandler)
+	SnackBar.SetColor("")
+	SnackBar.SetBottom(False)
+	SnackBar.SetRight(False) 
+	
+	Notification = CreateAlert("appnotif", eventHandler, "")
+	Notification.SetVModel("appnotifshow")
+	Notification.SetContent("Notification")
+	Notification.SetBorder("left")
+	Notification.SetColor("green")
+	Notification.SetColoredBorder(True)
+	Notification.SetDismissible(True)
+	Notification.SetIcon("")
+	Notification.SetType("")
+	Notification.Hide
 	'
 	'put loader on page
-	SetStateSingle("pageloader", False)
-	Overlay = CreateOverlay("pageloader", module).SetValue("pageloader")
-	Dim vpc As VMProgressCircular = CreateProgressCircular("", module).SetSize(200).SetIndeterminate(True).SetColor("blue")
-	vpc.Pop(Overlay.Overlay)
-	Overlay.Pop(VContent)
+	Overlay.Initialize(vue, "pageloader", eventHandler)
+		'
+	Animate.Initialize(vue, "appanimate", eventHandler).SetStatic(True)
+	Animate.SetType("v-fade-transition")
+	Animate.SetMode("out-in")
+	Animate.SetHideOnLeave(True)
+	
+	Dim vpc As VMProgressCircular
+	vpc.Initialize(vue, "pageloaderprogress", eventHandler)
+	vpc.SetSize(200)
+	vpc.SetIndeterminate(True)
+	vpc.SetColor("blue")
+	Overlay.AddComponent(vpc.ToString)
 	'
 	Drawer.Hide
 	Footer.hide
+	Overlay.hide
+	BottomNav.hide	
 	'
 	vue.SetData("confirmtitle", "Confirm")
 	vue.SetData("btnconfirmcancellabel", "Cancel")
@@ -236,58 +402,909 @@ Public Sub Initialize(eventHandler As Object, appName As String)
 	vue.SetData("confirmkey", "confirm")
 	
 	Confirm = CreateDialog("confirm", Me).SetWidth("600").SetModal(True)
+	Confirm.SetVModel("confirmshow")
 	Confirm.SetTitle("Title")
 	Confirm.SetContent("Confirm Message")
 	Confirm.AddCancel("btnConfirmCancel", "Cancel")
 	Confirm.AddOK("btnConfirmOk", "Ok")
+	Confirm.Hide
 	'
-	Alert = CreateDialog("alert", Me).SetWidth("600").SetModal(True)
+	Alert = CreateDialog("appalert", Me).SetWidth("600").SetModal(True)
+	Alert.SetVModel("appalertshow")
 	Alert.SetTitle("Title")
 	Alert.SetContent("Alert Message")
 	Alert.AddOK("btnalertOk", "Ok")
+	Alert.Hide
 	'
-	Dim sDialog As String = Confirm.tostring
-	AddContent(sDialog)
-	'
-	Dim sDialog As String = Alert.tostring
-	AddContent(sDialog)
-	
-	'
-	Dim e As Int
-	Elevation.initialize
-	For e = 0 To 24
-		Elevation.Put(e, e)
-	Next
-	Elevation.Put("", "None")
 	InitColors
-	InitTransition
+	UsesDrawer = True
+	UsesNavBar = True
+	UsesFooter = True
+	UsesBottomNav = True
+	UsesOverlay = True
+	UsesSnackBar = True
+	UsesDialog = True
+	UsesNotification = True
+	UsesContainer = True
+End Sub
+
+'add anything from the appendholder
+Sub AppendHolderTo(target As String) As BANanoVM
+	Dim stemplate As String = vue.BANanoGetHTMLAsIs("appendholder")
+	Dim elx As BANanoElement = BANano.GetElement(target)
+	elx.append(stemplate)
+	Return Me
+End Sub
+
+'add html of component to app and this binds events and states
+Sub BindVueElement(elx As VueElement)
+	vue.BindVueElement(elx)
+End Sub
+
+'get the name of the breakpoint
+Sub GetBreakPointName As String
+	Dim bp As BANanoObject = vuetify.GetField("breakpoint")
+	Dim res As String = bp.GetField("name").Result
+	Return res
+End Sub
+
+Sub Toggle(stateID As String)
+	ToggleState(stateID)
+End Sub
+
+'set the transition for the router
+Sub SetTransition(trans As String) As BANanoVM
+	Animate.SetType($"v-${trans}"$)
+	Return Me
+End Sub
+
+'set the transition mode
+Sub SetTransitionMode(mode As String) As BANanoVM
+	Animate.SetMode(mode)
+	Return Me
+End Sub
+
+'use a completelt blank template
+Sub UseBlankTemplate As BANanoVM
+	UsesDrawer = False
+	UsesNavBar = False
+	UsesFooter = False
+	UsesBottomNav = False
+	UsesOverlay = False
+	UsesSnackBar = False
+	UsesDialog = False
+	UsesNotification = False
 	'
-	If SubExists(module, "confirm_ok") = False Then
-		Log("Initialize.confirm_ok - please add this event to trap confirm dialog!")
+	RemoveNeeds
+	Return Me
+End Sub
+
+private Sub RemoveNeeds
+	If UsesContainer = False Then
+		vue.RemoveDataItems(Array("appcontainershow"))
 	End If
-	'
-	If SubExists(module, "confirm_cancel") = False Then
-		Log("Initialize.confirm_cancel - please add this event to trap confirm dialog!")
-	End If	
-	'
-	If SubExists(module, "alert_ok") = False Then
-		Log("Initialize.alert_ok - please add this event to trap alert dialog!")
+	
+	If UsesDialog = False Then
+		vue.RemoveDataItems(Array("appalertcardbarlogoheight", "appalertcardbarlogomaxheight"))
+		vue.RemoveDataItems(Array("appalertcardbarlogomaxwidth", "appalertcardbarlogoshow", "appalertcardbarlogostyle"))
+		vue.RemoveDataItems(Array("appalertcardbarlogowidth", "appalertcardbarprogressabsolute", "appalertcardbarprogressactive"))
+		vue.RemoveDataItems(Array("appalertcardbarprogressbottom", "appalertcardbarprogressindeterminate", "appalertcardbarshow"))
+		vue.RemoveDataItems(Array("appalertcardbartablsds", "appalertcardbartablsshow", "appalertcardbartitleshow", "appalertcardformshow"))
+		vue.RemoveDataItems(Array("appalertcardformvalid", "appalertcardimgshow", "appalertcardpsfootershow", "appalertcardpsshow"))
+		vue.RemoveDataItems(Array("appalertcontent", "appalertpersistent", "appalertshow", "appalerttitle", "appalertwidth"))
+		vue.RemoveDataItems(Array("btnalertoklabel", "btnalertoktext", "btnalertokbadgeshow", "btnalertokcolor"))
+		vue.RemoveMethod("btnalertOk_click")
+		
+		'
+		vue.RemoveDataItems(Array("btnconfirmcancelbadgeshow", "btnconfirmcancelcolor", "btnconfirmcancellabel"))
+		vue.RemoveDataItems(Array("btnconfirmcanceltext", "btnconfirmokbadgeshow", "btnconfirmokcolor", "btnconfirmoklabel"))
+		vue.RemoveDataItems(Array("btnconfirmoktext", "confirmcardbarlogoheight", "confirmcardbarlogomaxheight", "confirmcardbarlogomaxwidth"))
+		vue.RemoveDataItems(Array("confirmcardbarlogoshow", "confirmcardbarlogostyle", "confirmcardbarlogowidth", "confirmcardbarprogressabsolute"))
+		vue.RemoveDataItems(Array("confirmcardbarprogressactive", "confirmcardbarprogressbottom", "confirmcardbarprogressindeterminate"))
+		vue.RemoveDataItems(Array("confirmcardbarshow", "confirmcardbartablsds", "confirmcardbartablsshow", "confirmcardbartitleshow", "confirmcardformshow"))
+		vue.RemoveDataItems(Array("confirmcardformvalid", "confirmcardimgshow", "confirmcardpsfootershow", "confirmcardpsshow", "confirmcontent"))
+		vue.RemoveDataItems(Array("confirmkey", "confirmpersistent", "confirmshow", "confirmtitle", "confirmwidth"))
+		vue.RemoveMethod("btnConfirmCancel_click")
+		vue.RemoveMethod("btnConfirmOk_click")
+	End If
+	
+	
+	If UsesNavBar = False Then
+		vue.RemoveDataItems(Array("appbarlogoheight", "appbarlogomaxheight", "appbarlogomaxwidth", "appbarlogoshow", "appbarlogostyle"))
+		vue.RemoveDataItems(Array("appbarlogowidth", "appbarprogressabsolute", "appbarprogressactive", "appbarprogressbottom", "appbarprogressindeterminate"))
+		vue.RemoveDataItems(Array("appbarshow", "appbartablsds", "appbartablsshow", "appbartitleshow", "menushow" ,"rightmenushow"))
+		vue.RemoveMethod("menu_click")
+	End If
+	
+	
+	If UsesOverlay = False Then
+		vue.RemoveDataItems(Array("pageloadercontshow", "pageloaderprogresscolor", "pageloaderprogressindeterminate"))
+		vue.RemoveDataItems(Array("pageloaderprogressshow", "pageloaderprogresssize", "pageloadershow"))
+	End If
+		
+	If UsesNotification = False Then
+		vue.RemoveDataItems(Array("appnotifborder", "appnotifcolor"))
+		vue.RemoveDataItems(Array("appnotifcoloredborder", "appnotifcontent", "appnotifcontshow", "appnotifdismissible", "appnotificon"))
+		vue.RemoveDataItems(Array("appnotifshow", "appnotiftype"))
+	End If
+	
+		
+	If UsesBottomNav = False Then
+		vue.RemoveDataItems(Array("appbottomnavbn", "appbottomnavshow"))
+	End If
+	
+	
+	If UsesDrawer = False Then
+		vue.RemoveDataItems(Array("drawer", "drawercontshow", "draweritemsds", "draweritemsnav", "drawershow"))
+	End If
+
+	If UsesFooter = False Then
+		vue.RemoveDataItems(Array("appfootercontshow", "appfootershow"))
+	End If
+	
+		
+	If UsesSnackBar = False Then
+		vue.RemoveDataItems(Array("appsnackbottom", "appsnackbuttonbadgeshow"))
+		vue.RemoveDataItems(Array("appsnackbuttonlabel", "appsnackbuttonshow", "appsnackcentered", "appsnackcolor", "appsnackleft", "appsnackmessage"))
+		vue.RemoveDataItems(Array("appsnackright", "appsnackshow", "appsnacktop"))
+		vue.RemoveMethod("appsnackbutton_click")
 	End If
 End Sub
 
-Sub InitTransition
-	Dim tran As List
-	tran.Initialize
-	'
-	tran.AddAll(Array("slide-x-transition", "slide-x-reverse-transition", "slide-y-transition", "slide-y-reverse-transition", "scroll-x-transition"))
-	tran.AddAll(Array("scroll-x-reverse-transition", "scroll-y-transition", "scroll-y-reverse-transition", "scale-transition",  "fade-transition"))
-	'
-	Transition.Initialize 
-	For Each sl As String In tran
-		Transition.Put(sl, sl)
-	Next
-	Transition.Put("", "None")
+Sub GetDataGlobal(prop As String) As Object
+	Return vue.GetDataGlobal(prop)
 End Sub
+
+Sub SetDataGlobal(prop As String, value As Object) As BANanoVM
+	vue.SetDataGlobal(prop, value)
+	Return Me
+End Sub
+
+Sub H1(elID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elID)
+	elx.SetTag("h1")
+	Return elx
+End Sub
+
+Sub VFileInput(elID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elID)
+	elx.SetTag("v-file-input")
+	Return elx
+End Sub
+
+Sub H2(elID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elID)
+	elx.SetTag("h2")
+	Return elx
+End Sub
+
+Sub H3(elID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elID)
+	elx.SetTag("h3")
+	Return elx
+End Sub
+
+Sub H4(elID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elID)
+	elx.SetTag("h4")
+	Return elx
+End Sub
+
+Sub H5(elID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elID)
+	elx.SetTag("h5")
+	Return elx
+End Sub
+
+
+Sub H6(elID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elID)
+	elx.SetTag("h6")
+	Return elx
+End Sub
+
+
+Sub Div(elID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elID)
+	elx.SetTag("div")
+	Return elx
+End Sub
+
+Sub VLayout(elID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elID)
+	elx.SetTag("v-layout")
+	Return elx
+End Sub
+
+Sub VFlex(elID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elID)
+	elx.SetTag("v-flex")
+	Return elx
+End Sub
+
+
+Sub Span(elID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elID)
+	elx.SetTag("span")
+	Return elx
+End Sub
+
+Sub VSnackBar(elID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elID)
+	elx.SetTag("v-snackbar")
+	Return elx
+End Sub
+
+Sub A(elID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elID)
+	elx.SetTag("a")
+	Return elx
+End Sub
+
+Sub P(elID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elID)
+	elx.SetTag("p")
+	Return elx
+End Sub
+
+Sub VRating(elID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elID)
+	elx.SetTag("v-rating")
+	Return elx
+End Sub
+
+Sub VCarouselItem(elID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elID)
+	elx.SetTag("v-carousel-item")
+	Return elx
+End Sub
+
+
+Sub VCarousel(elID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elID)
+	elx.SetTag("v-carousel")
+	Return elx
+End Sub
+
+Sub VResponsive(elID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elID)
+	elx.SetTag("v-responsive")
+	Return elx
+End Sub
+
+Sub VBottomNav(elID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elID)
+	elx.SetTag("v-bottom-nav")
+	Return elx
+End Sub
+
+Sub VStepper(elID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elID)
+	elx.SetTag("v-stepper")
+	Return elx
+End Sub
+
+Sub VStepperHeader(elID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elID)
+	elx.SetTag("v-stepper-header")
+	Return elx
+End Sub
+
+
+Sub VStepperStep(elID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elID)
+	elx.SetTag("v-stepper-step")
+	Return elx
+End Sub
+
+Sub VTimeline(elID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elID)
+	elx.SetTag("v-timeline")
+	Return elx
+End Sub
+
+Sub VTimelineItem(elID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elID)
+	elx.SetTag("v-timeline-item")
+	Return elx
+End Sub
+
+
+Sub VStepperItems(elID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elID)
+	elx.SetTag("v-stepper-items")
+	Return elx
+End Sub
+
+Sub VStepperContent(elID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elID)
+	elx.SetTag("v-stepper-content")
+	Return elx
+End Sub
+
+Sub VRow(elID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elID)
+	elx.SetTag("v-row")
+	Return elx
+End Sub
+
+Sub VDialog(elID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elID)
+	elx.SetTag("v-dialog")
+	Return elx
+End Sub
+
+Sub VCardActions(elID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elID)
+	elx.SetTag("v-card-actions")
+	Return elx
+End Sub
+
+Sub VTooltip(elID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elID)
+	elx.SetTag("v-tooltip")
+	Return elx
+End Sub
+
+Sub Form(elID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elID)
+	elx.SetTag("form")
+	Return elx
+End Sub
+
+Sub VForm(elID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elID)
+	elx.SetTag("v-form")
+	Return elx
+End Sub
+
+
+Sub VListItemGroup(elID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elID)
+	elx.SetTag("v-list-item-group")
+	Return elx
+End Sub
+
+Sub VListItemActionText(elID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elID)
+	elx.SetTag("v-list-item-action-text")
+	Return elx
+End Sub
+
+
+Sub VTemplate(elID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elID)
+	elx.SetTag("template")
+	Return elx
+End Sub
+
+Sub VContainer(elID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elID)
+	elx.SetTag("v-container")
+	Return elx
+End Sub
+
+Sub VCard(elID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elID)
+	elx.SetTag("v-card")
+	Return elx
+End Sub
+
+Sub VCardText(elID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elID)
+	elx.SetTag("v-card-text")
+	Return elx
+End Sub
+
+Sub VCardTitle(elID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elID)
+	elx.SetTag("v-card-title")
+	Return elx
+End Sub
+
+Sub VCol(elID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elID)
+	elx.SetTag("v-col")
+	Return elx
+End Sub
+
+Sub VSelect(elID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elID)
+	elx.SetTag("v-select")
+	Return elx
+End Sub
+
+
+Sub VAutoComplete(elID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elID)
+	elx.SetTag("v-autocomplete")
+	Return elx
+End Sub
+
+
+Sub VProgressLinear(elID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elID)
+	elx.SetTag("v-progress-linear")
+	Return elx
+End Sub
+
+
+Sub VToolBar(elID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elID)
+	elx.SetTag("v-toolbar")
+	Return elx
+End Sub
+
+Sub VSubHeader(elID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elID)
+	elx.SetTag("v-subheader")
+	Return elx
+End Sub
+
+Sub VCheckBox(elID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elID)
+	elx.SetTag("<v-checkbox")
+	Return elx
+End Sub
+
+Sub VListItemSubTitle(elID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elID)
+	elx.SetTag("v-list-item-subtitle")
+	Return elx
+End Sub
+
+
+Sub VImg(elID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elID)
+	elx.SetTag("v-img")
+	Return elx
+End Sub
+
+
+Sub VMenu(elID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elID)
+	elx.SetTag("v-menu")
+	Return elx
+End Sub
+
+
+Sub VToolbarItems(elID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elID)
+	elx.SetTag("v-toolbar-items")
+	Return elx
+End Sub
+
+
+Sub VRadio(elID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elID)
+	elx.SetTag("v-radio")
+	Return elx
+End Sub
+
+Sub VRadioGroup(elID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elID)
+	elx.SetTag("v-radio-group")
+	Return elx
+End Sub
+
+Sub VTextField(elID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elID)
+	elx.SetTag("v-text-field")
+	Return elx
+End Sub
+
+Sub VAppBar(elID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elID)
+	elx.SetTag("v-app-bar").AddAttr("app", True)
+	Return elx
+End Sub
+
+Sub VNavigationDrawer(elID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elID)
+	elx.SetTag("v-navigation-drawer")
+	Return elx
+End Sub
+
+Sub VAppBarNavIcon(elID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elID)
+	elx.SetTag("v-app-bar-nav-icon")
+	Return elx
+End Sub
+
+Sub VListItem(elID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elID)
+	elx.SetTag("v-list-item")
+	Return elx
+End Sub
+
+Sub VListItemAvatar(elID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elID)
+	elx.SetTag("v-list-item-avatar")
+	Return elx
+End Sub
+
+Sub VListItemContent(elID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elID)
+	elx.SetTag("v-list-item-content")
+	Return elx
+End Sub
+
+Sub VListItemTitle(elID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elID)
+	elx.SetTag("v-list-item-title")
+	Return elx
+End Sub
+
+Sub VListItemAction(elID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elID)
+	elx.SetTag("v-list-item-action")
+	Return elx
+End Sub
+
+Sub VSpacer(elID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elID)
+	elx.SetTag("v-spacer")
+	Return elx
+End Sub
+
+Sub VDivider(elid As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elid)
+	elx.SetTag("v-divider")
+	Return elx
+End Sub
+
+Sub VChip(elid As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elid)
+	elx.SetTag("v-chip")
+	Return elx
+End Sub
+
+Sub VChipGroup(elid As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elid)
+	elx.SetTag("v-chip-group")
+	Return elx
+End Sub
+
+
+Sub VList(elID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elID)
+	elx.SetTag("v-list")
+	Return elx
+End Sub
+
+Sub VBtn(elID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elID)
+	elx.SetTag("v-btn")
+	Return elx
+End Sub
+
+Sub VToolbarTitle(tID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, tID)
+	elx.SetTag("v-toolbar-title")
+	Return elx
+End Sub
+
+Sub VAvatar(tID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, tID)
+	elx.SetTag("v-avatar")
+	Return elx
+End Sub
+
+Sub VRouterLink(tID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, tID)
+	elx.SetTag("router-link")
+	Return elx
+End Sub
+
+Sub VRouterView(tID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, tID)
+	elx.SetTag("router-view")
+	Return elx
+End Sub
+
+
+Sub VIcon(tID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, tID)
+	elx.SetTag("v-icon")
+	Return elx
+End Sub
+
+Sub Img(tID As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, tID)
+	elx.SetTag("img")
+	Return elx
+End Sub
+
+Sub SetUseRouter(b As Boolean) As BANanoVM
+	bUseRouter = b
+	Return Me
+End Sub
+
+'show loading on toolbar
+Sub ShowLoading
+	NavBar.SetLoading(True)
+End Sub
+
+'create a new element
+Sub NewElement(elID As String, elTag As String, mprops As Map, mstyles As Map, lclasses As List, loose As List, elText As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elID)
+	elx.SetTag(elTag)
+	elx.BuildModel(mprops, mstyles, lclasses, loose)
+	elx.SetText(elText)
+	Return elx
+End Sub
+
+'create a new spacer
+Sub NewSpacer(elid As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elid)
+	elx.SetTag("v-spacer")
+	Return elx
+End Sub
+
+'create a new divider
+Sub NewDivider(elid As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, elid)
+	elx.SetTag("v-divider")
+	Return elx
+End Sub
+
+'hide loading on toolbar
+Sub HideLoading
+	NavBar.SetLoading(False)
+End Sub
+
+Sub CreateHamburger(v As BANanoVue, eid As String, eventHandler As Object) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(v, eid)
+	elx.SetTag("v-app-bar-nav-icon")
+	Return elx
+End Sub
+
+Sub AddModule(tagName As String) As BANanoVM
+	tagName = tagName.tolowercase
+	Modules.Put(tagName, tagName)
+	Return Me
+End Sub
+
+Sub ModuleExist(tagName As String) As Boolean
+	tagName = tagName.tolowercase
+	Dim b As Boolean = Modules.ContainsKey(tagName)
+	Return b
+End Sub
+
+'remove the delimiter from stringbuilder
+Sub RemDelim(sValue As String, Delim As String) As String
+	Dim sw As Boolean = sValue.EndsWith(Delim)
+	If sw Then
+		Dim lDelim As Int = Delim.Length
+		Dim nValue As String = sValue
+		sw = nValue.EndsWith(Delim)
+		If sw Then
+			nValue = nValue.SubString2(0, nValue.Length-lDelim)
+		End If
+		Return nValue
+	Else
+		Return sValue
+	End If
+End Sub
+
+
+Sub JoinMapKeys(m As Map, delim As String) As String
+	Dim sb As StringBuilder
+	sb.Initialize
+	Dim kTot As Int = m.Size - 1
+	Dim kCnt As Int
+	Dim strKey As String = m.getkeyat(0)
+	sb.Append(strKey)
+	For kCnt = 1 To kTot
+		Dim strKey As String = m.getkeyat(kCnt)
+		sb.Append(delim).append(strKey)
+	Next
+	Return sb.ToString
+End Sub
+
+'return sentences of lorem ipsum
+Sub Rand_LoremIpsum(count As Int) As String
+	Dim str As String = $"Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."$
+	Dim sb As StringBuilder
+	sb.Initialize
+	For i = 1 To count
+		sb.Append(str).Append(CRLF)
+	Next
+	Return sb.tostring
+End Sub
+
+'join list to multi value string with a quote
+Sub JoinItems(delimiter As String, sQuote As String, lst As List) As String
+	If lst.Size = 0 Then Return ""
+	Dim i As Int
+	Dim sb As StringBuilder
+	Dim fld As String
+	sb.Initialize
+	fld = lst.Get(0)
+	Dim xfld As String = $"${fld}"$
+	xfld = sQuote & xfld & sQuote
+	sb.Append(xfld)
+	For i = 1 To lst.size - 1
+		Dim fld As String = lst.Get(i)
+		Dim xfld As String = $"${fld}"$
+		xfld = sQuote & xfld & sQuote
+		sb.Append(delimiter).Append(xfld)
+	Next
+	Return sb.ToString
+End Sub
+
+Sub NewMap As Map
+	Dim nm As Map = CreateMap()
+	Return nm
+End Sub
+
+'get the record position from saved items
+Sub ListOfMapsRecordPos(lst As List, k As String, v As String) As Int
+	Dim lTot As Int = lst.Size - 1
+	Dim lCnt As Int
+	For lCnt = 0 To lTot
+		Dim m As Map = lst.Get(lCnt)
+		Dim sk As String = m.GetDefault(k, "")
+		If sk.EqualsIgnoreCase(v) Then
+			Return lCnt
+		End If
+	Next
+	Return -1
+End Sub
+
+'nullify the file select
+Sub NullifyFileSelect(refID As String)
+	RefNull(refID)
+End Sub
+
+Sub RefNull(refID As String)
+	refID = refID.tolowercase
+	vue.refs.GetField(refID).SetField("value", Null)
+End Sub
+
+Sub FormValidate(frmID As String) As Boolean
+	frmID = frmID.tolowercase
+	Dim bValid As Boolean = vue.refs.GetField(frmID).RunMethod("validate", Null).Result
+	Return bValid
+End Sub
+
+Sub FormReset(frmID As String)
+	frmID = frmID.tolowercase
+	vue.refs.GetField(frmID).RunMethod("reset", Null)
+End Sub
+
+Sub RefReset(frmID As String)
+	frmID = frmID.tolowercase
+	vue.refs.GetField(frmID).RunMethod("reset", Null)
+End Sub
+
+'click a reference
+Sub RefClick(refID As String)
+	refID = refID.tolowercase
+	vue.refs.GetField(refID).RunMethod("click", Null)
+End Sub
+
+Sub ShowFileSelect(fsName As String)
+	RefClick(fsName)
+End Sub
+
+'focus on a ref
+Sub SetFocus(refID As String)
+	refID = refID.tolowercase
+	vue.refs.GetField(refID).RunMethod("focus", Null)
+End Sub
+
+Sub AddFileSelect(eventHandler As Object, fid As String)
+	Dim fu As VMElement = CreateInvisibleFileInput(eventHandler, fid)
+	Container.SetText(fu.ToString)
+End Sub
+
+'create an invisible file input
+private Sub CreateInvisibleFileInput(eventHandler As Object, fid As String) As VMElement
+	fid = fid.tolowercase
+	Dim methodName As String = $"${fid}_change"$
+	'
+	Dim fu As VMElement
+	fu.Initialize(vue, fid).SetTag("input")
+	fu.SetAttrSingle("v-show", "false")
+	fu.SetAttrSingle("ref", fid)
+	fu.SetAttrSingle("type", "file")
+	fu.SetAttrSingle("@change", methodName)
+	'
+	If SubExists(eventHandler, methodName) = False Then Return fu
+	Dim e As BANanoEvent
+	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, Array(e))
+	'add to methods
+	vue.SetCallBack(methodName, cb)
+	Return fu
+End Sub
+
+Sub SetOnClick(EventHandler As Object, methodName As String)
+	methodName = methodName.tolowercase
+	If SubExists(EventHandler, methodName) = False Then Return
+	Dim e As BANanoEvent
+	Dim cb As BANanoObject = BANano.CallBack(EventHandler, methodName, Array(e))
+	'add to methods
+	vue.SetCallBack(methodName, cb)
+End Sub
+
 
 'getElementById
 Sub getElementById(sid As String) As BANanoObject
@@ -295,6 +1312,59 @@ Sub getElementById(sid As String) As BANanoObject
 	Return el
 End Sub
 
+Sub List2ArrayVariable(lst As List) As String
+	If lst.Size = 0 Then
+		Return $""""$
+	End If
+	Dim i As Int
+	Dim sb As StringBuilder
+	Dim fld As String
+	sb.Initialize
+	fld = $""${lst.Get(0)}""$
+	sb.Append(fld)
+	For i = 1 To lst.size - 1
+		fld = $""${lst.Get(i)}""$
+		sb.Append(",").Append(fld)
+	Next
+	Return sb.ToString
+End Sub
+
+
+Sub AddHTMLElement(EventHandler As Object, parentID As String, elID As String, tag As String, props As Map, styleProps As Map, classNames As List, loose As List, Text As String)
+	parentID = parentID.ToLowerCase
+	elID = elID.tolowercase
+	parentID = parentID.Replace("#","")
+	elID = elID.Replace("#","")
+	'
+	Dim elIT As VMElement
+	elIT.Initialize(EventHandler, elID)
+	elIT.SetText(Text)
+	If loose <> Null Then
+		For Each k As String In loose
+			elIT.SetAttrSingle(k, True)
+		Next
+	End If
+	If props <> Null Then
+		For Each k As String In props.Keys
+			Dim v As String = props.Get(k)
+			elIT.SetAttrSingle(k, v)
+		Next
+	End If
+	If styleProps <> Null Then
+		For Each k As String In styleProps.Keys
+			Dim v As String = styleProps.get(k)
+			elIT.SetStyleSingle(k, v)
+		Next
+	End If
+	If classNames <> Null Then
+		For Each strClass As String In classNames
+			elIT.AddClass(strClass)
+		Next
+	End If
+	'add to the parent element
+	Dim sElement As String = elIT.tostring
+	BANano.GetElement($"#${parentID}"$).Append(sElement)
+End Sub
 
 'build the map to send an email to use in callinlinephp
 Sub BuildPHPEmail(sfrom As String, sto As String, scc As String, ssubject As String, smsg As String) As Map
@@ -322,6 +1392,13 @@ Sub LogState(stateName As String)
 	Log(rec)
 End Sub
 
+Sub NewList As List
+	Dim lst As List
+	lst.Initialize
+	Return lst
+End Sub
+
+
 Sub RefreshKey(keyName As String) As BANanoVM
 	keyName = keyName.ToLowerCase
 	vue.SetData(keyName, DateTime.now)
@@ -341,10 +1418,34 @@ Sub ShowConfirm(process As String, Title As String, Message As String,ConfirmTex
 	Confirm.Show
 End Sub
 
+Sub ShowConfirm1(eventHandler As Object, process As String, Title As String, Message As String,ConfirmText As String, CancelText As String)
+	process = process.tolowercase
+	vue.SetState(CreateMap("confirmtitle":Title,"confirmcontent":Message,"confirmkey":process,"btnconfirmoklabel":ConfirmText,"btnconfirmcancellabel":CancelText))
+	SetOnClick(eventHandler, "btnConfirmOk_click")
+	SetOnClick(eventHandler, "btnConfirmCancel_click")
+	Confirm.Show
+End Sub
+
+Sub ConfirmHide
+	Confirm.hide
+End Sub
+
 Sub ShowAlert(process As String, Title As String, Message As String, ConfirmText As String)
 	process = process.tolowercase
-	vue.SetState(CreateMap("alertkey":process, "alerttitle":Title,"alertcontent":Message,"btnalertoklabel":ConfirmText))
+	vue.SetState(CreateMap("alertkey":process, "appalerttitle":Title,"appalertcontent":Message,"btnalertoklabel":ConfirmText))
 	Alert.Show
+End Sub
+
+Sub ShowNotification(Message As String, Color As String, Dismissable As Boolean)
+	Notification.SetContent(Message)
+	Notification.SetColor(Color)
+	Notification.SetDismissible(Dismissable)
+	Notification.SetIcon("")
+	Notification.Show
+End Sub
+
+Sub HideNotification
+	Notification.hide
 End Sub
 
 Sub GetConfirm As String
@@ -352,22 +1453,22 @@ Sub GetConfirm As String
 	Return sproc
 End Sub
 
-Sub btnalertOk_click(e As BANanoEvent)
+Sub btnalertOk_click(e As BANanoEvent)    'ignoredeadcode
 	Alert.hide
 	Dim e As BANanoEvent
-	BANano.CallSub(module, "alert_ok", Array(e))
+	BANano.CallSub(Module, "alert_ok", Array(e))   'ignoredeadcode
 End Sub
 
-Sub btnConfirmCancel_click(e As BANanoEvent)
+Sub btnConfirmCancel_click(e As BANanoEvent)   'ignoredeadcode
 	Confirm.hide
 	Dim e As BANanoEvent
-	BANano.CallSub(module, "confirm_cancel", Array(e))
+	BANano.CallSub(Module, "confirm_cancel", Array(e))   'ignore
 End Sub
 
-Sub btnConfirmOk_click(e As BANanoEvent)
+Sub btnConfirmOk_click(e As BANanoEvent)  'ignoredeadcode
 	Confirm.hide
 	Dim e As BANanoEvent
-	BANano.CallSub(module, "confirm_ok", Array(e))
+	BANano.CallSub(Module, "confirm_ok", Array(e))  'ignore
 End Sub
 
 'convert json to a list
@@ -377,6 +1478,38 @@ End Sub
 
 Sub CreateExpandTransition(eID As String, eventHandler As Object) As VMExpandTransition
 	Dim el As VMExpandTransition
+	el.Initialize(vue, eID, eventHandler)
+	Return el
+End Sub
+
+Sub CreateItemGroup(eID As String, eventHandler As Object) As VMItemGroup
+	Dim el As VMItemGroup
+	el.Initialize(vue, eID, eventHandler)
+	Return el
+End Sub
+
+Sub CreateWindow(eID As String, eventHandler As Object) As VMWindow
+	Dim el As VMWindow
+	el.Initialize(vue, eID, eventHandler)
+	Return el
+End Sub
+
+Sub CreateWindowItem(eID As String, eventHandler As Object) As VMWindowItem
+	Dim el As VMWindowItem
+	el.Initialize(vue, eID, eventHandler)
+	Return el
+End Sub
+
+
+Sub CreateSlideItem(eID As String, eventHandler As Object) As VMSlideItem
+	Dim el As VMSlideItem
+	el.Initialize(vue, eID, eventHandler)
+	Return el
+End Sub
+
+
+Sub CreateItem(eID As String, eventHandler As Object) As VMItem
+	Dim el As VMItem
 	el.Initialize(vue, eID, eventHandler)
 	Return el
 End Sub
@@ -393,6 +1526,20 @@ Sub CreateParallax(eID As String, eventHandler As Object) As VMParallax
 	el.Initialize(vue, eID, eventHandler)
 	Return el
 End Sub
+
+Sub CreateListItem(eID As String, eventHandler As Object) As VMListItem
+	Dim el As VMListItem
+	el.Initialize(vue, eID, eventHandler)
+	Return el
+End Sub
+
+
+Sub CreateChipGroup(eID As String, eventHandler As Object) As VMChipGroup
+	Dim el As VMChipGroup
+	el.Initialize(vue, eID, eventHandler)
+	Return el
+End Sub
+
 
 Sub NewParallax(eventHandler As Object,bStatic As Boolean, sname As String, sheight As String, src As String,salt As String) As VMParallax
 	Dim el As VMParallax = CreateParallax(sname, eventHandler)
@@ -436,44 +1583,10 @@ Sub CreateTextArea(eID As String, eventHandler As Object) As VMTextField
 	el.SetTextArea
 	Return el
 End Sub
-'
-'
-'Sub CreateSelectSides(eID As String, eventHandler As Object) As VMSelectSides
-'	Dim el As VMSelectSides
-'	el.Initialize(vue, eID, eventHandler)
-'	Return el
-'End Sub
+
 
 Sub CreateProperty(eID As String, eventHandler As Object) As VMProperty
 	Dim el As VMProperty
-	el.Initialize(vue, eID, eventHandler)
-	el.SetVModel($"${eID}x"$)
-	Return el
-End Sub
-
-Sub CreatePrism(eID As String, eventHandler As Object) As VMPrism
-	Dim el As VMPrism
-	el.Initialize(vue, eID, eventHandler)
-	Return el
-End Sub
-
-
-Sub CreateArcCounter(eID As String, eventHandler As Object) As VMArcCounter
-	Dim el As VMArcCounter
-	el.Initialize(vue, eID, eventHandler)
-	Return el
-End Sub
-
-
-Sub CreateCircleCounter(eID As String, eventHandler As Object) As VMCircleCounter
-	Dim el As VMCircleCounter
-	el.Initialize(vue, eID, eventHandler)
-	Return el
-End Sub
-
-
-Sub CreateEChart(eID As String, eventHandler As Object) As VMEChart
-	Dim el As VMEChart
 	el.Initialize(vue, eID, eventHandler)
 	Return el
 End Sub
@@ -509,12 +1622,6 @@ Sub CreateSkeletonLoader(eID As String, eventHandler As Object) As VMSkeletonLoa
 End Sub
 
 
-Sub CreateQuill(eID As String, eventHandler As Object) As VMQuill
-	Dim el As VMQuill
-	el.Initialize(vue, eID, eventHandler)
-	Return el
-End Sub
-
 Sub CreateBanner(eID As String, eventHandler As Object) As VMBanner
 	Dim el As VMBanner
 	el.Initialize(vue, eID, eventHandler)
@@ -534,6 +1641,16 @@ Sub CreateDataTable(cID As String, PrimaryKey As String, eventHandler As Object)
 	Return el
 End Sub
 
+Sub CreatePagination(cID As String, eventHandler As Object) As VMPagination
+	Dim el As VMPagination
+	el.Initialize(vue, cID, eventHandler)
+	Return el
+End Sub
+
+
+Sub CreateDataTable1(el As VMDataTable, cID As String, PrimaryKey As String, eventHandler As Object)
+	el.Initialize(vue, cID,PrimaryKey,  eventHandler)
+End Sub
 
 Sub CreateTreeView(cID As String, eventHandler As Object) As VMTreeView
 	Dim el As VMTreeView
@@ -576,37 +1693,104 @@ Sub CreateProgressLinear(sid As String, eventHandler As Object) As VMProgressLin
 End Sub
 
 Sub ShowSnackBarError(Message As String)
-	SetStateSingle("snackmessage", Message)
-	SnackBar.SetColor("red")
+	Message = CStr(Message)
+	Message = Message.Replace("null", "")
+	Message = Message.Trim
+	If Message = "" Then Return
+	SetStateSingle("appsnackmessage", Message)
+	SnackBar.SetTop(True)
+	SnackBar.SetColor("error")
 	SnackBar.Button.Hide
 	SnackBar.show
 End Sub
 
 Sub ShowSnackBarSuccess(Message As String)
-	SetStateSingle("snackmessage", Message)
-	SnackBar.SetColor("green")
+	Message = CStr(Message)
+	Message = Message.Replace("null", "")
+	Message = Message.Trim
+	If Message = "" Then Return
+	SetStateSingle("appsnackmessage", Message)
+	SnackBar.SetColor("success")
+	SnackBar.SetTop(True)
 	SnackBar.Button.Hide
 	SnackBar.show
 End Sub
 
+Sub ShowSnackBarPrimary(Message As String)
+	Message = CStr(Message)
+	Message = Message.Replace("null", "")
+	Message = Message.Trim
+	If Message = "" Then Return
+	SetStateSingle("appsnackmessage", Message)
+	SnackBar.SetColor("primary")
+	SnackBar.SetTop(True)
+	SnackBar.Button.Hide
+	SnackBar.show
+End Sub
+
+Sub ShowSnackBarSecondary(Message As String)
+	Message = CStr(Message)
+	Message = Message.Replace("null", "")
+	Message = Message.Trim
+	If Message = "" Then Return
+	SetStateSingle("appsnackmessage", Message)
+	SnackBar.SetColor("secondary")
+	SnackBar.SetTop(True)
+	SnackBar.Button.Hide
+	SnackBar.show
+End Sub
+
+
+Sub ShowSnackBarWarning(Message As String)
+	Message = CStr(Message)
+	Message = Message.Replace("null", "")
+	Message = Message.Trim
+	If Message = "" Then Return
+	SetStateSingle("appsnackmessage", Message)
+	SnackBar.SetColor("warning")
+	SnackBar.SetTop(True)
+	SnackBar.Button.Hide
+	SnackBar.show
+End Sub
+
+
 Sub ShowSnackBar(Message As String)
-	SetStateSingle("snackmessage", Message)
+	Message = CStr(Message)
+	Message = Message.Replace("null", "")
+	Message = Message.Trim
+	If Message = "" Then Return
+	SetStateSingle("appsnackmessage", Message)
 	SnackBar.Button.Hide
 	SnackBar.show
 End Sub
 
 Sub ShowSnackBarButton(Message As String, buttonText As String, OnClick As String)
-	SetStateSingle("snackmessage", Message)
+	SetStateSingle("appsnackmessage", Message)
 	SnackBar.Button.Show
 	SnackBar.SetOnClick(OnClick)
 	SnackBar.Button.SetLabel(buttonText)
 	SnackBar.show
 End Sub
 
+'set the progress value
+Sub SetProgressValue(elID As String, elValue As String)
+	elID = elID.tolowercase
+	Dim elKey As String = $"${elID}value"$
+	vue.SetData(elKey, elValue)
+End Sub
+
+Sub GetProgressValue(elID As String) As String
+	elID = elID.tolowercase
+	Dim elKey As String = $"${elID}value"$
+	Dim svalue As String = vue.getData(elKey)
+	Return svalue
+End Sub
+
 
 Sub Increment(elID As String, valueOf As Int) As BANanoVM
 	elID = elID.tolowercase
 	Dim oldv As Int = vue.GetState(elID,0)
+	If BANano.IsNull(oldv) Or oldv = "" Then oldv = 0
 	oldv = BANano.parseInt(oldv) + valueOf
 	vue.SetStateSingle(elID, oldv)
 	Return Me
@@ -615,10 +1799,33 @@ End Sub
 Sub Decrement(elID As String, valueOf As Int) As BANanoVM
 	elID = elID.tolowercase
 	Dim oldv As Int = vue.GetState(elID,0)
+	If BANano.IsNull(oldv) Or oldv = "" Then oldv = 0
 	oldv = BANano.parseInt(oldv) - valueOf
 	vue.SetStateSingle(elID, oldv)
 	Return Me
 End Sub
+
+'decrement limit to
+Sub DecrementTo(elID As String, valueOf As Int, LimitTo As Int) As BANanoVM
+	elID = elID.tolowercase
+	Dim oldv As Int = vue.GetState(elID,0)
+	If BANano.IsNull(oldv) Or oldv = "" Then oldv = 0
+	oldv = BANano.parseInt(oldv) - valueOf
+	If oldv <= 0 Then oldv = LimitTo
+	vue.SetStateSingle(elID, oldv)
+	Return Me
+End Sub
+
+Sub IncrementTo(elID As String, valueOf As Int, LimitTo As Int) As BANanoVM
+	elID = elID.tolowercase
+	Dim oldv As Int = vue.GetState(elID,0)
+	If BANano.IsNull(oldv) Or oldv = "" Then oldv = 0
+	oldv = BANano.parseInt(oldv) + valueOf
+	If oldv >= LimitTo Then oldv = LimitTo
+	vue.SetStateSingle(elID, oldv)
+	Return Me
+End Sub
+
 
 'add a theme to use in the app
 Sub AddTheme(themeName As String, ForeColor As String, ForeColorIntensity As String, BackColor As String, BackColorIntensity As String)
@@ -637,14 +1844,22 @@ Sub ProperCase(myStr As String) As String
 	Return vue.ProperCase(myStr)
 End Sub
 
+Sub BeautifyName(namx As String) As String
+	Return vue.BeautifyName(namx)
+End Sub
+
 Sub Capitalize(t As String) As String
-	Return vue.Capitalize(t)
+	Return vue.propercase(t)
 End Sub
 
 Sub ShowMulti(lst As List)
 	For Each item As String In lst
 		Show(item)
 	Next
+End Sub
+
+Sub BeautifyRest(idName As String) As String
+	Return vue.BeautifyRest(idName)
 End Sub
 
 Sub HideMulti(lst As List)
@@ -682,30 +1897,6 @@ Public Sub MonthNow() As String
 	Return vue.monthnow
 End Sub
 
-Sub CreateGMap(sid As String, eventHandler As Object) As VMGMap
-	Dim el As VMGMap
-	el.Initialize(vue, sid, eventHandler)
-	Return el
-End Sub
-
-Sub CreateDevice(sid As String, eventHandler As Object) As VMDevice
-	Dim el As VMDevice
-	el.Initialize(vue, sid, eventHandler)
-	Return el
-End Sub
-
-Sub SetGMapKey(key As String)
-	VueGoogleMaps.Initialize("VueGoogleMaps")
-	Dim opt As Map = CreateMap()
-	Dim load As Map = CreateMap()
-	load.Put("key", key)
-	load.Put("libraries", "places")
-	opt.Put("load", load)
-	opt.Put("installComponents", True)
-	vue.Use1(VueGoogleMaps, opt)
-End Sub
-
-
 'join list to mv string
 Sub Join(delimiter As String, lst As List) As String
 	Return vue.Join(delimiter, lst)
@@ -724,20 +1915,6 @@ End Sub
 'copy a state from one to another
 Sub State2Another(source As String, target As String, defaultValue As Object)
 	vue.State2Another(source, target, defaultValue)
-End Sub
-
-Sub CreateChartKick(sid As String, eventHandler As Object) As VMChartKick
-	Dim el As VMChartKick
-	el.Initialize(vue, sid, eventHandler)
-	
-	Return el
-End Sub
-
-'update value of progress bar
-Sub SetProgressValue(pID As String, pVal As Int) As BANanoVM
-	pID = pID.ToLowerCase
-	SetStateSingle($"${pID}value"$, pVal)
-	Return Me
 End Sub
 
 'update buffer of progress bar
@@ -764,33 +1941,62 @@ End Sub
 'show any dialog, alert, prompt
 Sub ShowDialog(dID As String)
 	dID = dID.tolowercase
-	SetStateTrue(dID)
+	SetStateTrue(dID & "show")
+End Sub
+
+Sub ShowBottomSheet(dID As String)
+	dID = dID.tolowercase
+	vue.SetData($"${dID}show"$, True)
+End Sub
+
+Sub HideBottomSheet(dID As String)
+	dID = dID.tolowercase
+	vue.SetData($"${dID}show"$, False)
+End Sub
+
+Sub ShowOverlay(dID As String)
+	dID = dID.tolowercase
+	vue.SetData($"${dID}show"$, True)
+End Sub
+
+Sub HideOverlay(dID As String)
+	dID = dID.tolowercase
+	vue.SetData($"${dID}show"$, False)
 End Sub
 
 Sub HideDrawer(dID As String)
 	dID = dID.tolowercase
-	SetStateFalse(dID)
+	SetStateFalse(dID & "show")
 End Sub
 
 'show a specific drawer and hide all others
 Sub ShowDrawer(dID As String)
 	dID = dID.tolowercase
-	HideDrawers
-	SetStateTrue(dID)
+	HideOtherDrawers(dID)
+	SetStateTrue($"${dID}show"$)
 End Sub
 
 'show a specific drawer and hide all others
 Sub HideDrawers
 	Dim nm As Map = CreateMap()
 	For Each k As String In drawers
-		nm.Put(k, False)
+		nm.Put($"${k}show"$, False)
 	Next
 	SetState(nm)
 End Sub
 
+Sub HideOtherDrawers(sexcept As String)
+	Dim nm As Map = CreateMap()
+	For Each k As String In drawers
+		If k.EqualsIgnoreCase(sexcept) = False Then nm.Put($"${k}show"$, False)
+	Next
+	SetState(nm)
+End Sub
+
+
 Sub HideDialog(dID As String)
 	dID = dID.tolowercase
-	SetStateFalse(dID)
+	SetStateFalse(dID & "show")
 End Sub
 
 Sub SetCloak(b As Boolean) As BANanoVM
@@ -827,35 +2033,9 @@ Sub Show(elID As String)
 	vue.SetStateSingle($"${elID}show"$, True)
 End Sub
 
-Sub ShowError(elID As String)
-	vue.SetStateSingle($"${elID}error"$, True)
-End Sub
-
-Sub HideError(elID As String)
-	vue.SetStateSingle($"${elID}error"$, False)
-End Sub
-
-Sub Date2YYYYMMDD(value As Object) As String
-	Return vue.Date2YYYYMMDD(value)
-End Sub
 
 Sub DateAdd(mDate As String, HowManyDays As Int) As String
 	Return vue.DateAdd(mDate, HowManyDays)
-End Sub
-
-Sub Age(birthDay As String) As Int
-	Return vue.Age(birthDay)
-End Sub
-
-Sub DateDiff(CurrentDate As String, OtherDate As String) As Int
-	Return vue.DateDiff(CurrentDate, OtherDate)
-End Sub
-
-Sub CreateFrappeGantt(sid As String, eventHandler As Object) As VMFrappeGantt
-	Dim el As VMFrappeGantt
-	el.Initialize(vue, sid, eventHandler)
-	
-	Return el
 End Sub
 
 Sub CreateContainer(sid As String, eventHandler As Object) As VMContainer
@@ -885,18 +2065,6 @@ Sub ExtractMap(source As Map, keys As List) As Map
 	Return vue.ExtractMap(source, keys)
 End Sub
 
-'return md5 hash
-Sub Md5Hash(value As String, key As String, raw As Boolean) As String
-	Return vue.Md5Hash(value, key, raw)
-End Sub
-
-Sub CreatePrettyPrint(sid As String, slang As String) As VMPrettyPrint
-	Dim El As VMPrettyPrint
-	El.Initialize(vue, sid, slang)
-	
-	Return El
-End Sub
-
 'set dynamic style
 Sub SetStyle(className As String, prop As String, vals As String) As BANanoVM
 	vue.SetStyle(className, prop, vals)
@@ -908,23 +2076,10 @@ Sub JSONPretty(m As Object) As String
 	Return vue.JSONPretty(m)
 End Sub
 
-'Sub CreatePrism(sid As String, lang As String) As VMPrism
-'	Dim el As VMPrism
-'	el.Initialize(Vue, sid, lang)
-'	Return el
-'End Sub
-
-Sub CreateImage(img As String, eventHandler As Object) As VMImage
+Sub CreateImage(sImg As String, eventHandler As Object) As VMImage
 	Dim el As VMImage
-	el.Initialize(vue, img, eventHandler)
+	el.Initialize(vue, sImg, eventHandler)
 	el.Image.typeof = "image"
-	Return el
-End Sub
-
-Sub CreatePDF(sid As String, url As String) As VMPDF
-	Dim el As VMPDF
-	el.Initialize(vue, sid, url)
-	
 	Return el
 End Sub
 
@@ -953,6 +2108,27 @@ Sub StrParse(Delim As String, InputString As String) As List
 End Sub
 
 private Sub InitColors
+	Dim e As Int
+	Elevation.initialize
+	For e = 0 To 24
+		Elevation.Put(e, e)
+	Next
+	Elevation.Put("", "None")
+	'
+	Dim tran As List
+	tran.Initialize
+	'
+	tran.AddAll(Array("slide-x-transition", "slide-x-reverse-transition", "slide-y-transition", "slide-y-reverse-transition", "scroll-x-transition"))
+	tran.AddAll(Array("scroll-x-reverse-transition", "scroll-y-transition", "scroll-y-reverse-transition", "scale-transition",  "fade-transition", "fab-transition"))
+	'
+	Transition.Initialize
+	Transitions.Initialize
+	For Each sl As String In tran
+		Transition.Put(sl, sl)
+		Transitions.Put($"v-${sl}"$, sl)
+	Next
+	Transition.Put("", "None")
+	
 	DisplayOptions.Initialize
 	DisplayOptions.Put("", "None")
 	DisplayOptions.Put("display-4", "Display 4")
@@ -968,7 +2144,7 @@ private Sub InitColors
 	DisplayOptions.Put("caption", "Caption")
 	DisplayOptions.Put("overline", "Overline")
 	'
-	TextAlignmentOptions.Initialize 
+	TextAlignmentOptions.Initialize
 	TextAlignmentOptions.put("", "None")
 	TextAlignmentOptions.put("text-left", "Left")
 	TextAlignmentOptions.put("text-center", "Center")
@@ -983,7 +2159,7 @@ private Sub InitColors
 	FontWeightOptions.Put("font-weight-regular", "Regular")
 	FontWeightOptions.Put("font-weight-light", "Light")
 	FontWeightOptions.Put("font-weight-thin", "Thin")
-	'	
+	'
 	IntensityOptions.Initialize
 	IntensityOptions.put("","Normal")
 	IntensityOptions.put("lighten-1","Lighten 1")
@@ -1023,14 +2199,14 @@ private Sub InitColors
 	ColorOptions.Put("transparent", "Transparent")
 	ColorOptions.Put("white", "White")
 	ColorOptions.Put("yellow", "Yellow")
-	ColorOptions.Put("none", "")
-	ColorOptions.Put("primary","primary")
-	ColorOptions.Put("secondary","secondary")
-	ColorOptions.Put("accent","accent")
-	ColorOptions.Put("error","error")
-	ColorOptions.Put("info","info")
-	ColorOptions.Put("success","success")
-	ColorOptions.Put("warning","warning")
+	ColorOptions.Put("", "None")
+	ColorOptions.Put("primary","Primary")
+	ColorOptions.Put("secondary","Secondary")
+	ColorOptions.Put("accent","Accent")
+	ColorOptions.Put("error","Error")
+	ColorOptions.Put("info","Info")
+	ColorOptions.Put("success","Success")
+	ColorOptions.Put("warning","Warning")
 	'
 	BorderOptions.Initialize
 	BorderOptions.Put("dashed", "Dashed")
@@ -1043,6 +2219,103 @@ private Sub InitColors
 	BorderOptions.Put("outset", "Outset")
 	BorderOptions.Put("ridge", "Ridge")
 	BorderOptions.Put("solid", "Solid")
+	'
+	TargetOptions.Put("","None")
+	TargetOptions.Put("_blank","Blank")
+	TargetOptions.Put("_self","Self")
+	TargetOptions.Put("_parent","Parent")
+	TargetOptions.Put("_top","Top")
+	'
+	ColumnTypes.Initialize
+	ColumnTypes.put("date","Date")
+	ColumnTypes.put("text", "Text")
+	ColumnTypes.put("icon", "Icon")
+	ColumnTypes.put("checkbox", "Check Box")
+	ColumnTypes.put("", "None")
+	ColumnTypes.put("time","Time")
+	ColumnTypes.put("datetime","Date Time")
+	ColumnTypes.put("image","Image")
+	ColumnTypes.Put("money","Money")
+	ColumnTypes.put("filesize", "File Size")
+	ColumnTypes.put("chip","Chip")
+	ColumnTypes.put("edit","Edit")
+	ColumnTypes.put("delete","Delete")
+	ColumnTypes.put("action","Action")
+	ColumnTypes.put("save","Save")
+	ColumnTypes.put("cancel","Cancel")
+	ColumnTypes.Put("switch", "Switch")
+	ColumnTypes.put("avatarimg", "Avatar")
+	ColumnTypes.Put("rating", "Rating")
+	ColumnTypes.Put("progresscircular", "ProgressCircular")
+	ColumnTypes.Put("progresslinear", "ProgressLinear")
+	
+	'
+	ColumnAlign.Initialize
+	ColumnAlign.Put("start", "Start")
+	ColumnAlign.Put("center", "Center")
+	ColumnAlign.Put("end", "End")
+	'
+	DataTypes.Initialize
+	DataTypes.Put("BOOL", "Boolean")
+	DataTypes.Put("INT", "Integer")
+	DataTypes.Put("TEXT", "Text")
+	DataTypes.Put("FLOAT", "Double")
+	DataTypes.Put("BLOB", "Blob")
+	DataTypes.Put("DATE", "Date")
+	DataTypes.Put("None", "None")
+	'
+	ControlTypes.Initialize
+	ControlTypes.put("text", "Text")
+	ControlTypes.put("textarea", "Text Area")
+	ControlTypes.put("checkbox", "Check Box")
+	ControlTypes.put("date", "Date")
+	ControlTypes.put("file", "File")
+	ControlTypes.put("radio", "Radio")
+	ControlTypes.put("select", "Select")
+	ControlTypes.put("slider", "Slider")
+	ControlTypes.put("switch", "Switch")
+	ControlTypes.put("label", "Label")
+	ControlTypes.put("email", "Email")
+	ControlTypes.put("rating", "Rating")
+	ControlTypes.put("password", "Password")
+	ControlTypes.put("tel", "Telephone")
+	ControlTypes.put("time", "Time")
+	ControlTypes.put("combo", "Combo")
+	ControlTypes.put("auto", "Auto Complete")
+	ControlTypes.put("profile", "Profile")
+	ControlTypes.put("image", "Image")
+	ControlTypes.put("button", "Button")
+	ControlTypes.put("icon", "Icon")
+	ControlTypes.put("parallax", "Parallax")
+	ControlTypes.put("container", "Container")
+	ControlTypes.put("menu", "Menu")
+	ControlTypes.put("carousel", "Carousel")
+	ControlTypes.put("speeddial", "Speed Dial")
+	ControlTypes.Put("quill", "Quill Editor")
+	ControlTypes.Put("None", "None")
+	ControlTypes.Put("rangeslider", "Range Slider")
+	ControlTypes.Put("infobox", "Info Box")
+	ControlTypes.Put("fileselect", "File Select")
+	ControlTypes.Put("sparkline", "Sparkline")
+	ControlTypes.Put("number", "Number")
+	'
+	Direction.Initialize
+	Direction.Put("top", "Top")
+	Direction.Put("bottom", "Bottom")
+	Direction.Put("left", "Left")
+	Direction.Put("right", "Right")
+	'
+	Dim fList As List
+	fList.Initialize
+	fList.AddAll(Array("float-left", "float-right", "float-none", "float-sm-left", "float-sm-right", "float-sm-none", _
+	"float-md-left", "float-md-right", "float-md-none", "float-lg-left", "float-lg-right", "float-lg-none", "float-xl-left", _
+	"float-xl-right", "float-xl-none"))
+	Floats = vue.List2MapSimple(fList, True)
+	Floats.Put("","None")
+	'
+	Dim xList As List = vue.NewList
+	xList.AddAll(Array("medium","xx-small","x-small","small","large","x-large","xx-large","smaller","larger","initial","inherit"))
+	
 End Sub
 
 
@@ -1050,19 +2323,7 @@ Sub MergeMaps(oldm As Map, newm As Map) As Map
 	Return vue.MergeMaps(oldm, newm)
 End Sub
 
-Sub CreateInfoBox(sid As String, eventHandler As Object) As VMInfoBox
-	Dim el As VMInfoBox
-	el.Initialize(vue, sid, eventHandler)
-	Return el
-End Sub
-
-Sub CreateCountTo(sid As String, eventHandler As Object) As VMCountTo
-	Dim el As VMCountTo
-	el.Initialize(vue, sid, eventHandler)
-	Return el
-End Sub
-
-Sub AddComponent(comp As VMElement)
+Sub AddComponent(comp As VMComponent)
 	vue.AddComponent(comp)
 End Sub
 
@@ -1085,34 +2346,90 @@ End Sub
 'create an element with a 'component' tag
 Sub CreateComponent(id As String) As VMElement
 	Dim el As VMElement
-	el.Initialize(vue, id).SetTag("component")
-	
+	el.Initialize(vue, id).SetTag("component")	
 	Return el
 End Sub
 
-Sub AddRoute(path As String, comp As VMElement) As BANanoVM
-	vue.AddRoute(path, comp)
+'create an element with a 'component' tag
+Sub CreateOwnComponent(id As String, compName As String) As VMElement
+	Dim elx As VMElement
+	elx.Initialize(vue, id).SetTag(compName)
+	Return elx
+End Sub
+
+Sub AddRoute(comp As VMComponent) As BANanoVM
+	vue.AddRoute(comp)
+	SetUseRouter(True)
 	Return Me
 End Sub
 
-Sub UpdateBadge(elID As String, counted As String) As BANanoVM
+Sub SetBadgeAvatar(elID As String, b As Boolean) As BANanoVM
 	elID = elID.tolowercase
-	Dim badValue As String = $"${elID}value"$
+	Dim badValue As String = $"${elID}badgeavatar"$
+	vue.SetStateSingle(badValue, b)
+	Return Me
+End Sub
+
+Sub SetBadgeOverlap(elID As String, b As Boolean) As BANanoVM
+	elID = elID.tolowercase
+	Dim badValue As String = $"${elID}badgeoverlap"$
+	vue.SetStateSingle(badValue, b)
+	Return Me
+End Sub
+
+
+Sub SetBadgeBordered(elID As String, bordered As Boolean) As BANanoVM
+	elID = elID.tolowercase
+	Dim badValue As String = $"${elID}badgebordered"$
+	vue.SetStateSingle(badValue, bordered)
+	Return Me
+End Sub
+
+Sub SetBadgeColor(elID As String, color As String, intensity As String) As BANanoVM
+	elID = elID.tolowercase
+	Dim scolor As String = $"${color} ${intensity}"$
+	Dim badValue As String = $"${elID}badgecolor"$
+	vue.SetStateSingle(badValue, scolor)
+	Return Me
+End Sub
+
+Sub SetBadgeIcon(elID As String, sicon As String) As BANanoVM
+	elID = elID.tolowercase
+	Dim badValue As String = $"${elID}badgeicon"$
+	vue.SetStateSingle(badValue, sicon)
+	Return Me
+End Sub
+
+Sub SetBadgeContent(elID As String, counted As String) As BANanoVM
+	elID = elID.tolowercase
+	counted = BANano.parseInt(counted)
+	Dim badValue As String = $"${elID}badgecontent"$
 	vue.SetStateSingle(badValue, counted)
 	Return Me
 End Sub
 
-Sub UpdateItemBadge(elID As String, counted As String) As BANanoVM
+Sub SetBadgeOffsetX(elID As String, counted As String) As BANanoVM
 	elID = elID.tolowercase
-	Dim badValue As String = $"${elID}badgevalue"$
+	counted = BANano.parseInt(counted)
+	Dim badValue As String = $"${elID}badgeoffsetx"$
 	vue.SetStateSingle(badValue, counted)
 	Return Me
 End Sub
+
+Sub SetBadgeOffsetY(elID As String, counted As String) As BANanoVM
+	elID = elID.tolowercase
+	counted = BANano.parseInt(counted)
+	Dim badValue As String = $"${elID}badgeoffsety"$
+	vue.SetStateSingle(badValue, counted)
+	Return Me
+End Sub
+
 
 Sub IncrementBadge(elID As String, counted As Int) As BANanoVM
 	elID = elID.tolowercase
-	Dim badValue As String = $"${elID}badgevalue"$
+	Dim badValue As String = $"${elID}badgecontent"$
 	Dim lastValue As String = vue.GetState(badValue, "0")
+	If BANano.IsNull(lastValue) Or lastValue = "" Then lastValue = 0
 	Dim intLast As Int = BANano.parseInt(lastValue)
 	intLast = intLast + counted
 	vue.SetStateSingle(badValue, intLast)
@@ -1121,13 +2438,20 @@ End Sub
 
 Sub DecrementBadge(elID As String, counted As Int) As BANanoVM
 	elID = elID.tolowercase
-	Dim badValue As String = $"${elID}badgevalue"$
+	Dim badValue As String = $"${elID}badgecontent"$
 	Dim lastValue As String = vue.GetState(badValue, "0")
+	If BANano.IsNull(lastValue) Or lastValue = "" Then lastValue = 0
 	Dim intLast As Int = BANano.parseInt(lastValue)
 	intLast = intLast - counted
 	vue.SetStateSingle(badValue, intLast)
 	Return Me
 End Sub
+
+Sub GetFileListFromTarget(e As BANanoEvent) As List
+	Dim files As List = e.OtherField("target").GetField("files").Result
+	Return files
+End Sub
+
 
 'hack
 Sub GetChipIDFromEvent(e As BANanoEvent) As String
@@ -1147,6 +2471,13 @@ Sub CreateAvatar(sid As String, moduleObj As Object) As VMAvatar
 	el.Initialize(vue,sid, moduleObj)
 	Return el
 End Sub
+
+Sub CreateSparkLine(sid As String, moduleObj As Object) As VMSparkLine
+	Dim el As VMSparkLine
+	el.Initialize(vue,sid, moduleObj)
+	Return el
+End Sub
+
 
 Sub CreateCarousel(sid As String, moduleObj As Object) As VMCarousel
 	Dim el As VMCarousel
@@ -1170,10 +2501,9 @@ Sub HR As String
 	Return "<hr>"
 End Sub
 
-Sub CreateRouterLink(rID As String, Text As String) As VMElement
+Sub CreateRouterLink(rID As String, rTo As String, Text As String) As VMElement
 	Dim el As VMElement
-	el.Initialize(vue,rID).SetTag("router-link").SetText(Text)
-	
+	el.Initialize(vue,rID).SetTag("router-link").SetTo(rTo).SetText(Text)
 	Return el
 End Sub
 
@@ -1238,23 +2568,27 @@ End Sub
 
 'change state of items to be false
 Sub HideItems(items As List)
-	Dim nm As Map = CreateMap()
 	For Each item As String In items
-		nm.Put(item, False)
+		HideItem(item)
 	Next
-	SetState(nm)
+End Sub
+
+Sub ShowItem(elID As String)
+	vue.ShowItem(elID)
+End Sub
+
+Sub HideItem(elID As String)
+	vue.HideItem(elID)
 End Sub
 
 'change state of items to be true
 Sub ShowItems(items As List)
-	Dim nm As Map = CreateMap()
 	For Each item As String In items
-		nm.Put(item, True)
+		ShowItem(item)
 	Next
-	SetState(nm)
 End Sub
 
-Sub SetStateSingle(k As Object, v As Object) As BANanoVM
+Sub SetStateSingle(k As String, v As Object) As BANanoVM
 	vue.SetStateSingle(k, v)
 	Return Me
 End Sub
@@ -1290,7 +2624,7 @@ End Sub
 
 Sub SetData(prop As String, valuex As Object) As BANanoVM
 	vue.SetStateSingle(prop, valuex)
-	Return Me	
+	Return Me
 End Sub
 
 Sub GetData(prop As String) As Object
@@ -1391,13 +2725,13 @@ End Sub
 
 Sub CreateSlider(sid As String, eventHandler As Object) As VMSlider
 	Dim el As VMSlider
-	el.Initialize(vue, sid, eventHandler)	
+	el.Initialize(vue, sid, eventHandler)
 	Return el
 End Sub
 
 Sub CreateTabs(sid As String, eventHandler As Object) As VMTabs
 	Dim el As VMTabs
-	el.Initialize(vue, sid, eventHandler)	
+	el.Initialize(vue, sid, eventHandler)
 	Return el
 End Sub
 
@@ -1433,6 +2767,13 @@ Sub CreateDynamicContent(sid As String) As VMElement
 	SetStateSingle(pp,"<div></div>")
 	Dim UI As VMElement = CreateTag(sid, "renderstring")
 	UI.Bind(":string", pp)
+	UI.SetStyleSingle("width", "100% !important")
+	UI.SetStyleSingle("height", "100% !important")
+	UI.SetStyleSingle("max-height", "100% !important")
+	UI.SetStyleSingle("max-width", "100% !important")
+	UI.SetStyleSingle("overflow-y", "auto !important")
+	UI.SetStyleSingle("overflow-x", "hidden !important")
+	UI.SetStyleSingle("float", "left !important")
 	Return UI
 End Sub
 
@@ -1518,21 +2859,6 @@ Sub MakeTrim(m As Map, xkeys As List)
 	vue.MakeTrim(m, xkeys)
 End Sub
 
-'date picker dates in yyyy-mm-dd format
-Sub Prepare(keys As List)
-	For Each k As String In keys
-		Dim sk As String = GetState(k,"")
-		sk = Date2YYYYMMDD(sk)
-		SetStateSingle(k, sk)
-	Next
-End Sub
-
-'convert date picker value to correct date
-Sub ToYYYYMMDD(vmodel As String)
-	Dim sk As String = GetState(vmodel,"")
-	sk = Date2YYYYMMDD(sk)
-	SetStateSingle(vmodel, sk)
-End Sub
 
 Sub JoinNonBlanks(delimiter As String, lst As List) As String
 	Return vue.JoinNonBlanks(delimiter, lst)
@@ -1549,26 +2875,6 @@ End Sub
 Sub ToggleNamedState(stateName As String, state1 As String, state2 As String) As BANanoVM
 	vue.ToggleNamedState(stateName, state1, state2)
 	Return Me
-End Sub
-
-'compile html to render
-Sub Compile(html As String) As BANanoObject
-	Dim bo As BANanoObject = vue.Compile(html)
-	Return bo
-End Sub
-
-Sub CreateWaterBall(sid As String, eventHandler As Object, Width As String, Height As String) As VMWaterBall
-	Dim el As VMWaterBall
-	el.Initialize(vue, sid, eventHandler, Width, Height)
-	
-	Return el
-End Sub
-
-Sub CreateProgressCircle(sid As String, Width As String, Height As String) As VMProgressCircle
-	Dim el As VMProgressCircle
-	el.Initialize(vue, sid, Width, Height)
-	
-	Return el
 End Sub
 
 Sub MakePx(sValue As String) As String
@@ -1631,13 +2937,14 @@ End Sub
 
 'show a page for the app
 Sub ShowPage(name As String)
+	name = name.tolowercase
 	If Pages.IndexOf(name) = -1 Then
 		Log($"ShowPage: ${name} does not exist!"$)
 	End If
 	HideDrawers
 	Dim nm As Map = CreateMap()
 	For Each page As String In Pages
-		nm.Put($"${page}show"$, False)	
+		nm.Put($"${page}show"$, False)
 	Next
 	nm.Put($"${name}show"$, True)
 	SetState(nm)
@@ -1663,34 +2970,11 @@ Sub GetPrompt As String
 	Return ss
 End Sub
 
-''build your own alert
-'Sub AddAlert(alertid As String, eventHandler As Object, title As String, AlertContent As String, ConfirmText As String)
-'	alertid = alertid.tolowercase
-'	Dim myalert As VMAlert = CreateAlert(alertid,eventHandler).SetStatic(True).SetTitle(title).SetConfirmText(ConfirmText).SetContent(AlertContent)
-'	myalert.Pop(Content)
-'End Sub
-'
-''build your own confirm
-'Sub AddConfirm(confirmid As String, eventHandler As Object, title As String, ConfirmContent As String, ConfirmText As String, CancelText As String)
-'	confirmid = confirmid.tolowercase
-'	Dim myalert As VMConfirm = CreateConfirm(confirmid,eventHandler).SetStatic(True).SetTitle(title).SetConfirmText(ConfirmText).SetContent(ConfirmContent).SetCancelText(CancelText)
-'	myalert.Pop(Content)
-'End Sub
-'
-''build your own prompt
-'Sub AddPrompt(promptid As String, eventHandler As Object, title As String, Message As String,  placeHolder As String, maxLen As Int,ConfirmText As String, CancelText As String)
-'	promptid = promptid.tolowercase
-'	vue.SetStateSingle(promptid, Null)
-'	Dim myprompt As VMPrompt = CreatePrompt(promptid, eventHandler).SetStatic(True).SetTitle(title).SetContent(Message).SetMaxLength(maxLen).SetPlaceHolder(placeHolder)
-'	myprompt.SetConfirmText(ConfirmText).SetCancelText(CancelText)
-'	myprompt.Pop(Content)
-'End Sub
-
 Sub SetCallBack(moduleObj As Object, methodName As String) As BANanoVM
 	methodName = methodName.tolowercase
 	If SubExists(moduleObj, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(moduleObj, methodName, e)
+	Dim cb As BANanoObject = BANano.CallBack(moduleObj, methodName, Array(e))
 	vue.SetCallBack(methodName, cb)
 	Return Me
 End Sub
@@ -1706,19 +2990,6 @@ Sub RemoveMethod(methodName As String) As BANanoVM
 	Return Me
 End Sub
 
-
-
-'Sub ShowPrompt(Title As String, Message As String,Placeholder As String, MaxLen As Int, ConfirmText As String, CancelText As String)
-'	vue.SetStateSingle("promptvalue",Null)
-'	vue.SetState(CreateMap("promptplaceholder":Placeholder, "prompttitle":Title,"promptcontent":Message, "promptconfirmtext":ConfirmText,"promptcanceltext":CancelText,"promptmaxlength":MaxLen))
-'	Prompt.Show
-'End Sub
-'
-'Sub ShowSnackBar(Message As String)
-'	vue.SetState(CreateMap("snackmessage":Message))
-'	Snack.show
-'End Sub
-
 Sub CreateSnackBar(sid As String, eventHandler As Object) As VMSnackBar
 	Dim el As VMSnackBar
 	el.Initialize(vue, sid, eventHandler)
@@ -1733,8 +3004,7 @@ End Sub
 
 Sub CreateExpansionPanels(sid As String, eventHandler As Object) As VMExpansionPanels
 	Dim el As VMExpansionPanels
-	el.Initialize(vue, sid, eventHandler)	
-	el.SetVModel(sid)
+	el.Initialize(vue, sid, eventHandler)
 	Return el
 End Sub
 
@@ -1758,16 +3028,22 @@ Sub CreateSheet(sid As String, eventHandler As Object) As VMSheet
 	Return el
 End Sub
 
+Sub CreateCalendar(sid As String, eventHandler As Object) As VMCalendar
+	Dim el As VMCalendar
+	el.Initialize(vue, sid, eventHandler)
+	Return el
+End Sub
+
+
 Sub CreateChip(sid As String, eventHandler As Object) As VMChip
 	Dim el As VMChip
 	el.Initialize(vue, sid, eventHandler)
-	
 	Return el
 End Sub
 
 Sub CreateCarouselItem(sid As String, eventHandler As Object) As VMCarouselItem
 	Dim el As VMCarouselItem
-	el.Initialize(vue, sid, eventHandler)	
+	el.Initialize(vue, sid, eventHandler)
 	Return el
 End Sub
 
@@ -1785,10 +3061,9 @@ Sub CreateInput(sid As String, eventHandler As Object) As VMInput
 	Return el
 End Sub
 
-Sub CreateFileInput(sid As String, eventHandler As Object, bUpload As Boolean) As VMTextField
-	Dim el As VMTextField
+Sub CreateFileInput(sid As String, eventHandler As Object) As VMFileInput
+	Dim el As VMFileInput
 	el.Initialize(vue, sid, eventHandler)
-	el.SetFileInput(bUpload)
 	Return el
 End Sub
 
@@ -1853,7 +3128,7 @@ End Sub
 
 Sub CreateElement(sid As String, stag As String) As VMElement
 	Dim el As VMElement
-	el.Initialize(vue,sid).SetTag(stag)	
+	el.Initialize(vue,sid).SetTag(stag)
 	Return el
 End Sub
 
@@ -1862,6 +3137,26 @@ Sub CreateButton(sid As String,moduleObj As Object) As VMButton
 	el.Initialize(vue, sid, moduleObj)
 	el.SetType("button")
 	Return el
+End Sub
+
+Sub CreateButtonToggle(bid As String, moduleObj As Object) As VMButtonToggle
+	Dim el As VMButtonToggle
+	el.Initialize(vue, bid, moduleObj)
+	Return el 
+End Sub
+
+Sub CreateB4xList(lst As List) As List
+	Dim nl As List
+	nl.Initialize 
+	nl.AddAll(lst)
+	Return nl
+End Sub
+
+Sub NewList1(lst As List) As List
+	Dim nl As List
+	nl.Initialize 
+	nl.AddAll(lst)
+	Return nl
 End Sub
 
 Sub CreateIconButton(sid As String,moduleObj As Object, iconName As String) As VMButton
@@ -1891,6 +3186,13 @@ Sub CreateAppBar(sid As String, moduleObj As Object) As VMToolBar
 	Return el
 End Sub
 
+Sub CreateSlideGroup(sid As String, moduleObj As Object) As VMSlideGroup
+	Dim el As VMSlideGroup
+	el.Initialize(vue, sid, moduleObj)
+	Return el
+End Sub
+
+
 Sub CreateSystemBar(sid As String, moduleObj As Object) As VMToolBar
 	Dim el As VMToolBar
 	el.Initialize(vue, sid, moduleObj)
@@ -1905,13 +3207,20 @@ End Sub
 Sub CreateToolbar(sid As String, moduleObj As Object) As VMToolBar
 	Dim el As VMToolBar
 	el.Initialize(vue, sid, moduleObj)
-	el.SetToolBar(True)	
+	el.SetToolBar(True)
 	Return el
 End Sub
 
+Sub CreateToolbarTitle(sid As String, moduleObj As Object) As VMToolbarTitle
+	Dim el As VMToolbarTitle
+	el.Initialize(vue, sid, moduleObj)
+	Return el
+End Sub
+
+
 Sub CreateOverlay(sid As String, moduleObj As Object) As VMOverlay
 	Dim el As VMOverlay
-	el.Initialize(vue, sid, moduleObj)	
+	el.Initialize(vue, sid, moduleObj)
 	Return el
 End Sub
 
@@ -1930,17 +3239,14 @@ Public Sub DateNow() As String
 	Return vue.DateNow
 End Sub
 
+Public Sub TimeNow() As String
+	Return vue.timenow
+End Sub
 
 Public Sub DateTimeNow() As String
 	Return vue.DateTimeNow
 End Sub
 
-'get an element using jquery
-Sub JQueryElement(sid As String) As BANanoObject
-	sid = sid.ToLowerCase
-	Dim bo As BANanoObject = JQuery.Selector($"#${sid}"$)
-	Return bo
-End Sub
 
 'convert a map keys to lowercase
 Sub MakeLowerCase(m As Map) As Map
@@ -1957,12 +3263,12 @@ End Sub
 
 'show hour glass
 Sub PagePause
-	vue.SetStateSingle("pageloader", True)
+	Overlay.show
 End Sub
 
 'hide hourglass
 Sub PageResume
-	vue.SetStateSingle("pageloader", False)
+	Overlay.hide
 End Sub
 
 Sub LeftString(Text As String, lLength As Long)As String
@@ -1979,6 +3285,28 @@ End Sub
 
 'build the page
 Sub UX
+	vue.ShowWarnings = ShowWarnings
+	If ShowWarnings Then
+		If SubExists(Module, "confirm_ok") = False Then
+			Log("Initialize.confirm_ok - please consider adding this optional event to trap confirm dialog!")
+		End If
+		'
+		If SubExists(Module, "confirm_cancel") = False Then
+			Log("Initialize.confirm_cancel - please consider adding this optional event to trap confirm dialog!")
+		End If
+		'
+		If SubExists(Module, "alert_ok") = False Then
+			Log("Initialize.alert_ok - please consider adding this optional event to trap alert dialog!")
+		End If
+		'
+		If SubExists(Module, "logo_click") = False Then
+			Log("Initialize.logo_click - please consider adding this optional event to trap logo click event if needed!")
+		End If
+		'
+		If SubExists(Module, "title_click") = False Then
+			Log("Initialize.title_click - please consider adding this optional event to trap title click event if needed!")
+		End If
+	End If
 	Drawer.SetRight(RTL)
 	'make spanish
 	Dim mlang As Map = CreateMap()
@@ -1990,15 +3318,43 @@ Sub UX
 	Options.Put("theme", theme)
 	Options.Put("lang", mlang)
 	'
-	Drawer.Pop(VApp)
-	NavBar.Pop(VApp)
+	If UsesDialog Then
+		Dim sDialog As String = Confirm.tostring
+		AddContent(sDialog)
+	'
+		Dim sDialog As String = Alert.tostring
+		AddContent(sDialog)
+	End If
+	'
+	If UsesSnackBar Then SnackBar.Pop(VContent)
+	If UsesOverlay Then Overlay.Pop(VContent)
+	If UsesNotification Then Notification.Pop(VContent)
 	
-	Container.Pop(VContent)
+	'add drawer first
+	If UsesDrawer Then Drawer.Pop(VApp)
+	'add navbar
+	If UsesNavBar Then NavBar.Pop(VApp)
+	
+	If bUseRouter Then
+		Animate.AddComponent(RouterView.ToString)
+		VContent.AddComponent(Animate.ToString)
+	Else
+		If UsesContainer Then 
+			Container.Pop(VContent)
+		End If
+	End If
+	
+	'add content
 	VContent.Pop(VApp)
-	Footer.Pop(VApp)
-	
+	'add footer
+	If UsesFooter Then Footer.Pop(VApp)
+	'add bottom nan
+	If UsesBottomNav Then BottomNav.Pop(VApp)
 	'template built from all pages
 	vue.SetTemplate(VApp.ToString)
+	
+	'remove needs
+	RemoveNeeds
 	'
 	'set vuetify to the vue scope
 	'create a new instance of vuetify
@@ -2009,8 +3365,79 @@ Sub UX
 	'
 	Dim svuetify As String = "$vuetify"
 	vuetify = vue.BOVue.GetField(svuetify)
+	Breakpoint = vuetify.GetField("breakpoint").Result
+	BreakpointName = vuetify.GetField("breakpoint").GetField("name").Result
 End Sub
 
+'add custom element to VApp
+Sub VApp_AddCustomElement(eltag As String, elid As String, elprops As Map, eltext As String)
+	VApp.AddElement1(eltag, elid, eltext, elprops, Null, Null, Null)
+End Sub
+
+'add placeholder to VAPP
+Sub VApp_AddPlaceholder() As BANanoVM
+	Dim stemplate As String = vue.BANanoGetHTML("placeholder")
+	VApp.SetText(stemplate)
+	Return Me
+End Sub
+
+'add layout to VAPP
+Sub VApp_AddLayout() As BANanoVM
+	Dim stemplate As String = vue.BANanoGetHTML("placeholder")
+	VApp.SetText(stemplate)
+	Return Me
+End Sub
+
+
+'add custom element to VMain
+Sub VMain_AddCustomElement(eltag As String, elid As String, elprops As Map, eltext As String)
+	VContent.AddElement1(eltag, elid, eltext, elprops, Null, Null, Null)
+End Sub
+
+'add placeholder to VMain
+Sub VMain_AddPlaceholder() As BANanoVM
+	Dim stemplate As String = vue.BANanoGetHTML("placeholder")
+	VContent.SetText(stemplate)
+	Return Me
+End Sub
+
+'add custom element to body
+Sub Body_AddCustomElement(eltag As String, elid As String, elprops As Map, eltext As String)
+	VContent.AddElement1(eltag, elid, eltext, elprops, Null, Null, Null)
+End Sub
+
+'add placeholder to body
+Sub Body_AddPlaceholder() As BANanoVM
+	Dim stemplate As String = vue.BANanoGetHTML("placeholder")
+	VContent.SetText(stemplate)
+	Return Me
+End Sub
+
+'Use router To navigate
+Sub NavigateTo(sPath As String) As BANanoVM
+	vue.NavigateTo(sPath)
+	Return Me
+End Sub
+
+'scroll to, 300, 0, easeInOutCubic
+Sub ScrollTo(elID As String, duration As Int, offset As Int, easing As String)
+	Try
+		elID = elID.tolowercase
+		Dim el As BANanoObject = vue.refs.GetField(elID)
+		If duration = Null Then duration = 300
+		If offset = Null Then offset = 0
+		If easing = "" Then easing = "easeInOutCubic"
+		Dim opt As Map = CreateMap()
+		opt.Put("duration", duration)
+		opt.Put("offset", offset)
+		opt.Put("easing", easing)
+		vuetify.RunMethod("goTo", Array(el, opt))
+	Catch
+		Log("ScrollTo Error")
+	End Try
+End Sub
+
+'change the locale
 Sub SetLocale(slang As String) As BANanoVM
 	lang = slang
 	Try
@@ -2025,18 +3452,31 @@ Sub CreateDrawer(sid As String, eventHandler As Object) As VMNavigationDrawer
 	Dim el As VMNavigationDrawer
 	el.Initialize(vue, sid, eventHandler)
 	el.RemoveAttr("app")
-	Return el 
+	Return el
 End Sub
 
 'add a container
 Sub AddDrawer(cont As VMNavigationDrawer)
 	drawers.Add(cont.ID)
 	Dim scont As String = cont.tostring
-	Container.SetText(scont)
+	'Container.SetText(scont)
+	VApp.SetText(scont)
+End Sub
+
+'add content to the v-app element
+Sub AddToApp(content As String)
+	VApp.SetText(content)
 End Sub
 
 'add a container
 Sub AddContainer(cont As VMContainer)
+	Dim scont As String = cont.tostring
+	Container.SetText(scont)
+End Sub
+
+
+'add a bottom sheet
+Sub AddBottomSheet(cont As VMBottomSheet)
 	Dim scont As String = cont.tostring
 	Container.SetText(scont)
 End Sub
@@ -2058,10 +3498,10 @@ Sub NewSwitch(eventHandler As Object, bStatic As Boolean, sid As String, vmodel 
 	el.SetVModel(vmodel)
 	el.Setlabel(slabel)
 	el.SetValue(svalue)
-	'el.SetTrueValue(svalue)
+	el.SetTrueValue(svalue)
 	el.SetPrimary(bPrimary)
-	'el.SetFalseValue(sunchecked)
 	el.SetUncheckedValue(sunchecked)
+	el.SetFalseValue(sunchecked)
 	el.SetTabIndex(iTabIndex)
 	vue.SetData(vmodel, sunchecked)
 	Return el
@@ -2074,12 +3514,13 @@ Sub NewRadioGroup(eventHandler As Object, bStatic As Boolean, sid As String, vmo
 	el.Setlabel(slabel)
 	el.SetOptions(optionsm)
 	el.SetTabIndex(iTabIndex)
+	el.SetValue(svalue)
 	vue.SetData(vmodel, svalue)
 	If bShowLabel = False Then el.SetLabel("")
 	If bLabelOnTop Then
 		el.SetColumn(bLabelOnTop)
 	Else
-	 	el.SetRow(True)
+		el.SetRow(True)
 	End If
 	Return el
 End Sub
@@ -2107,12 +3548,12 @@ Sub NewCheckBox(eventHandler As Object, bStatic As Boolean, sid As String, vmode
 	el.SetStatic(bStatic)
 	el.SetVModel(vmodel)
 	el.SetValue(svalue)
-	'el.SetTrueValue(svalue)
+	el.SetTrueValue(svalue)
 	el.Setlabel(slabel)
 	el.SetPrimary(bPrimary)
-	'el.SetFalseValue(sunchecked)
-	el.SetTabIndex(iTabIndex)
 	el.SetUncheckedValue(sunchecked)
+	el.SetFalseValue(sunchecked)
+	el.SetTabIndex(iTabIndex)
 	vue.SetData(vmodel, sunchecked)
 	Return el
 End Sub
@@ -2126,7 +3567,10 @@ Sub NewDatePicker(eventHandler As Object, bStatic As Boolean, sid As String, vmo
 	el.SetVModel(vmodel)
 	el.SetPlaceHolder(sPlaceholder)
 	el.SetHint(sHint)
-	el.SetErrorText(sErrorText)
+	el.TextField.SetRules(True)
+	el.TextField.SetErrorMessages(True)
+	el.DateTimePicker.ErrorMessage = sErrorText
+	el.TextField.SetError(False)
 	el.SetForInput
 	Return el
 End Sub
@@ -2140,7 +3584,10 @@ Sub NewTimePicker(eventHandler As Object, bStatic As Boolean, sid As String, vmo
 	el.SetPlaceHolder(sPlaceholder)
 	el.SetHint(sHint)
 	el.SetTabIndex(iTabIndex)
-	el.SetErrorText(sErrorText)
+	el.TextField.SetRules(True)
+	el.TextField.SetErrorMessages(True)
+	el.DateTimePicker.ErrorMessage = sErrorText
+	el.TextField.SetError(False)
 	el.SetForInput
 	Return el
 End Sub
@@ -2168,22 +3615,6 @@ End Sub
 '	Return el
 'End Sub
 '
-
-Sub NewInfoBox(eventHandler As Object, bStatic As Boolean, sname As String, sText As String, sIcon As String, sIconBackgroundColor As String, iStart As String, iFinish As String) As VMInfoBox
-	Dim el As VMInfoBox = CreateInfoBox(sname, eventHandler)
-	'el.setstatic(bStatic)
-	el.InfoBox.typeof = "infobox"
-	el.InfoBox.fieldType = "string"
-	If iStart <> Null Then el.SetFrom(iStart)
-	If iFinish <> Null Then el.SetTo(iFinish)
-	If sIcon <> Null Then el.SetIcon(sIcon)
-	If sIconBackgroundColor <> Null Then el.SetIconBackgroundColor(sIconBackgroundColor)
-	el.SetText(sText)
-	If iFinish <> Null Then el.Countit.SetText(iFinish)
-	el.SetDuration("1000")
-	Return el
-End Sub
-
 ''
 Sub NewSlider(eventHandler As Object,bStatic As Boolean,sid As String, vmodel As String, slabel As String, iMinValue As String, iMaxValue As String,iTabIndex As Int) As VMSlider
 	Dim el As VMSlider = CreateSlider(sid, eventHandler)
@@ -2207,7 +3638,7 @@ Sub NewTextField(eventHandler As Object,bStatic As Boolean,sid As String, vmodel
 	el.Setlabel(slabel)
 	el.SetRequired(bRequired)
 	el.SetPrependIcon(sIcon)
-	If iMaxLen > 0 Then 
+	If iMaxLen > 0 Then
 		el.SetMaxLength(iMaxLen)
 		el.SetCounter(True)
 	End If
@@ -2215,11 +3646,22 @@ Sub NewTextField(eventHandler As Object,bStatic As Boolean,sid As String, vmodel
 	el.SetHint(shelpertext)
 	el.SetTabIndex(iTabIndex)
 	el.SetVModel(vmodel)
-	el.SetErrorText(sErrorText)
 	el.SetType("text")
+	el.SetRules(True)
+	el.SetErrorMessages(True)
+	el.TextField.ErrorMessage = sErrorText
+	el.SetError(False)
 	Return el
 End Sub
 '
+Sub ShowError(elID As String, elError As String)
+	vue.ShowError(elID, elError)
+End Sub
+
+Sub HideError(elID As String)
+	vue.HideError(elID)
+End Sub
+
 Sub NewTel(eventHandler As Object,bStatic As Boolean,sname As String, vmodel As String, slabel As String, splaceholder As String, bRequired As Boolean, sIcon As String, shelpertext As String, sErrorText As String, iTabIndex As Int) As VMTextField
 	Dim el As VMTextField = NewTextField(eventHandler,bStatic,sname, vmodel, slabel, splaceholder, bRequired, sIcon, 0, shelpertext, sErrorText, iTabIndex)
 	el.SetType("tel")
@@ -2238,16 +3680,19 @@ Sub NewTextArea(eventHandler As Object,bStatic As Boolean,sname As String, vmode
 	el.Setlabel(slabel)
 	el.Setrequired(bRequired)
 	el.SetPrependIcon(sIcon)
-	If iMaxLen > 0 Then 
+	If iMaxLen > 0 Then
 		el.SetCounter(iMaxLen)
 		el.SetMaxLength(iMaxLen)
 	End If
+	el.SetVModel(vmodel)
 	el.SetPlaceHolder(splaceholder)
 	el.SetHint(shelpertext)
 	el.SetTabIndex(iTabIndex)
-	el.SetErrorText(sErrorText)
+	el.SetRules(True)
+	el.SetError(False)
+	el.SetErrorMessages(True)
 	el.SetAutoGrow(bAutoGrow)
-	el.SetVModel(vmodel)
+	el.TextField.ErrorMessage = sErrorText
 	Return el
 End Sub
 
@@ -2259,21 +3704,25 @@ Sub NewPassword(eventHandler As Object,bStatic As Boolean,sname As String, vmode
 End Sub
 
 'backward compatibility
-Sub NewFile(eventHandler As Object,bStatic As Boolean, bUpload As Boolean, sname As String, vmodel As String, slabel As String, splaceholder As String, bRequired As Boolean, shelpertext As String, sErrorText As String, iTabIndex As Int) As VMTextField
+Sub NewFile(eventHandler As Object,bStatic As Boolean, bUpload As Boolean, sname As String, vmodel As String, slabel As String, splaceholder As String, bRequired As Boolean, shelpertext As String, sErrorText As String, iTabIndex As Int) As VMFileInput
 	Return NewFileInput(eventHandler,bStatic,bUpload, sname, vmodel, slabel, splaceholder, bRequired, shelpertext, sErrorText, iTabIndex)
 End Sub
 '
-Sub NewFileInput(eventHandler As Object,bStatic As Boolean, bUpload As Boolean, sname As String, vmodel As String, slabel As String, splaceholder As String, bRequired As Boolean, shelperText As String, sErrorText As String, iTabIndex As Int) As VMTextField
-	Dim el As VMTextField = CreateFileInput(sname, eventHandler, bUpload)
+Sub NewFileInput(eventHandler As Object,bStatic As Boolean, bUpload As Boolean, sname As String, vmodel As String, slabel As String, splaceholder As String, bRequired As Boolean, shelperText As String, sErrorText As String, iTabIndex As Int) As VMFileInput
+	Dim el As VMFileInput = CreateFileInput(sname, eventHandler)
 	el.setstatic(bStatic)
 	el.SetHint(shelperText)
-	el.SetErrorText(sErrorText)
 	el.SetTabIndex(iTabIndex)
 	el.SetPlaceHolder(splaceholder)
 	el.SetVModel(vmodel)
 	el.Setlabel(slabel)
+	el.SetClearable(False)
 	el.SetRequired(bRequired)
 	vue.SetData(vmodel, Null)
+	el.SetRules(vue.NewList)
+	el.SetErrorMessages(vue.NewList)
+	el.SetError(False)
+	el.SetErrorText(sErrorText)
 	Return el
 End Sub
 '
@@ -2284,22 +3733,21 @@ Sub NewImage(eventHandler As Object,bStatic As Boolean,sname As String, vmodel A
 	el.SetWidth(swidth)
 	el.SetHeight(sheight)
 	el.SetAlt(salt)
-	el.SetVModel(vmodel, src)	
+	el.SetVModel(vmodel, src)
 	Return el
 End Sub
 '
 '
 Sub NewLabel(bStatic As Boolean,sname As String, vmodel As String, sSize As String, sText As String) As VMLabel
 	vmodel = vmodel.tolowercase
-	vue.SetStateSingle(vmodel, sText)
 	Dim el As VMLabel = CreateLabel(sname)
 	el.setstatic(bStatic)
 	el.SetTag(sSize)
 	el.SetVModel(vmodel, sText)
 	Select Case sSize
-	Case vue.SIZE_BLOCKQUOTE
-		el.AddClass("blockquote")	
-	End Select	
+		Case vue.SIZE_BLOCKQUOTE
+			el.AddClass("blockquote")
+	End Select
 	Return el
 End Sub
 
@@ -2336,7 +3784,10 @@ Sub NewAutoCompleteOptions(eventHandler As Object,bStatic As Boolean,sname As St
 	el.Setmultiple(bMultiple)
 	el.SetVModel(vmodel)
 	el.SetOptions($"${vmodel}items"$, optionsm, sourceField, displayField, returnObject)
-	el.SetErrorText(sErrorText)
+	el.SetRules(True)
+	el.SetError(False)
+	el.SetErrorMessages(True)
+	el.Combo.ErrorMessage = sErrorText
 	Return el
 End Sub
 
@@ -2351,7 +3802,10 @@ Sub NewAutoCompleteDataSource(eventHandler As Object,bStatic As Boolean,sname As
 	el.SetMultiple(bMultiple)
 	el.SetDataSource(sourceTable, sourceField, displayField,returnObject)
 	el.SetVModel(vmodel)
-	el.SetErrorText(sErrorText)
+	el.SetRules(True)
+	el.SetError(False)
+	el.SetErrorMessages(True)
+	el.Combo.ErrorMessage = sErrorText
 	Return el
 End Sub
 
@@ -2366,7 +3820,10 @@ Sub NewSelectDataSource(eventHandler As Object,bStatic As Boolean,sname As Strin
 	el.SetMultiple(bMultiple)
 	el.SetDataSource(sourceTable, sourceField, displayField,returnObject)
 	el.SetVModel(vmodel)
-	el.SetErrorText(sErrorText)
+	el.SetRules(True)
+	el.SetError(False)
+	el.SetErrorMessages(True)
+	el.Combo.ErrorMessage = sErrorText
 	Return el
 End Sub
 
@@ -2382,7 +3839,10 @@ Sub NewSelectOptions(eventHandler As Object,bStatic As Boolean,sname As String, 
 	el.Setmultiple(bMultiple)
 	el.SetVModel(vmodel)
 	el.SetOptions($"${vmodel}items"$, optionsm, sourceField, displayField, returnObject)
-	el.SetErrorText(sErrorText)
+	el.SetRules(True)
+	el.SetError(False)
+	el.SetErrorMessages(True)
+	el.Combo.ErrorMessage = sErrorText
 	Return el
 End Sub
 
@@ -2397,7 +3857,10 @@ Sub NewComboDataSource(eventHandler As Object,bStatic As Boolean,sname As String
 	el.SetMultiple(bMultiple)
 	el.SetVModel(vmodel)
 	el.SetDataSource(sourceTable, sourceField, displayField,returnObject)
-	el.SetErrorText(sErrorText)
+	el.SetRules(True)
+	el.SetError(False)
+	el.SetErrorMessages(True)
+	el.Combo.ErrorMessage = sErrorText
 	Return el
 End Sub
 
@@ -2413,7 +3876,10 @@ Sub NewComboOptions(eventHandler As Object,bStatic As Boolean,sname As String, v
 	el.Setmultiple(bMultiple)
 	el.SetVModel(vmodel)
 	el.SetOptions($"${vmodel}items"$, optionsm, sourceField, displayField, returnObject)
-	el.SetErrorText(sErrorText)
+	el.SetRules(True)
+	el.SetError(False)
+	el.SetErrorMessages(True)
+	el.Combo.ErrorMessage = sErrorText
 	Return el
 End Sub
 '
@@ -2476,4 +3942,262 @@ End Sub
 
 Sub NewBLOCKQUOTE(bStatic As Boolean,sname As String, sText As String) As VMLabel
 	Return NewLabel(bStatic,sname, sname, SIZE_BLOCKQUOTE, sText)
+End Sub
+
+public Sub readAsText(fr As String) As BANanoPromise
+	Dim promise As BANanoPromise 'ignore
+		
+	' calling a single upload
+	promise.CallSub(Me, "ReadFile", Array(fr, "readAsText"))
+	Return promise
+End Sub
+
+Sub readAsBinaryString(fr As String) As BANanoPromise
+	Dim promise As BANanoPromise 'ignore
+		
+	' calling a single upload
+	promise.CallSub(Me, "ReadFile", Array(fr, "readAsBinaryString"))
+	Return promise
+End Sub
+
+Sub readAsDataURL(fr As String) As BANanoPromise
+	Dim promise As BANanoPromise 'ignore
+		
+	' calling a single upload
+	promise.CallSub(Me, "ReadFile", Array(fr, "readAsDataURL"))
+	Return promise
+End Sub
+
+Sub readAsArrayBuffer(fr As String) As BANanoPromise
+	Dim promise As BANanoPromise 'ignore
+		
+	' calling a single upload
+	promise.CallSub(Me, "ReadFile", Array(fr, "readAsArrayBuffer"))
+	Return promise
+End Sub
+
+private Sub ReadFile(FileToRead As Object, MethodName As String)
+	' make a filereader
+	Dim FileReader As BANanoObject
+	FileReader.Initialize2("FileReader", Null)
+	' attach the file (to get the name later)
+	FileReader.SetField("file", FileToRead)
+	
+	' make a callback for the onload event
+	' an onload of a FileReader requires a 'event' param
+	Dim event As Map
+	FileReader.SetField("onload", BANano.CallBack(Me, "OnLoad", Array(event)))
+	FileReader.SetField("onerror", BANano.CallBack(Me, "OnError", Array(event)))
+	' start reading the DataURL
+	FileReader.RunMethod(MethodName, FileToRead)
+End Sub
+
+private Sub OnLoad(event As Map) As String 'ignore
+	' getting our file again (set in UploadFileAndGetDataURL)
+	Dim FileReader As BANanoObject = event.Get("target")
+	Dim UploadedFile As BANanoObject = FileReader.GetField("file")
+	' return to the then of the UploadFileAndGetDataURL
+	BANano.ReturnThen(CreateMap("name": UploadedFile.GetField("name"), "result": FileReader.Getfield("result")))
+End Sub
+
+private Sub OnError(event As Map) As String 'ignore
+	Dim FileReader As BANanoObject = event.Get("target")
+	Dim UploadedFile As BANanoObject = FileReader.GetField("file")
+	Dim Abort As Boolean = False
+	' uncomment this if you want to abort the whole operatio
+	' Abort = true
+	' FileReader.RunMethod("abort", Null)
+	
+	BANano.ReturnElse(CreateMap("name": UploadedFile.GetField("name"), "result": FileReader.GetField("error"), "abort": Abort))
+End Sub
+
+'generate a treeitem
+Sub TreeItem(parentID As String, key As String, text As String, mhref As String, mIcon As String, mDisabled As Boolean) As Map
+	parentID = parentID.tolowercase
+	key = key.tolowercase
+	Dim mitem As Map = CreateMap()
+	mitem.Put("id", key)
+	mitem.Put("name", text)
+	mitem.Put("href", mhref)
+	mitem.Put("icon", mIcon)
+	mitem.Put("disabled", mDisabled)
+	mitem.Put("parentid", parentID)
+	Return mitem
+End Sub
+
+'return the icon for the file
+Sub FileIcon(ext As String) As String
+	Dim extm As Map = CreateMap()
+	extm.Put("html", "mdi-language-html5")
+	extm.Put("js", "mdi-nodejs")
+	extm.Put("json", "mdi-code-json")
+	extm.Put("md", "mdi-markdown")
+	extm.Put("pdf", "mdi-file-pdf")
+	extm.Put("png", "mdi-file-image")
+	extm.Put("txt", "mdi-file-document-outline")
+	extm.Put("xls", "mdi-file-excel")
+	extm.Put("csv", "mdi-file-delimited-outline")
+	extm.Put("pre", "mdi-file-code-outline")
+	extm.Put("code", "mdi-file-code-outline")
+	extm.Put("doc", "mdi-file-word-box-outline")
+	extm.Put("mp3", "mdi-file-music-outline")
+	extm.Put("folder", "mdi-folder")
+	extm.Put("woff", "marketweb-webfont.woff")
+	extm.Put("css", "mdi-language-css3")
+	'
+	ext = ext.ToLowerCase
+	If extm.ContainsKey(ext) Then
+		Dim res As String = extm.Get(ext)
+		Return res
+	Else
+		Return "mdi-file-document-outline"
+	End If
+End Sub
+
+'add a list with
+Sub CreateMultiCheckList(EventHandler As Object, dtID As String, dtSource As String, dtKey As String, dtTitle As String, dtTarget As String) As VMList
+	'create a list
+	dtID = dtID.tolowercase
+	Dim dtList As VMList
+	dtList.Initialize(vue, dtID, EventHandler)
+	dtList.SetDense(True)
+	'
+	Dim vlig As VMListItemGroup
+	vlig.Initialize(vue, $"${dtID}lig"$, EventHandler)
+	vlig.SetVModel(dtTarget)
+	vlig.SetAttrLoose("multiple")
+	vlig.SetOnChange($"${dtID}_check"$)
+	'
+	Dim dtLI As VMListItem
+	dtLI.Initialize(vue, "", EventHandler)
+	dtLI.SetAttrSingle("v-for", $"(item, index) in ${dtSource}"$)
+	dtLI.SetAttrSingle(":key", $"item.${dtKey}"$)
+	dtLI.SetAttrSingle(":value", $"item.${dtKey}"$)
+	'add checkbox slot
+	Dim tmpx As VMTemplate
+	tmpx.Initialize(vue, "", EventHandler)
+	tmpx.SetAttrSingle("v-slot:default", "{ active, toggle }")
+	'add action item
+	Dim vlia As VMListItemAction
+	vlia.Initialize(vue, "", EventHandler)
+	'add checkbox
+	Dim vliacb As VMCheckBox
+	vliacb.Initialize(vue, "", EventHandler)
+	vliacb.SetAttrSingle(":input-value", "active")
+	vliacb.SetAttrSingle(":key", $"item.${dtKey}"$)
+	vliacb.SetAttrSingle(":true-value", $"item.${dtKey}"$)
+	vliacb.SetColor("primary")
+	vliacb.SetDense(True)
+	vliacb.SetAttrSingle("@click", "toggle")
+		
+	'add checkbox to item action
+	vlia.AddComponent(vliacb.tostring)
+	tmpx.AddComponent(vlia.ToString)
+	
+	'add title
+	Dim vlic As VMListItemContent
+	vlic.Initialize(vue, "", EventHandler)
+	Dim vlit As VMListItemTitle
+	vlit.Initialize(vue, "", EventHandler)
+	vlit.SetVText($"item.${dtTitle}"$)
+	vlic.AddComponent(vlit.ToString)
+	'add template to item
+	tmpx.AddComponent(vlic.ToString)
+	dtLI.AddComponent(tmpx.tostring)
+	'add to group
+	vlig.AddComponent(dtLI.ToString)
+	'add item to list
+	dtList.AddComponent(vlig.tostring)
+	Return dtList
+End Sub
+
+Sub CreateH1(id As String) As VMLabel
+	Dim elx As VMLabel = CreateLabel(id).seth1
+	Return elx
+End Sub
+
+Sub CreateH2(id As String) As VMLabel
+	Dim elx As VMLabel = CreateLabel(id).seth2
+	Return elx
+End Sub
+
+Sub CreateH3(id As String) As VMLabel
+	Dim elx As VMLabel = CreateLabel(id).seth3
+	Return elx
+End Sub
+
+Sub CreateH4(id As String) As VMLabel
+	Dim elx As VMLabel = CreateLabel(id).seth4
+	Return elx
+End Sub
+
+Sub CreateH5(id As String) As VMLabel
+	Dim elx As VMLabel = CreateLabel(id).seth5
+	Return elx
+End Sub
+
+Sub CreateH6(id As String) As VMLabel
+	Dim elx As VMLabel = CreateLabel(id).seth6
+	Return elx
+End Sub
+
+Sub CreateParagraph(id As String) As VMLabel
+	Dim elx As VMLabel = CreateLabel(id).SetParagraph
+	Return elx
+End Sub
+
+Sub CreateAnchor(id As String) As VMLabel
+	Dim elx As VMLabel = CreateLabel(id).SetA
+	Return elx
+End Sub
+
+Sub LoremIpsum As String
+	Return BANanoShared.Rand_LoremIpsum(1)
+End Sub
+
+
+'add anything from the appendholder
+Sub AppendPlaceHolderTo(target As String)
+	Dim stemplate As String = BANanoGetHTMLAsIs("placeholder")
+	Dim elx As BANanoElement
+	elx.Initialize($"#${target}"$)
+	elx.append(stemplate)
+End Sub
+
+
+'get the html part of a bananoelement
+Sub BANanoGetHTMLAsIs(id As String) As String
+	id = id.tolowercase
+	Dim be As BANanoElement
+	be.Initialize($"#${id}"$)
+	Dim xTemplate As String = be.GetHTML
+	be.Empty
+	Return xTemplate
+End Sub
+
+
+'get html from source and append it on target
+Sub BANanoMoveHTML(source As String, target As String)
+	source = source.tolowercase
+	target = target.tolowercase
+	Dim ssource As String = BANanoGetHTML(source)
+	'append the html to the target
+	BANano.GetElement($"#${target}"$).Append(ssource)
+End Sub
+
+'get the html part of a bananoelement
+Sub BANanoGetHTML(id As String) As String
+	id = id.tolowercase
+	Dim be As BANanoElement
+	be.Initialize($"#${id}"$)
+	Dim xTemplate As String = be.GetHTML
+	be.Empty
+	xTemplate = xTemplate.Replace("v-template", "template")
+	Return xTemplate
+End Sub
+
+'set the template from the placeholder
+Sub AppendPlaceholderToTemplate
+	Dim ssource As String = BANanoGetHTML("placeholder")
+	VApp.SetText(ssource)
 End Sub

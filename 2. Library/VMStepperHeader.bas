@@ -10,8 +10,9 @@ Sub Class_Globals
 	Public ID As String
 	Private vue As BANanoVue
 	Private BANano As BANano  'ignore
-	Private DesignMode As Boolean
-	Private Module As Object
+	Private DesignMode As Boolean    'ignore
+	Private Module As Object    'ignore
+	Private bStatic As Boolean   'ignore
 End Sub
 
 'initialize the StepperHeader
@@ -22,6 +23,31 @@ Public Sub Initialize(v As BANanoVue, sid As String, eventHandler As Object) As 
 	DesignMode = False
 	Module = eventHandler
 	vue = v
+	bStatic = False
+	Return Me
+End Sub
+
+Sub SetData(xprop As String, xValue As Object) As VMStepperHeader
+	vue.SetData(xprop, xValue)
+	Return Me
+End Sub
+
+
+
+'add an element to the page content
+Sub AddElement(elm As VMElement)
+	StepperHeader.SetText(elm.ToString)
+End Sub
+
+
+Sub SetStatic(b As Boolean) As VMStepperHeader
+	bStatic = b
+	StepperHeader.SetStatic(b)
+	Return Me
+End Sub
+
+Sub AddDivider As VMStepperHeader
+	StepperHeader.AddDivider
 	Return Me
 End Sub
 
@@ -43,8 +69,7 @@ Sub SetAttributes(attrs As List) As VMStepperHeader
 End Sub
 
 'get component
-Sub ToString As String
-	
+Sub ToString As String	
 	Return StepperHeader.ToString
 End Sub
 
@@ -53,12 +78,12 @@ Sub SetVModel(k As String) As VMStepperHeader
 	Return Me
 End Sub
 
-Sub SetVIf(vif As Object) As VMStepperHeader
+Sub SetVIf(vif As String) As VMStepperHeader
 	StepperHeader.SetVIf(vif)
 	Return Me
 End Sub
 
-Sub SetVShow(vif As Object) As VMStepperHeader
+Sub SetVShow(vif As String) As VMStepperHeader
 	StepperHeader.SetVShow(vif)
 	Return Me
 End Sub
@@ -76,7 +101,7 @@ Sub AddChild(child As VMElement) As VMStepperHeader
 End Sub
 
 'set text
-Sub SetText(t As Object) As VMStepperHeader
+Sub SetText(t As String) As VMStepperHeader
 	StepperHeader.SetText(t)
 	Return Me
 End Sub
@@ -189,23 +214,8 @@ Sub BuildModel(mprops As Map, mstyles As Map, lclasses As List, loose As List) A
 StepperHeader.BuildModel(mprops, mstyles, lclasses, loose)
 Return Me
 End Sub
+
 Sub SetVisible(b As Boolean) As VMStepperHeader
 StepperHeader.SetVisible(b)
 Return Me
-End Sub
-
-'set color intensity
-Sub SetTextColor(varColor As String) As VMStepperHeader
-	Dim sColor As String = $"${varColor}--text"$
-	AddClass(sColor)
-	Return Me
-End Sub
-
-'set color intensity
-Sub SetTextColorIntensity(varColor As String, varIntensity As String) As VMStepperHeader
-	Dim sColor As String = $"${varColor}--text"$
-	Dim sIntensity As String = $"text--${varIntensity}"$
-	Dim mcolor As String = $"${sColor} ${sIntensity}"$
-	AddClass(mcolor)
-	Return Me
 End Sub

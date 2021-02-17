@@ -28,10 +28,31 @@ Public Sub Initialize(v As BANanoVue, sid As String, eventHandler As Object) As 
 	SetOnClickPrepend($"${ID}_prepend"$)
 	xmodel = ""
 	Slider.typeOf = "slide"
+	Slider.fieldType = "int"
 	bStatic = False
 	bIsRange = False
+	SetOnClick($"${ID}_click"$)
 	Return Me
 End Sub
+
+
+
+'add an element to the page content
+Sub AddElement(elm As VMElement)
+	Slider.SetText(elm.ToString)
+End Sub
+
+Sub SetFieldType(ft As String) As VMSlider
+	Slider.fieldType = ft
+	Return Me
+End Sub
+
+Sub SetData(xprop As String, xValue As Object) As VMSlider
+	vue.SetData(xprop, xValue)
+	Return Me
+End Sub
+
+
 
 Sub SetRangeSlider(b As Boolean) As VMSlider
 	If b = False Then Return Me
@@ -125,6 +146,12 @@ End Sub
 
 'get component
 Sub ToString As String
+	If vue.ShowWarnings Then
+	Dim eName As String = $"${ID}_click"$
+	If SubExists(Module, eName) = False Then
+		Log($"VMSlider.${eName} event has not been defined!"$)
+	End If
+	End If
 	Return Slider.ToString
 End Sub
 
@@ -135,12 +162,12 @@ Sub SetVModel(k As String) As VMSlider
 	Return Me
 End Sub
 
-Sub SetVIf(vif As Object) As VMSlider
+Sub SetVIf(vif As String) As VMSlider
 	Slider.SetVIf(vif)
 	Return Me
 End Sub
 
-Sub SetVShow(vif As Object) As VMSlider
+Sub SetVShow(vif As String) As VMSlider
 	Slider.SetVShow(vif)
 	Return Me
 End Sub
@@ -266,12 +293,11 @@ End Sub
 
 'set error
 Sub SetError(varError As Boolean) As VMSlider
-	If varError = False Then Return Me
 	If bStatic Then
 		SetAttrSingle("error", varError)
 		Return Me
 	End If
-	Dim pp As String = $"${ID}Error"$
+	Dim pp As String = $"${xmodel}Error"$
 	vue.SetStateSingle(pp, varError)
 	Slider.Bind(":error", pp)
 	Return Me
@@ -283,16 +309,18 @@ Sub SetErrorCount(varErrorCount As Int) As VMSlider
 		SetAttrSingle("error-count", varErrorCount)
 		Return Me
 	End If
-	Dim pp As String = $"${ID}ErrorCount"$
+	Dim pp As String = $"${xmodel}ErrorCount"$
 	vue.SetStateSingle(pp, varErrorCount)
 	Slider.Bind(":error-count", pp)
 	Return Me
 End Sub
 
 'set error-messages
-Sub SetErrorMessages(varErrorMessages As Object) As VMSlider
-	Dim pp As String = $"${ID}ErrorMessages"$
-	vue.SetStateSingle(pp, varErrorMessages)
+Sub SetErrorMessages(b As Boolean) As VMSlider
+	If b = False Then Return Me
+	Dim nl As List = vue.NewList
+	Dim pp As String = $"${xmodel}ErrorMessages"$
+	vue.SetData(pp, nl)
 	Slider.Bind(":error-messages", pp)
 	Return Me
 End Sub
@@ -483,10 +511,13 @@ Sub SetReadonly(varReadonly As Boolean) As VMSlider
 End Sub
 
 'set rules
-Sub SetRules(varRules As Object) As VMSlider
-	Dim pp As String = $"${ID}Rules"$
-	vue.SetStateSingle(pp, varRules)
+Sub SetRules(varRules As Boolean) As VMSlider
+	If varRules = False Then Return Me
+	If bStatic Then Return Me
+	If DesignMode Then Return Me
+	Dim pp As String = $"${xmodel}Rules"$
 	Slider.Bind(":rules", pp)
+	vue.SetData(pp, vue.NewList)
 	Return Me
 End Sub
 
@@ -676,8 +707,13 @@ End Sub
 
 'set value, updated the vmodel
 Sub SetValue(varValue As String) As VMSlider
+	If bStatic Then
+		SetAttrSingle("value", varValue)
+		Return Me
+	End If
 	If xmodel = "" Then
-		Log($"VMSlider.SetValue '${ID}' - please set the vmodel first!"$)
+		xmodel = $"${ID}value"$
+		SetVModel(xmodel)
 	End If
 	If bIsRange Then
 		Dim v1 As String = vue.MvField(varValue,1,",")
@@ -695,6 +731,7 @@ Sub SetValue(varValue As String) As VMSlider
 	End If
 	varValue = BANano.parseFloat(varValue)
 	vue.SetData(xmodel, varValue)
+	Slider.SetValue(varValue)
 	Return Me
 End Sub
 
@@ -747,7 +784,7 @@ Sub SetOnClick(methodName As String) As VMSlider
 	If SubExists(Module, methodName) = False Then Return Me
 	Dim e As BANanoEvent
 	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
-	SetAttr(CreateMap("v-on:click": methodName))
+	SetAttr(CreateMap("@click": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -783,7 +820,7 @@ Sub SetOnEnd(methodName As String) As VMSlider
 	If SubExists(Module, methodName) = False Then Return Me
 	Dim e As BANanoEvent
 	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
-	SetAttr(CreateMap("v-on:end": methodName))
+	SetAttr(CreateMap("@end": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -795,7 +832,7 @@ Sub SetOnMousedown(methodName As String) As VMSlider
 	If SubExists(Module, methodName) = False Then Return Me
 	Dim e As BANanoEvent
 	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
-	SetAttr(CreateMap("v-on:mousedown": methodName))
+	SetAttr(CreateMap("@mousedown": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -807,7 +844,7 @@ Sub SetOnMouseup(methodName As String) As VMSlider
 	If SubExists(Module, methodName) = False Then Return Me
 	Dim e As BANanoEvent
 	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
-	SetAttr(CreateMap("v-on:mouseup": methodName))
+	SetAttr(CreateMap("@mouseup": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -819,7 +856,7 @@ Sub SetOnStart(methodName As String) As VMSlider
 	If SubExists(Module, methodName) = False Then Return Me
 	Dim e As BANanoEvent
 	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
-	SetAttr(CreateMap("v-on:start": methodName))
+	SetAttr(CreateMap("@start": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -831,7 +868,7 @@ Sub SetOnUpdateError(methodName As String) As VMSlider
 	If SubExists(Module, methodName) = False Then Return Me
 	Dim e As BANanoEvent
 	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
-	SetAttr(CreateMap("v-on:update:error": methodName))
+	SetAttr(CreateMap("@update:error": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -942,4 +979,11 @@ Sub SetTextColorIntensity(varColor As String, varIntensity As String) As VMSlide
 	Dim mcolor As String = $"${sColor} ${sIntensity}"$
 	AddClass(mcolor)
 	Return Me
+End Sub
+
+
+'get the value
+Sub GetValue As String
+	Dim svalue As String = vue.GetData(xmodel)
+	Return svalue
 End Sub

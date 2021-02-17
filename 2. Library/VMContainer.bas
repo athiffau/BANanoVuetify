@@ -4,7 +4,7 @@ ModulesStructureVersion=1
 Type=Class
 Version=8.1
 @EndOfDesignText@
-#IgnoreWarnings:12
+#IgnoreWarnings:12, 9
 Sub Class_Globals
 	Public Container As VMElement
 	Public ID As String
@@ -57,17 +57,23 @@ Sub Class_Globals
 	Public ShowMatrix As Boolean
 	Public NoGutters As Boolean
 	Private cStatic As Boolean
+	Public HasContent As Boolean
+	Public bindings As Map
+	Public UseVShow As Boolean
+	Public showKey As String
 End Sub
 
 'initialize the Container
 Public Sub Initialize(v As BANanoVue, sid As String, eventHandler As Object) As VMContainer
 	ID = sid.tolowercase
+	HasContent = False
 	rowClasses.Initialize
 	rowStyles.Initialize	
 	attributes.Initialize
 	afewoptions.Initialize
 	Container.Initialize(v, ID)
 	Container.SetTag("v-container")
+	showKey = $"${ID}show"$
 	DesignMode = False
 	Module = eventHandler
 	vue = v
@@ -95,13 +101,132 @@ Public Sub Initialize(v As BANanoVue, sid As String, eventHandler As Object) As 
 	Exclusions.Initialize
 	Mode = "A"
 	HasInfoBox = False
-	Container.SetVShow($"${ID}show"$)
 	bControls = False
 	HasBorder = False
 	ShowMatrix = False
 	NoGutters = False
 	cStatic = True
+	UseVShow = True
+	SetVShow(Container.showKey)
+	Show
+	Container.typeOf = "container"
 	Return Me
+End Sub
+
+'add an element to the page content
+Sub AddElement(elm As VMElement)
+	Container.SetText(elm.ToString)
+End Sub
+
+'set the conver image for the container
+Sub SetCoverImage(url As String) As VMContainer
+	SetStyleSingle("background", $"url('${url}')"$)
+	SetStyleSingle("background-size", "cover")
+	SetStyleSingle("width", "100%")
+	SetStyleSingle("height", "100%")
+	Return Me
+End Sub
+
+Sub SetColumn As VMContainer
+	AddClass("column")
+	Return Me
+End Sub
+
+Sub SetGridListXS As VMContainer
+	AddClass("grid-list-xs")
+	Return Me
+End Sub
+
+Sub SetGridListSM As VMContainer
+	AddClass("grid-list-sm")
+	Return Me
+End Sub
+
+Sub SetGridListMD As VMContainer
+	AddClass("grid-list-md")
+	Return Me
+End Sub
+
+Sub SetGridListLG As VMContainer
+	AddClass("grid-list-lg")
+	Return Me
+End Sub
+
+Sub SetGridListXL As VMContainer
+	AddClass("grid-list-xl")
+	Return Me
+End Sub
+
+
+Sub SetVElse(vif As String) As VMContainer
+	Container.SetVElse(vif)
+	Return Me
+End Sub
+
+Sub SetVText(vhtml As String) As VMContainer
+	Container.SetVText(vhtml)
+	Return Me
+End Sub
+
+Sub SetVhtml(vhtml As String) As VMContainer
+	Container.SetVHtml(vhtml)
+	Return Me
+End Sub
+
+Sub SetData(prop As String, value As Object) As VMContainer
+	vue.SetData(prop, value)
+	Return Me
+End Sub
+
+
+Sub SetSlotOpposite As VMContainer
+	Container.SetAttrLoose("v-slot:opposite")
+	Return Me
+End Sub
+
+Sub SetFillHeight(b As Boolean) As VMContainer
+	If b = False Then Return Me
+	AddClass("fill-height")
+	Return Me
+End Sub
+
+Sub SetVOnce(t As Boolean) As VMContainer
+	Container.setvonce(t)
+	Return Me
+End Sub
+
+'set single style
+Sub BindStyleSingle(prop As String, value As String) As VMContainer
+	Container.BindStyleSingle(prop, value)
+	Return Me
+End Sub
+
+Sub CreateList(sid As String, eventHandler As Object) As VMList
+	Dim el As VMList
+	el.Initialize(vue, sid, eventHandler)
+	el.SetDesignMode(DesignMode)
+	Return el
+End Sub
+
+Sub CreateButtonToggle(bid As String, moduleObj As Object) As VMButtonToggle
+	Dim el As VMButtonToggle
+	el.Initialize(vue, bid, moduleObj)
+	el.SetDesignMode(DesignMode)
+	Return el
+End Sub
+
+Sub CreateStepper(sid As String, eventHandler As Object) As VMStepper
+	Dim el As VMStepper
+	el.Initialize(vue, sid, eventHandler)
+	el.SetDesignMode(DesignMode)
+	Return el
+End Sub
+
+Sub CreateBadge(sid As String, moduleObj As Object) As VMBadge
+	Dim el As VMBadge
+	el.Initialize(vue, sid, moduleObj)
+	el.SetDesignMode(DesignMode)
+	Return el
 End Sub
 
 Sub SetStatic(b As Boolean) As VMContainer
@@ -110,15 +235,108 @@ Sub SetStatic(b As Boolean) As VMContainer
 	Return Me
 End Sub
 
+Sub SetDiv(b As Boolean) As VMContainer
+	If b = False Then Return Me
+	SetTag("div")
+	Return Me
+End Sub
+
+Sub CreateDataTable(cID As String, PrimaryKey As String, eventHandler As Object) As VMDataTable
+	Dim el As VMDataTable
+	el.Initialize(vue, cID,PrimaryKey,  eventHandler)
+	el.SetDesignMode(DesignMode)
+	Return el
+End Sub
+
+Sub CreateChip(sid As String, eventHandler As Object) As VMChip
+	Dim el As VMChip
+	el.Initialize(vue, sid, eventHandler)
+	el.SetDesignMode(DesignMode)
+	Return el
+End Sub
+
+
+Sub CreateExpansionPanels(sid As String, eventHandler As Object) As VMExpansionPanels
+	Dim el As VMExpansionPanels
+	el.Initialize(vue, sid, eventHandler)
+	el.SetDesignMode(DesignMode)
+	Return el
+End Sub
+
+Sub CreateSpeedDial(sid As String, eventHandler As Object) As VMSpeedDial
+	Dim el As VMSpeedDial
+	el.Initialize(vue, sid,eventHandler)
+	el.SetDesignMode(DesignMode)
+	Return el
+End Sub
+
+Sub CreateRating(eID As String, eventHandler As Object) As VMRating
+	Dim el As VMRating
+	el.Initialize(vue, eID, eventHandler)
+	el.SetDesignMode(DesignMode)
+	Return el
+End Sub
+
+Sub CreateTabs(sid As String, eventHandler As Object) As VMTabs
+	Dim el As VMTabs
+	el.Initialize(vue, sid, eventHandler)
+	el.SetDesignMode(DesignMode)
+	Return el
+End Sub
+
+Sub CreateAvatar(sid As String, moduleObj As Object) As VMAvatar
+	Dim el As VMAvatar
+	el.Initialize(vue,sid, moduleObj)
+	el.SetDesignMode(DesignMode)
+	Return el
+End Sub
+
 Sub CreateParallax(eID As String, eventHandler As Object) As VMParallax
 	Dim el As VMParallax
 	el.Initialize(vue, eID, eventHandler)
+	el.SetDesignMode(DesignMode)
+	Return el
+End Sub
+
+Sub CreateDialog(sid As String, moduleObj As Object) As VMDialog
+	Dim el As VMDialog
+	el.Initialize(vue, sid, moduleObj)
+	el.SetDesignMode(DesignMode)
+	Return el
+End Sub
+
+Sub CreateMenu(sid As String, moduleObj As Object) As VMMenu
+	Dim el As VMMenu
+	el.Initialize(vue, sid, moduleObj)
+	el.SetDesignMode(DesignMode)
+	Return el
+End Sub
+
+Sub CreateCarousel(sid As String, moduleObj As Object) As VMCarousel
+	Dim el As VMCarousel
+	el.Initialize(vue,sid, moduleObj)
+	el.SetDesignMode(DesignMode)
+	Return el
+End Sub
+
+Sub CreateDrawer(sid As String, eventHandler As Object) As VMNavigationDrawer
+	Dim el As VMNavigationDrawer
+	el.Initialize(vue, sid, eventHandler)
+	el.SetDesignMode(DesignMode)
 	Return el
 End Sub
 
 Sub CreateContainer(sid As String, eventHandler As Object) As VMContainer
 	Dim el As VMContainer
 	el.Initialize(vue, sid, eventHandler)
+	el.SetDesignMode(DesignMode)
+	Return el
+End Sub
+
+Sub CreateCard(cID As String, eventHandler As Object) As VMCard
+	Dim el As VMCard
+	el.Initialize(vue, cID, eventHandler)
+	el.SetDesignMode(DesignMode)
 	Return el
 End Sub
 
@@ -153,13 +371,17 @@ Sub NewAutoCompleteDataSource(eventHandler As Object,bStatic As Boolean,sname As
 	el.SetMultiple(bMultiple)
 	el.SetDataSource(sourceTable, sourceField, displayField,returnObject)
 	el.SetVModel(vmodel)
-	el.SetErrorText(sErrorText)
+	el.SetRules(True)
+	el.SetError(False)
+	el.SetErrorMessages(True)
+	el.Combo.ErrorMessage = sErrorText
 	Return el
 End Sub
 
 Sub CreateAppBar(sid As String, moduleObj As Object) As VMToolBar
 	Dim el As VMToolBar
 	el.Initialize(vue, sid, moduleObj)
+	el.SetDesignMode(DesignMode)
 	el.SetAppBar(True)
 	Return el
 End Sub
@@ -167,6 +389,7 @@ End Sub
 Sub CreateSystemBar(sid As String, moduleObj As Object) As VMToolBar
 	Dim el As VMToolBar
 	el.Initialize(vue, sid, moduleObj)
+	el.SetDesignMode(DesignMode)
 	el.SetSystemBar(True)
 	Return el
 End Sub
@@ -187,12 +410,14 @@ End Sub
 Sub CreateLabel(sID As String) As VMLabel
 	Dim el As VMLabel
 	el.Initialize(vue, sID)
+	el.SetDesignMode(DesignMode)
 	Return el
 End Sub
 
 Sub CreateImage(img As String, eventHandler As Object) As VMImage
 	Dim el As VMImage
 	el.Initialize(vue, img, eventHandler)
+	el.SetDesignMode(DesignMode)
 	el.Image.typeof = "image"
 	Return el
 End Sub
@@ -225,16 +450,10 @@ Sub NewLabel(bStatic As Boolean,sname As String, vmodel As String, sSize As Stri
 	Return el
 End Sub
 
-
-Sub CreateInfoBox(sid As String, eventHandler As Object) As VMInfoBox
-	Dim el As VMInfoBox
-	el.Initialize(vue, sid, eventHandler)
-	Return el
-End Sub
-
 Sub CreateIcon(sid As String, moduleObj As Object) As VMIcon
 	Dim el As VMIcon
 	el.Initialize(vue, sid, moduleObj)
+	el.SetDesignMode(DesignMode)
 	Return el
 End Sub
 
@@ -249,26 +468,10 @@ Sub NewIcon(eventHandler As Object,bStatic As Boolean,sname As String, sIcon As 
 End Sub
 
 
-Sub NewInfoBox(eventHandler As Object, bStatic As Boolean, sname As String, sText As String, sIcon As String, sIconBackgroundColor As String, iStart As String, iFinish As String) As VMInfoBox
-	Dim el As VMInfoBox = CreateInfoBox(sname, eventHandler)
-	el.SetDesignMode(DesignMode)
-	'el.setstatic(bStatic)
-	el.InfoBox.typeof = "infobox"
-	el.InfoBox.fieldType = "string"
-	If iStart <> Null Then el.SetFrom(iStart)
-	If iFinish <> Null Then el.SetTo(iFinish)
-	If sIcon <> Null Then el.SetIcon(sIcon)
-	If sIconBackgroundColor <> Null Then el.SetIconBackgroundColor(sIconBackgroundColor)
-	el.SetText(sText)
-	If iFinish <> Null Then el.Countit.SetText(iFinish)
-	el.SetDuration("1000")
-	Return el
-End Sub
-
-
 Sub CreateSlider(sid As String, eventHandler As Object) As VMSlider
 	Dim el As VMSlider
 	el.Initialize(vue, sid, eventHandler)
+	el.SetDesignMode(DesignMode)
 	Return el
 End Sub
 
@@ -289,6 +492,7 @@ End Sub
 Sub CreateSwitch(sid As String, eventHandler As Object) As VMCheckBox
 	Dim el As VMCheckBox
 	el.Initialize(vue, sid, eventHandler)
+	el.SetDesignMode(DesignMode)
 	el.SetSwitch
 	Return el
 End Sub
@@ -306,10 +510,10 @@ Sub NewSwitch(eventHandler As Object, bStatic As Boolean, sid As String, vmodel 
 	el.SetVModel(vmodel)
 	el.Setlabel(slabel)
 	el.SetValue(svalue)
-	'el.SetTrueValue(svalue)
+	el.SetTrueValue(svalue)
 	el.SetPrimary(bPrimary)
-	'el.SetFalseValue(sunchecked)
 	el.SetUncheckedValue(sunchecked)
+	el.SetFalseValue(sunchecked)
 	el.SetTabIndex(iTabIndex)
 	vue.SetData(vmodel, sunchecked)
 	Return el
@@ -319,6 +523,7 @@ End Sub
 Sub CreateRadioGroup(sid As String, eventHandler As Object) As VMRadioGroup
 	Dim el As VMRadioGroup
 	el.Initialize(vue, sid, eventHandler)
+	el.SetDesignMode(DesignMode)
 	Return el
 End Sub
 '
@@ -330,6 +535,7 @@ Sub NewRadioGroup(eventHandler As Object, bStatic As Boolean, sid As String, vmo
 	el.Setlabel(slabel)
 	el.SetOptions(optionsm)
 	el.SetTabIndex(iTabIndex)
+	el.SetValue(svalue)
 	vue.SetData(vmodel, svalue)
 	If bShowLabel = False Then el.SetLabel("")
 	If bLabelOnTop Then
@@ -352,7 +558,10 @@ Sub NewSelectDataSource(eventHandler As Object,bStatic As Boolean,sname As Strin
 	el.SetMultiple(bMultiple)
 	el.SetDataSource(sourceTable, sourceField, displayField,returnObject)
 	el.SetVModel(vmodel)
-	el.SetErrorText(sErrorText)
+	el.SetRules(True)
+	el.SetError(False)
+	el.SetErrorMessages(True)
+	el.Combo.ErrorMessage = sErrorText
 	Return el
 End Sub
 
@@ -369,7 +578,10 @@ Sub NewSelectOptions(eventHandler As Object,bStatic As Boolean,sname As String, 
 	el.Setmultiple(bMultiple)
 	el.SetVModel(vmodel)
 	el.SetOptions($"${vmodel}items"$, optionsm, sourceField, displayField, returnObject)
-	el.SetErrorText(sErrorText)
+	el.SetRules(True)
+	el.SetError(False)
+	el.SetErrorMessages(True)
+	el.Combo.ErrorMessage = sErrorText
 	Return el
 End Sub
 
@@ -386,7 +598,10 @@ Sub NewComboDataSource(eventHandler As Object,bStatic As Boolean,sname As String
 	el.SetMultiple(bMultiple)
 	el.SetVModel(vmodel)
 	el.SetDataSource(sourceTable, sourceField, displayField,returnObject)
-	el.SetErrorText(sErrorText)
+	el.SetRules(True)
+	el.SetError(False)
+	el.SetErrorMessages(True)
+	el.Combo.ErrorMessage = sErrorText
 	Return el
 End Sub
 
@@ -404,7 +619,10 @@ Sub NewComboOptions(eventHandler As Object,bStatic As Boolean,sname As String, v
 	el.Setmultiple(bMultiple)
 	el.SetVModel(vmodel)
 	el.SetOptions($"${vmodel}items"$, optionsm, sourceField, displayField, returnObject)
-	el.SetErrorText(sErrorText)
+	el.SetRules(True)
+	el.SetError(False)
+	el.SetErrorMessages(True)
+	el.Combo.ErrorMessage = sErrorText
 	Return el
 End Sub
 '
@@ -412,6 +630,7 @@ End Sub
 Sub CreateFABButton(sid As String,moduleObj As Object, iconName As String) As VMButton
 	Dim el As VMButton
 	el.Initialize(vue, sid, moduleObj)
+	el.SetDesignMode(DesignMode)
 	el.SetFabButton(iconName)
 	Return el
 End Sub
@@ -471,7 +690,6 @@ Sub NewBLOCKQUOTE(bStatic As Boolean,sname As String, sText As String) As VMLabe
 	Return NewLabel(bStatic,sname, sname, "blockquote", sText)
 End Sub
 
-
 Sub NewRadioGroupDataSource(eventHandler As Object,bStatic As Boolean,sname As String, vmodel As String, sLabel As String, svalue As String, sourceTable As String, sourceField As String, displayField As String, bShowLabel As Boolean, bLabelOnTop As Boolean, iTabIndex As Int) As VMRadioGroup
 	Dim el As VMRadioGroup = CreateRadioGroup(sname, eventHandler)
 	el.SetDesignMode(DesignMode)
@@ -494,6 +712,7 @@ End Sub
 Sub CreateCheckBox(sid As String, eventHandler As Object) As VMCheckBox
 	Dim el As VMCheckBox
 	el.Initialize(vue, sid, eventHandler)	
+	el.SetDesignMode(DesignMode)
 	Return el
 End Sub
 
@@ -502,13 +721,13 @@ Sub NewCheckBox(eventHandler As Object, bStatic As Boolean, sid As String, vmode
 	el.SetDesignMode(DesignMode)
 	el.SetStatic(bStatic)
 	el.SetVModel(vmodel)
+	el.SetTrueValue(svalue)
 	el.SetValue(svalue)
-	'el.SetTrueValue(svalue)
 	el.Setlabel(slabel)
 	el.SetPrimary(bPrimary)
-	'el.SetFalseValue(sunchecked)
-	el.SetTabIndex(iTabIndex)
 	el.SetUncheckedValue(sunchecked)
+	el.SetFalseValue(sunchecked)
+	el.SetTabIndex(iTabIndex)
 	vue.SetData(vmodel, sunchecked)
 	Return el
 End Sub
@@ -517,6 +736,7 @@ End Sub
 Sub CreateDateTimePicker(sid As String, eventHandler As Object) As VMDateTimePicker
 	Dim el As VMDateTimePicker
 	el.Initialize(vue, sid, eventHandler)
+	el.SetDesignMode(DesignMode)
 	Return el
 End Sub
 
@@ -530,7 +750,10 @@ Sub NewDatePicker(eventHandler As Object, bStatic As Boolean, sid As String, vmo
 	el.SetVModel(vmodel)
 	el.SetPlaceHolder(sPlaceholder)
 	el.SetHint(sHint)
-	el.SetErrorText(sErrorText)
+	el.TextField.SetRules(True)
+	el.TextField.SetErrorMessages(True)
+	el.DateTimePicker.ErrorMessage = sErrorText
+	el.TextField.SetError(False)
 	el.SetForInput
 	Return el
 End Sub
@@ -546,8 +769,11 @@ Sub NewTimePicker(eventHandler As Object, bStatic As Boolean, sid As String, vmo
 	el.SetPlaceHolder(sPlaceholder)
 	el.SetHint(sHint)
 	el.SetTabIndex(iTabIndex)
-	el.SetErrorText(sErrorText)
+	el.TextField.SetRules(True)
+	el.TextField.SetErrorMessages(True)
+	el.TextField.SetError(False)
 	el.SetForInput
+	el.DateTimePicker.ErrorMessage = sErrorText
 	Return el
 End Sub
 
@@ -555,6 +781,7 @@ End Sub
 Sub CreateTextField(sid As String, eventHandler As Object) As VMTextField
 	Dim el As VMTextField
 	el.Initialize(vue, sid,eventHandler)
+	el.SetDesignMode(DesignMode)
 	Return el
 End Sub
 
@@ -579,8 +806,11 @@ Sub NewTextField(eventHandler As Object,bStatic As Boolean,sid As String, vmodel
 	el.SetHint(shelpertext)
 	el.SetTabIndex(iTabIndex)
 	el.SetVModel(vmodel)
-	el.SetErrorText(sErrorText)
 	el.SetType("text")
+	el.SetRules(True)
+	el.SetError(False)
+	el.SetErrorMessages(True)
+	el.TextField.ErrorMessage = sErrorText
 	Return el
 End Sub
 '
@@ -611,9 +841,12 @@ Sub NewTextArea(eventHandler As Object,bStatic As Boolean,sname As String, vmode
 	el.SetPlaceHolder(splaceholder)
 	el.SetHint(shelpertext)
 	el.SetTabIndex(iTabIndex)
-	el.SetErrorText(sErrorText)
 	el.SetAutoGrow(bAutoGrow)
 	el.SetVModel(vmodel)
+	el.SetRules(True)
+	el.SetError(False)
+	el.SetErrorMessages(True)
+	el.TextField.ErrorMessage = sErrorText
 	Return el
 End Sub
 
@@ -625,30 +858,34 @@ Sub NewPassword(eventHandler As Object,bStatic As Boolean,sname As String, vmode
 End Sub
 
 'backward compatibility
-Sub NewFile(eventHandler As Object,bStatic As Boolean,bUpload As Boolean,sname As String, vmodel As String, slabel As String, splaceholder As String, bRequired As Boolean, shelpertext As String, sErrorText As String, iTabIndex As Int) As VMTextField
+Sub NewFile(eventHandler As Object,bStatic As Boolean,bUpload As Boolean,sname As String, vmodel As String, slabel As String, splaceholder As String, bRequired As Boolean, shelpertext As String, sErrorText As String, iTabIndex As Int) As VMFileInput
 	Return NewFileInput(eventHandler,bStatic,bUpload,sname, vmodel, slabel, splaceholder, bRequired, shelpertext, sErrorText, iTabIndex)
 End Sub
 '
-Sub NewFileInput(eventHandler As Object,bStatic As Boolean,bUpload As Boolean, sname As String, vmodel As String, slabel As String, splaceholder As String, bRequired As Boolean, shelperText As String, sErrorText As String, iTabIndex As Int) As VMTextField
-	Dim el As VMTextField = CreateFileInput(sname, eventHandler, bUpload)
+Sub NewFileInput(eventHandler As Object,bStatic As Boolean,bUpload As Boolean, sname As String, vmodel As String, slabel As String, splaceholder As String, bRequired As Boolean, shelperText As String, sErrorText As String, iTabIndex As Int) As VMFileInput
+	Dim el As VMFileInput = CreateFileInput(sname, eventHandler)
 	el.SetDesignMode(DesignMode)
 	el.setstatic(bStatic)
 	el.SetHint(shelperText)
-	el.SetErrorText(sErrorText)
 	el.SetTabIndex(iTabIndex)
 	el.SetPlaceHolder(splaceholder)
 	el.SetVModel(vmodel)
+	el.SetClearable(False)
 	el.Setlabel(slabel)
 	el.SetRequired(bRequired)
 	vue.SetData(vmodel, Null)
+	el.SetRules(vue.newlist)
+	el.SetError(False)
+	el.SetErrorMessages(vue.newlist)
+	el.SetErrorText(sErrorText)
 	Return el
 End Sub
 '
 
-Sub CreateFileInput(sid As String, eventHandler As Object, bUpload As Boolean) As VMTextField
-	Dim el As VMTextField
+Sub CreateFileInput(sid As String, eventHandler As Object) As VMFileInput
+	Dim el As VMFileInput
 	el.Initialize(vue, sid, eventHandler)
-	el.SetFileInput(bUpload)
+	el.SetDesignMode(DesignMode)
 	Return el
 End Sub
 
@@ -666,7 +903,10 @@ Sub NewAutoCompleteOptions(eventHandler As Object,bStatic As Boolean,sname As St
 	el.Setmultiple(bMultiple)
 	el.SetVModel(vmodel)
 	el.SetOptions($"${vmodel}items"$, optionsm, sourceField, displayField, returnObject)
-	el.SetErrorText(sErrorText)
+	el.SetRules(True)
+	el.SetError(False)
+	el.SetErrorMessages(True)
+	el.Combo.ErrorMessage = sErrorText
 	Return el
 End Sub
 
@@ -687,6 +927,7 @@ End Sub
 Sub CreateSelect(sid As String, eventHandler As Object) As VMSelect
 	Dim el As VMSelect
 	el.Initialize(vue,sid,eventHandler)
+	el.SetDesignMode(DesignMode)
 	Return el
 End Sub
 
@@ -694,6 +935,7 @@ End Sub
 Sub CreateButton(sid As String,moduleObj As Object) As VMButton
 	Dim el As VMButton
 	el.Initialize(vue, sid, moduleObj)
+	el.SetDesignMode(DesignMode)
 	el.SetType("button")
 	Return el
 End Sub
@@ -749,14 +991,10 @@ Sub SetMinHeight(h As String) As VMContainer
 	Return Me
 End Sub
 
-Sub HasContent As Boolean
-	Return Container.hascontent
-End Sub
-
 'set transition
 Sub SetTransition(varTransition As String) As VMContainer
 	If varTransition = "" Then Return Me
-	Container.Bind("transition", varTransition)
+	SetAttrSingle("transition", varTransition)
 	Return Me
 End Sub
 
@@ -791,16 +1029,18 @@ Sub SetDefaults
 	vue.SetState(Defaults)
 	vue.SetState(visibility)
 	For Each k As String In Required.Keys
-		HideError(k)
+		vue.HideError(k)
 	Next
 End Sub
 
-Sub AddRequired(r As String) As VMContainer
-	Required.put(r,r)
+Sub AddRequired(r As String,e As String) As VMContainer
+	r = r.tolowercase
+	Required.put(r, e)
 	Return Me
 End Sub
 
 Sub RemoveRequired(r As String) As VMContainer
+	r = r.tolowercase
 	Required.Remove(r)
 	Return Me
 End Sub
@@ -856,14 +1096,6 @@ End Sub
 'validate the records
 Sub Validate(rec As Map) As Boolean
 	Return vue.Validate(rec, Required)
-End Sub
-
-Sub ShowError(elID As String)
-	vue.SetStateSingle($"${elID}error"$, True)
-End Sub
-
-Sub HideError(elID As String)
-	vue.SetStateSingle($"${elID}error"$, False)
 End Sub
 
 Sub LinkRecordTypes(rec As Map) As Map
@@ -968,6 +1200,8 @@ Sub SetTextCenter As VMContainer
 	Return Me
 End Sub
 
+
+
 Sub SetAttrLoose(loose As String) As VMContainer
 	Container.SetAttrLoose(loose)
 	Return Me
@@ -989,6 +1223,12 @@ Sub Clear As VMContainer
 	Components.Initialize
 	rowStyles.Initialize 
 	rowClasses.Initialize 
+	HasContent = False
+	Return Me
+End Sub
+
+Sub SetVModel(k As String) As VMContainer
+	Container.SetVModel(k)
 	Return Me
 End Sub
 
@@ -1006,6 +1246,7 @@ Sub AddRows(iRows As Int) As VMContainer
 	Dim rowKey As String = $"${ID}r${LastRow}"$
 	'lets save the row on the map
 	Rows.Put(rowKey,nRow)
+	HasContent = True
 	Return Me
 End Sub
 
@@ -1040,6 +1281,7 @@ Sub AddColumnsOS(iColumns As Int, osm As Int, omd As Int, olg As Int, oxl As Int
 		'save it back
 		Rows.Put(rowkey,oldRow)
 	End If
+	HasContent = True
 	Return Me
 End Sub
 
@@ -1200,6 +1442,62 @@ Sub AddColumns12 As VMContainer
 	Return Me
 End Sub
 
+Sub AddColumns6 As VMContainer
+	AddColumns(1,"12","6","6","6")
+	Return Me
+End Sub
+
+Sub AddColumns2 As VMContainer
+	AddColumns(1,"12","2","2","2")
+	Return Me
+End Sub
+
+Sub AddColumns1 As VMContainer
+	AddColumns(1,"12","1","1","1")
+	Return Me
+End Sub
+
+Sub AddColumns3 As VMContainer
+	AddColumns(1,"12","3","3","3")
+	Return Me
+End Sub
+
+Sub AddColumns4 As VMContainer
+	AddColumns(1,"12","4","4","4")
+	Return Me
+End Sub
+
+Sub AddColumns5 As VMContainer
+	AddColumns(1,"12","5","5","5")
+	Return Me
+End Sub
+
+Sub AddColumns7 As VMContainer
+	AddColumns(1,"12","7","7","7")
+	Return Me
+End Sub
+
+Sub AddColumns8 As VMContainer
+	AddColumns(1,"12","8","8","8")
+	Return Me
+End Sub
+
+Sub AddColumns9 As VMContainer
+	AddColumns(1,"12","9","9","9")
+	Return Me
+End Sub
+
+Sub AddColumns10 As VMContainer
+	AddColumns(1,"12","10","10","10")
+	Return Me
+End Sub
+
+Sub AddColumns11 As VMContainer
+	AddColumns(1,"12","11","11","11")
+	Return Me
+End Sub
+
+
 'add a style to a column
 Sub SetStyleRC(rowPos As Int, colPos As Int, prop As String, value As String) As VMContainer
 	Dim rowc As Map
@@ -1221,6 +1519,16 @@ End Sub
 'align row content
 Sub SetAlignContentRC(rowPos As Int, colPos As Int, align As String) As VMContainer
 	SetAttrRC(rowPos, colPos, "align-content", align)
+	Return Me
+End Sub
+
+Sub SetJustifyCenterRow(rowPos As Int) As VMContainer
+	SetJustifyRC(rowPos, 0, "center")
+	Return Me
+End Sub
+
+Sub SetAlignCenterRow(rowPos As Int) As VMContainer
+	SetAlignRC(rowPos, 0, "center")
 	Return Me
 End Sub
 
@@ -1308,6 +1616,26 @@ Sub SetBorder(bwidth As String, bcolor As String, bstyle As String) As VMContain
 	If bcolor <> "" Then SetStyleSingle("border-color", bcolor)
 	Return Me
 End Sub
+
+'show an rc
+Sub ShowRC(rowPos As Int, colPos As Int)
+	Dim rowKey As String = $"${ID}r${CStr(rowPos)}c${CStr(colPos)}"$
+	If colPos = 0 Then
+		rowKey = $"${ID}r${CStr(rowPos)}"$
+	End If
+	rowKey = $"${rowKey}show"$
+	vue.SetData(rowKey, True)
+End Sub
+
+Sub HideRC(rowPos As Int, colPos As Int)
+	Dim rowKey As String = $"${ID}r${CStr(rowPos)}c${CStr(colPos)}"$
+	If colPos = 0 Then
+		rowKey = $"${ID}r${CStr(rowPos)}"$
+	End If
+	rowKey = $"${rowKey}show"$
+	vue.SetData(rowKey, False)
+End Sub
+
 
 'set the border of the rc
 Sub SetBorderRC(rowPos As Int, colPos As Int, bwidth As String, bcolor As String, bstyle As String) As VMContainer
@@ -1409,6 +1737,11 @@ private Sub BuildRow(row As GridRow) As String
 		Dim tRow As VMRow
 		tRow.Initialize(vue, rowKey, Module)
 		tRow.SetDesignMode(DesignMode)
+		If DesignMode = False Then
+			Dim rowKeyShow As String = $"${rowKey}show"$
+			vue.SetData(rowKeyShow, True)
+			tRow.SetAttrSingle("v-show", rowKeyShow)
+		End If
 		'detect if we have styles for the Row
 		If rowStyles.ContainsKey(rowKey) Then
 			Dim cm As Map = rowStyles.Get(rowKey)
@@ -1470,9 +1803,15 @@ private Sub BuildRow(row As GridRow) As String
 				tColumn.SetOffsetLg(column.oflg)
 				tColumn.SetOffsetXl(column.ofxl)
 				'
+				If DesignMode = False Then
+					Dim cellKeyShow As String = $"${cellKey}show"$
+					vue.SetData(cellKeyShow, True)
+					tColumn.SetAttrSingle("v-show", cellKeyShow)
+				End If
+				'
 				If ShowMatrix Then
 					Dim matrix As String = $"R${LastRow}.C${LastColumn}"$
-					tColumn.SetText(matrix)
+					tColumn.AddComponent(matrix)
 				End If
 				'detect if we have styles for the rc
 				If rowStyles.ContainsKey(cellKey) Then
@@ -1504,9 +1843,11 @@ private Sub BuildRow(row As GridRow) As String
 					Dim lst As List = Components.Get(cellKey)
 					tColumn.AddContentList(lst)
 				End If
-				tRow.SetText(tColumn.ToString)
+				If UseVShow = False Then tColumn.Col.RemoveVShow
+				tRow.AddComponent(tColumn.ToString)
 			Next
 		Next
+		If UseVShow = False Then tRow.Row.RemoveVShow
 		Dim strRow As String = tRow.tostring
 		sb.Append(strRow)
 	Next
@@ -1530,6 +1871,7 @@ Sub AddComponent(rowPos As Int, colPos As Int, elHTML As String)
 		lst.Add(elHTML)
 		Components.Put(cellKey,lst)
 	End If
+	HasContent = True
 End Sub
 
 'backward compatibility
@@ -1555,6 +1897,7 @@ End Sub
 
 'add a control that will be automatically grid designed
 Sub AddControl1(el As VMElement, template As String)
+	HasContent = True
 	Controls.Add(el)
 	bControls = True
 	'get the row
@@ -1585,7 +1928,7 @@ Sub AddControl1(el As VMElement, template As String)
 	'
 	AddComponent(el.r, el.C, template)
 	Select Case el.typeOf
-	Case "checkbox", "checkbox", "switchbox", "switch"
+	Case "checkbox", "switchbox", "switch"
 		Dim newoption As CheckedUnchecked
 		newoption.Initialize
 		newoption.fieldname = el.vmodel
@@ -1599,9 +1942,9 @@ Sub AddControl1(el As VMElement, template As String)
 		vue.SetStateSingle(disKey, el.IsDisabled)
 		vue.SetStateSingle(enaKey, el.IsRequired)
 		If el.isarray Then
-			vue.SetStateSingle(el.vmodel, Array())
+			vue.SetStateSingle(el.vmodel, vue.newlist)
 		Else
-			vue.SetStateSingle(el.vmodel, el.defaultValue)
+			vue.SetStateSingle(el.vmodel, el.Value)
 		End If
 		vue.SetStateSingle(errKey, False)
 	End If	
@@ -1627,12 +1970,8 @@ Sub ToString As String
 	Next
 	'set the result of the container
 	SetText(sb.tostring)
+	If UseVShow = False Then Container.RemoveVShow
 	Return Container.ToString
-End Sub
-
-Sub SetVModel(k As String) As VMContainer
-	Container.SetVModel(k)
-	Return Me
 End Sub
 
 'check if the row exists
@@ -1652,12 +1991,12 @@ Sub HowManyRows() As Int
 	Return LastRow
 End Sub
 
-Sub SetVIf(vif As Object) As VMContainer
+Sub SetVIf(vif As String) As VMContainer
 	Container.SetVIf(vif)
 	Return Me
 End Sub
 
-Sub SetVShow(vif As Object) As VMContainer
+Sub SetVShow(vif As String) As VMContainer
 	Container.SetVShow(vif)
 	Return Me
 End Sub
@@ -1671,12 +2010,20 @@ End Sub
 Sub AddChild(child As VMElement) As VMContainer
 	Dim childHTML As String = child.ToString
 	Container.SetText(childHTML)
+	HasContent = True
 	Return Me
 End Sub
 
 'set text
 Sub SetText(t As String) As VMContainer
 	Container.SetText(t)
+	HasContent = True
+	Return Me
+End Sub
+
+Sub AddHTML(htmlContent As String) As VMContainer
+	Container.SetText(htmlContent)
+	HasContent = True
 	Return Me
 End Sub
 
@@ -1733,6 +2080,12 @@ End Sub
 Sub SetTag(varTag As String) As VMContainer
 	If varTag = "" Then Return Me
 	Container.SetTag(varTag)
+	Return Me
+End Sub
+
+
+Sub SetVisible(b As Boolean) As VMContainer
+	Container.SetVisible(b)
 	Return Me
 End Sub
 
@@ -1819,15 +2172,17 @@ private Sub CreateGrid
 		Dim idxpos As Int = Exclusions.IndexOf(el.id)
 		If idxpos = -1 Then
 			Select Case el.typeOf
-				Case "button", "list", "image", "label", "profile"
+				Case "button", "list", "image", "label", "profile", "table", _
+					"alert", "badge", "avatar","banner","nav", "container"
 					el.fieldType = ""
 					el.IsRequired = False
 				Case Else
 					Fields.Add(el.vmodel)
-					Defaults.Put(el.vmodel, el.defaultValue)
+					Defaults.Put(el.vmodel, el.value)
 			End Select
-			If el.isrequired Then Required.put(el.vmodel, el.vmodel)
-			Select Case el.fieldType
+			If el.isrequired Then Required.put(el.vmodel, el.ErrorMessage)
+			If (el.vmodel <> "") And (el.fieldType <> "") Then
+				Select Case el.fieldType
 				Case "int"
 					Integers.Add(el.vmodel)
 				Case "bool"
@@ -1838,7 +2193,8 @@ private Sub CreateGrid
 					Dates.Add(el.vmodel)
 				Case "dbl"
 					Doubles.Add(el.vmodel)
-			End Select
+				End Select
+			End If
 		End If
 	Next
 	
@@ -1863,7 +2219,17 @@ private Sub CreateGrid
 	Next
 	If missingRC.Size -1 >= 0 Then
 		For Each strRC As String In missingRC
-			Log("VMContainer.CreateGrid: "& strRC & ": RC is NOT defined")
+			'add labels in place of missing components
+			Dim lblKey As String = "lbl" & strRC.Replace(".","")
+			Dim xRow As String = vue.MvField(strRC,1,".")
+			Dim xCol As String = vue.MvField(strRC,2,".")
+			'
+			Dim lbl As VMLabel
+			lbl.Initialize(vue, lblKey)
+			lbl.SetText(lblKey)
+			lbl.SetVisible(False)
+			AddControl(lbl.Label, lbl.ToString,xRow,xCol,"0","0","0","0","12","12","12","12")			
+			Log("VMContainer.CreateGrid: " & ID & "." & strRC & ": RC is NOT defined")
 		Next
 	End If
 	'add the grid definition
@@ -1944,11 +2310,6 @@ Sub BuildModel(mprops As Map, mstyles As Map, lclasses As List, loose As List) A
 	Return Me
 End Sub
 
-Sub SetVisible(b As Boolean) As VMContainer
-	Container.SetVisible(b)
-	Return Me
-End Sub
-
 'set color intensity
 Sub SetTextColor(varColor As String) As VMContainer
 	If varColor = "" Then Return Me
@@ -1986,7 +2347,7 @@ Sub SetOnClickRC(rowpos As Int, colpos As Int, methodName As String) As VMContai
 		rowc.Initialize
 		rowc.clear
 	End If
-	rowc.Put("v-on:click",methodName)
+	rowc.Put("@click",methodName)
 	attributes.Put(rowKey,rowc)
 	Return Me
 End Sub
@@ -2009,8 +2370,18 @@ Sub SetOnTouchStartRC(rowpos As Int, colpos As Int, methodName As String) As VMC
 		rowc.Initialize
 		rowc.clear
 	End If
-	rowc.Put("v-on:touchstart",methodName)
+	rowc.Put("@touchstart",methodName)
 	attributes.Put(rowKey,rowc)
+	Return Me
+End Sub
+
+Sub SetOnDrop(methodName As String) As VMContainer
+	Container.SetOnDrop(Module, methodName)
+	Return Me
+End Sub
+
+Sub SetOnDragOver(methodName As String) As VMContainer
+	Container.SetOnDragOver(Module, methodName)
 	Return Me
 End Sub
 
@@ -2033,7 +2404,7 @@ Sub SetOnDragOverRC(rowPos As Int, colPos As Int, methodName As String) As VMCon
 		rowc.Initialize
 		rowc.clear
 	End If
-	rowc.Put("v-on:dragover",methodName)
+	rowc.Put("@dragover",methodName)
 	attributes.Put(rowKey,rowc)
 	Return Me
 End Sub
@@ -2057,7 +2428,7 @@ Sub SetOnDragStartRC(rowPos As Int, colPos As Int, methodName As String) As VMCo
 		rowc.Initialize
 		rowc.clear
 	End If
-	rowc.Put("v-on:dragstart",methodName)
+	rowc.Put("@dragstart",methodName)
 	attributes.Put(rowKey,rowc)
 	Return Me
 End Sub
@@ -2081,7 +2452,7 @@ Sub SetOnDragEndRC(rowPos As Int, colPos As Int, methodName As String) As VMCont
 		rowc.Initialize
 		rowc.clear
 	End If
-	rowc.Put("v-on:dragend",methodName)
+	rowc.Put("@dragend",methodName)
 	attributes.Put(rowKey,rowc)
 	Return Me
 End Sub
@@ -2105,7 +2476,7 @@ Sub SetOnDragEnterRC(rowPos As Int, colPos As Int, methodName As String) As VMCo
 		rowc.Initialize
 		rowc.clear
 	End If
-	rowc.Put("v-on:dragenter",methodName)
+	rowc.Put("@dragenter",methodName)
 	attributes.Put(rowKey,rowc)
 	Return Me
 End Sub
@@ -2129,7 +2500,7 @@ Sub SetOnDropRC(rowPos As Int, colPos As Int, methodName As String) As VMContain
 		rowc.Initialize
 		rowc.clear
 	End If
-	rowc.Put("v-on:drop",methodName)
+	rowc.Put("@drop",methodName)
 	attributes.Put(rowKey,rowc)
 	Return Me
 End Sub

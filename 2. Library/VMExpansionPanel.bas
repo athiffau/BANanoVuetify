@@ -4,7 +4,7 @@ ModulesStructureVersion=1
 Type=Class
 Version=8.1
 @EndOfDesignText@
-#IgnoreWarnings:12
+#IgnoreWarnings:12, 9
 Sub Class_Globals
 	Public ExpansionPanel As VMElement
 	Public ID As String
@@ -15,6 +15,7 @@ Sub Class_Globals
 	Public Header As VMExpansionPanelHeader
 	Public Content As VMExpansionPanelContent
 	Public Container As VMContainer
+	Private bStatic As Boolean
 End Sub
 
 'initialize the ExpansionPanel
@@ -30,17 +31,60 @@ Public Sub Initialize(v As BANanoVue, sparent As String, sid As String, eventHan
 	Content.Initialize(vue, $"${ID}cnt"$, Module)
 	Container = Content.container 
 	SetAttrSingle("key", ID) 
+	SetOnClick($"${ID}_click"$)
+	SetOnChange(Module, $"${ID}_change"$)
+	Return Me
+End Sub
+
+
+
+'add an element to the page content
+Sub AddElement(elm As VMElement)
+	ExpansionPanel.SetText(elm.ToString)
+End Sub
+
+
+Sub AddElement1(elID As String, elTag As String, elText As String, mprops As Map, mstyles As Map, lclasses As List) As VMExpansionPanel
+	Dim d As VMElement
+	d.Initialize(vue,elID).SetDesignMode(DesignMode).SetTag(elTag)
+	d.SetText(elText)
+	d.BuildModel(mprops, mstyles, lclasses, Null)
+	SetText(d.ToString)
+	Return Me
+End Sub
+
+
+Sub SetData(xprop As String, xValue As Object) As VMExpansionPanel
+	vue.SetData(xprop, xValue)
+	Return Me
+End Sub
+
+
+
+Sub SetStatic(b As Boolean) As VMExpansionPanel
+	bStatic = b
+	Header.SetStatic(b)
+	ExpansionPanel.setstatic(b)
+	Content.setstatic(b)
 	Return Me
 End Sub
 
 'get component
 Sub ToString As String
+	If vue.ShowWarnings Then
+	Dim eName As String = $"${ID}_change"$
+	If SubExists(Module, eName) = False Then
+		Log($"VMExpansionPanel.${eName} event has not been defined!"$)
+	End If
+	eName = $"${ID}_click"$
+	If SubExists(Module, eName) = False Then
+		Log($"VMExpansionPanel.${eName} event has not been defined!"$)
+	End If
+	End If
 	Content.RemoveAttr("v-show")
-	Content.RemoveAttr("ref")
 	Content.RemoveAttr(":style")
 	ExpansionPanel.RemoveAttr("v-show")
 	ExpansionPanel.RemoveAttr(":style")
-	ExpansionPanel.RemoveAttr("ref")
 	AddComponent(Header.ToString)
 	AddComponent(Content.ToString)
 	Return ExpansionPanel.ToString
@@ -51,12 +95,12 @@ Sub SetVModel(k As String) As VMExpansionPanel
 	Return Me
 End Sub
 
-Sub SetVIf(vif As Object) As VMExpansionPanel
+Sub SetVIf(vif As String) As VMExpansionPanel
 	ExpansionPanel.SetVIf(vif)
 	Return Me
 End Sub
 
-Sub SetVShow(vif As Object) As VMExpansionPanel
+Sub SetVShow(vif As String) As VMExpansionPanel
 	ExpansionPanel.SetVShow(vif)
 	Return Me
 End Sub
@@ -74,7 +118,7 @@ Sub AddChild(child As VMElement) As VMExpansionPanel
 End Sub
 
 'set text
-Sub SetText(t As Object) As VMExpansionPanel
+Sub SetText(t As String) As VMExpansionPanel
 	ExpansionPanel.SetText(t)
 	Return Me
 End Sub
@@ -110,7 +154,12 @@ Sub AddChildren(children As List)
 End Sub
 
 'set active-class
-Sub SetActiveClass(varActiveClass As Object) As VMExpansionPanel
+Sub SetActiveClass(varActiveClass As String) As VMExpansionPanel
+	If varActiveClass = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("active-class", varActiveClass)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}ActiveClass"$
 	vue.SetStateSingle(pp, varActiveClass)
 	ExpansionPanel.Bind(":active-class", pp)
@@ -118,15 +167,18 @@ Sub SetActiveClass(varActiveClass As Object) As VMExpansionPanel
 End Sub
 
 'set disabled
-Sub SetDisabled(varDisabled As Object) As VMExpansionPanel
-	Dim pp As String = $"${ID}Disabled"$
-	vue.SetStateSingle(pp, varDisabled)
-	ExpansionPanel.Bind(":disabled", pp)
+Sub SetDisabled(varDisabled As Boolean) As VMExpansionPanel
+	ExpansionPanel.SetDisabled(varDisabled)
 	Return Me
 End Sub
 
 'set readonly
-Sub SetReadonly(varReadonly As Object) As VMExpansionPanel
+Sub SetReadonly(varReadonly As Boolean) As VMExpansionPanel
+	If varReadonly = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("readonly", varReadonly)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Readonly"$
 	vue.SetStateSingle(pp, varReadonly)
 	ExpansionPanel.Bind(":readonly", pp)
@@ -138,8 +190,8 @@ Sub SetOnChange(eventHandler As Object, methodName As String) As VMExpansionPane
 	methodName = methodName.tolowercase
 	If SubExists(eventHandler, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, e)
-	SetAttr(CreateMap("v-on:change": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, Array(e))
+	SetAttr(CreateMap("@change": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -150,8 +202,8 @@ Sub SetOnClick(methodName As String) As VMExpansionPanel
 	methodName = methodName.tolowercase
 	If SubExists(Module, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, e)
-	SetAttr(CreateMap("v-on:click": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
+	SetAttr(CreateMap("@click": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -354,23 +406,8 @@ Sub BuildModel(mprops As Map, mstyles As Map, lclasses As List, loose As List) A
 ExpansionPanel.BuildModel(mprops, mstyles, lclasses, loose)
 Return Me
 End Sub
+
 Sub SetVisible(b As Boolean) As VMExpansionPanel
 ExpansionPanel.SetVisible(b)
 Return Me
-End Sub
-
-'set color intensity
-Sub SetTextColor(varColor As String) As VMExpansionPanel
-	Dim sColor As String = $"${varColor}--text"$
-	AddClass(sColor)
-	Return Me
-End Sub
-
-'set color intensity
-Sub SetTextColorIntensity(varColor As String, varIntensity As String) As VMExpansionPanel
-	Dim sColor As String = $"${varColor}--text"$
-	Dim sIntensity As String = $"text--${varIntensity}"$
-	Dim mcolor As String = $"${sColor} ${sIntensity}"$
-	AddClass(mcolor)
-	Return Me
 End Sub

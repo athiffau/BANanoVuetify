@@ -11,9 +11,14 @@ Sub Class_Globals
 	Private vue As BANanoVue
 	Private BANano As BANano  'ignore
 	Private DesignMode As Boolean
-	Private Module As Object
-	Private ErrorText As String
+	Private Module As Object   'ignore
 	Private bStatic As Boolean
+	Private vmodel As String
+	Private sitems As String
+	Private items As List
+	Private hasItems As Boolean
+	Private hasListItems As Boolean
+	Private marked As Boolean
 End Sub
 
 'initialize the Combo
@@ -25,9 +30,59 @@ Public Sub Initialize(v As BANanoVue, sid As String, eventHandler As Object) As 
 	Module = eventHandler
 	vue = v
 	Combo.typeOf = "selectbox"
-	ErrorText = ""
 	Combo.typeOf = "select"
 	bStatic = False
+	vmodel = ""
+	sitems = $"${ID}items"$
+	items = vue.newlist
+	hasItems = False
+	hasListItems = False
+	marked = False
+	SetOnChange(Module, $"${ID}_change"$)
+	Return Me
+End Sub
+
+
+
+'add an element to the page content
+Sub AddElement(elm As VMElement)
+	Combo.SetText(elm.ToString)
+End Sub
+
+'add a menu after the text box
+Sub AddMenuAfter(menu As VMMenu) As VMSelect
+	Dim appendOuter As VMTemplate
+	appendOuter.Initialize(vue, $"${ID}menuafter"$, Module)
+	appendOuter.SetAttrLoose("v-slot:append-outer")
+	appendOuter.AddComponent(menu.ToString)
+	AddComponent(appendOuter.ToString)
+	Return Me
+End Sub
+
+'add a menu after the text box
+Sub AddButtonAfter(btn As VMButton) As VMSelect
+	Dim appendOuter As VMTemplate
+	appendOuter.Initialize(vue, $"${ID}menuafter"$, Module)
+	appendOuter.SetAttrLoose("v-slot:append-outer")
+	appendOuter.AddComponent(btn.ToString)
+	AddComponent(appendOuter.ToString)
+	Return Me
+End Sub
+
+Sub SetData(xprop As String, xValue As Object) As VMSelect
+	vue.SetData(xprop, xValue)
+	Return Me
+End Sub
+
+
+
+Sub SetVOnce(t As Boolean) As VMSelect
+	Combo.setvonce(t)
+	Return Me
+End Sub
+
+Sub SetFieldType(ft As String) As VMSelect
+	Combo.fieldType = ft
 	Return Me
 End Sub
 
@@ -48,20 +103,6 @@ End Sub
 Sub SetStatic(b As Boolean) As VMSelect
 	bStatic = b
 	Combo.SetStatic(b)
-	Return Me
-End Sub
-
-
-'backward compatibility
-Sub SetInvalidMessage(ErrText As String) As VMSelect
-	If ErrText = "" Then Return Me
-	ErrorText = ErrText
-	Return Me
-End Sub
-
-Sub SetErrorText(Error As String) As VMSelect
-	If Error = "" Then Return Me
-	ErrorText = Error
 	Return Me
 End Sub
 
@@ -113,16 +154,25 @@ Sub SetAttributes(attrs As List) As VMSelect
 	Return Me
 End Sub
 
-
 Sub AddComponent(comp As String) As VMSelect
 	Combo.SetText(comp)
 	Return Me
 End Sub
 
-Sub AddItems(items As List) As VMSelect
-	Dim targ As String = $"${ID}items"$
-	vue.SetData(targ, items)
-	SetItems(targ)
+'add a predefined list of items
+Sub AddItems(xitems As List) As VMSelect
+	vue.SetData(sitems, xitems)
+	SetItems(sitems)
+	items = xitems
+	hasItems = True
+	Return Me
+End Sub
+
+'clear the contents of the list
+Sub Clear As VMSelect
+	vue.SetData(sitems, vue.NewList)
+	items.clear
+	hasItems = True
 	Return Me
 End Sub
 
@@ -136,11 +186,12 @@ Sub SetDataSource(sourceName As String, sourceField As String, displayField As S
 	SetItemValue(sourceField)
 	SetReturnObject(returnObject)
 	If vue.StateExists(sourceName) = False Then
-		vue.SetData(sourceName, Array())
+		vue.SetData(sourceName, vue.newlist)
 	End If
 	Return Me
 End Sub
 
+'use key value pairs
 Sub SetOptions(sourceName As String, options As Map, sourcefield As String, displayfield As String, returnObject As Boolean) As VMSelect
 	sourceName = sourceName.tolowercase
 	sourcefield = sourcefield.ToLowerCase
@@ -165,11 +216,159 @@ Sub SetOptions(sourceName As String, options As Map, sourcefield As String, disp
 	Return Me
 End Sub
 
+'Add a single item
+Sub AddItem(itemkey As String, itemvalue As String) As VMSelect
+	Dim nrec As Map = CreateMap()
+	nrec.Put("value", itemvalue)
+	nrec.Put("key", itemkey)
+	items.Add(nrec)
+	hasItems = True
+	If marked = False Then
+		UsesKeyValue
+		marked = True
+	End If
+	Return Me
+End Sub
+
+'indicate that it uses key values
+Sub UsesKeyValue As VMSelect
+	SetItemText("value")
+	SetItemValue("key")
+	SetReturnObject(False)
+	Return Me
+End Sub
+
+'indicate that it uses list items
+Sub UsesListItems As VMSelect
+	SetItemText("title")
+	SetItemValue("key")
+	SetReturnObject(False)
+	Return Me
+End Sub
+
+'add a list item
+Sub AddListItem(key As String, avatar As String, iconName As String, iconColor As String, title As String, subtitle As String, subtitle1 As String) As VMSelect
+	Dim nrec As Map = CreateMap()
+	nrec.Put("key", key)
+	nrec.Put("value", title)
+	nrec.Put("avatar", avatar)
+	nrec.Put("iconname", iconName)
+	nrec.Put("iconcolor", iconColor)
+	nrec.Put("title", title)
+	nrec.Put("subtitle", subtitle)
+	nrec.Put("subtitle1", subtitle1)
+	items.Add(nrec)
+	hasItems = True
+	hasListItems = True
+	If marked = False Then
+		UsesListItems
+		marked = True
+	End If
+	Return Me
+End Sub
+
+'define the list item for each of the items
+private Sub SetListItems As VMSelect
+	If DesignMode Then Return Me
+	'
+	Dim tmp As VMTemplate
+	tmp.Initialize(vue, $"${ID}tmpl"$, Module)
+	tmp.SetStatic(bStatic)
+	tmp.SetDesignMode(DesignMode)
+	tmp.SetAttrSingle("v-slot:item", "{ item, attrs, on }")
+	'
+	Dim vli As VMListItem
+	vli.Initialize(vue, "", Module).SetStatic(bStatic).SetDesignMode(DesignMode)
+	vli.SetVIf($"item.key"$)
+	vli.Bind(":key", $"item.key"$)
+	vli.SetAttrSingle(":id", $"item.key"$)
+	vli.SetAttrSingle("v-bind", "attrs")
+	vli.SetAttrSingle("v-on", "on")
+	'
+	Dim lia As VMListItemAvatar
+	lia.Initialize(vue, "", Module)
+	lia.SetStatic(bStatic)
+	lia.SetDesignMode(DesignMode)
+	lia.SetVIf($"item.avatar"$)
+	Dim img As VMImage
+	img.Initialize(vue, "", Module)
+	img.SetStatic(bStatic)
+	img.SetDesignMode(DesignMode)
+	img.SetAttrSingle(":src", $"item.avatar"$)
+	img.Pop(lia.ListItemAvatar)
+	lia.Pop(vli.ListItem)
+	'
+	Dim vlii As VMListItemIcon
+	vlii.Initialize(vue, "", Module)
+	vlii.SetStatic(bStatic)
+	vlii.SetDesignMode(DesignMode)
+	vlii.SetVif($"item.iconname"$)
+	Dim icon As VMIcon
+	icon.Initialize(vue,"", Module)
+	icon.SetStatic(bStatic)
+	icon.SetDesignMode(DesignMode)
+	icon.SetVText($"item.iconname"$)
+	icon.SetAttrSingle(":color", $"item.iconcolor"$)
+	icon.Pop(vlii.ListItemIcon)
+	vlii.Pop(vli.ListItem)
+	'
+	Dim lic As VMListItemContent
+	lic.Initialize(vue,"", Module)
+	lic.SetStatic(bStatic)
+	lic.SetDesignMode(DesignMode)
+	'
+	Dim lit As VMListItemTitle
+	lit.Initialize(vue, "", Module)
+	lit.SetStatic(bStatic)
+	lit.SetDesignMode(DesignMode)
+	lit.SetVif($"item.title"$)
+	lit.SetVText($"item.title"$)
+	lit.Pop(lic.ListItemContent)
+	'
+	Dim listt As VMListItemSubTitle
+	listt.Initialize(vue, "", Module)
+	listt.SetStatic(bStatic)
+	listt.SetDesignMode(DesignMode)
+	listt.SetVIf($"item.subtitle"$)
+	listt.SetVText($"item.subtitle"$)
+	listt.Pop(lic.ListItemContent)
+	'
+	Dim listt1 As VMListItemSubTitle
+	listt1.Initialize(vue, "", Module)
+	listt1.SetStatic(bStatic)
+	listt1.SetDesignMode(DesignMode)
+	listt1.SetVIf($"item.subtitle1"$)
+	listt1.SetVText($"item.subtitle1"$)
+	listt1.Pop(lic.ListItemContent)
+	'
+	lic.Pop(vli.ListItem)
+	
+	vli.Pop(tmp.Template)
+	SetText(tmp.ToString)
+	Return Me
+End Sub
+
 'get component
 Sub ToString As String
+	If vue.ShowWarnings Then
+	Dim eName As String = $"${ID}_change"$
+	If SubExists(Module, eName) = False Then
+		Log($"VMSelect.${eName} event has not been defined!"$)
+	End If
+	End If
+	If hasItems Then 
+		SetItems(sitems)
+		vue.SetData(sitems, items)
+	End If
+	If hasListItems Then SetListItems
 	Return Combo.ToString
 End Sub
 
+'update after clear
+Sub Update
+	SetItems(sitems)
+	vue.SetData(sitems, items)
+End Sub
 
 'apply a theme to an element
 Sub UseTheme(themeName As String) As VMSelect
@@ -206,16 +405,17 @@ Sub SetColorIntensity(varColor As String, varIntensity As String) As VMSelect
 End Sub
 
 Sub SetVModel(k As String) As VMSelect
+	vmodel = k.tolowercase
 	Combo.SetVModel(k)
 	Return Me
 End Sub
 
-Sub SetVIf(vif As Object) As VMSelect
+Sub SetVIf(vif As String) As VMSelect
 	Combo.SetVIf(vif)
 	Return Me
 End Sub
 
-Sub SetVShow(vif As Object) As VMSelect
+Sub SetVShow(vif As String) As VMSelect
 	Combo.SetVShow(vif)
 	Return Me
 End Sub
@@ -496,38 +696,36 @@ Sub SetEager(varEager As Boolean) As VMSelect
 End Sub
 
 'set error
-Sub SetError(varError As Object) As VMSelect
+Sub SetError(varError As Boolean) As VMSelect
 	If bStatic Then
 		SetAttrSingle("error", varError)
-	Else
-	Dim pp As String = $"${ID}Error"$
+		Return Me
+	End If
+	Dim pp As String = $"${vmodel}Error"$
 	vue.SetStateSingle(pp, varError)
 	Combo.Bind(":error", pp)
-	End If
 	Return Me
 End Sub
 
 'set error-count
-Sub SetErrorCount(varErrorCount As Object) As VMSelect
+Sub SetErrorCount(varErrorCount As String) As VMSelect
 	If bStatic Then
 		SetAttrSingle("error-count", varErrorCount)
-	Else
-	Dim pp As String = $"${ID}ErrorCount"$
+		Return Me
+	End If
+	Dim pp As String = $"${vmodel}ErrorCount"$
 	vue.SetStateSingle(pp, varErrorCount)
 	Combo.Bind(":error-count", pp)
-	End If
 	Return Me
 End Sub
 
 'set error-messages
-Sub SetErrorMessages(varErrorMessages As Object) As VMSelect
-	If bStatic Then
-		SetAttrSingle("error-messages", varErrorMessages)
-	Else
-	Dim pp As String = $"${ID}ErrorMessages"$
-	vue.SetStateSingle(pp, varErrorMessages)
+Sub SetErrorMessages(b As Boolean) As VMSelect
+	If b = False Then Return Me
+	Dim nl As List = vue.NewList
+	Dim pp As String = $"${vmodel}ErrorMessages"$
+	vue.SetData(pp, nl)
 	Combo.Bind(":error-messages", pp)
-	End If
 	Return Me
 End Sub
 
@@ -898,12 +1096,12 @@ End Sub
 'set return-object
 Sub SetReturnObject(varReturnObject As Boolean) As VMSelect
 	Select Case Combo.typeOf
-	Case "select", "auto"
+	Case "auto", "select"
 		If varReturnObject = False Then Return Me
-	Case "auto"
+	Case "combo"
 		If varReturnObject = True Then Return Me
 	End Select
-	SetAttrSingle("return-object", varReturnObject)
+	SetAttrSingle(":return-object", varReturnObject)
 	Return Me
 End Sub
 
@@ -934,10 +1132,13 @@ Sub SetRounded(varRounded As Boolean) As VMSelect
 End Sub
 
 'set rules
-Sub SetRules(varRules As Object) As VMSelect
-	Dim pp As String = $"${ID}Rules"$
-	vue.SetStateSingle(pp, varRules)
+Sub SetRules(varRules As Boolean) As VMSelect
+	If varRules = False Then Return Me
+	If bStatic Then Return Me
+	If DesignMode Then Return Me
+	Dim pp As String = $"${vmodel}Rules"$
 	Combo.Bind(":rules", pp)
+	vue.SetData(pp, vue.NewList)
 	Return Me
 End Sub
 
@@ -1072,9 +1273,25 @@ End Sub
 
 'set value
 Sub SetValue(varValue As String) As VMSelect
-	SetAttrSingle("value", varValue)
+	If bStatic Then
+		SetAttrSingle("value", varValue)
+		Return Me
+	End If
+	If vmodel = "" Then
+		vmodel = $"${ID}value"$
+		SetVModel(vmodel)
+	End If
+	Combo.SetValue(varValue)
+	vue.SetData(vmodel, varValue)
 	Return Me
 End Sub
+
+'get the value
+Sub GetValue As String
+	Dim svalue As String = vue.GetData(vmodel)
+	Return svalue
+End Sub
+
 
 'set value-comparator
 Sub SetValueComparator(varValueComparator As Object) As VMSelect
@@ -1089,84 +1306,12 @@ Sub SetValueComparator(varValueComparator As Object) As VMSelect
 End Sub
 
 '
-Sub SetSlotAppend(b As Boolean) As VMSelect    'ignore
-	SetAttr(CreateMap("slot": "append"))
-	Return Me
-End Sub
-
-'
-Sub SetSlotAppendItem(b As Boolean) As VMSelect    'ignore
-	SetAttr(CreateMap("slot": "append-item"))
-	Return Me
-End Sub
-
-'
-Sub SetSlotAppendOuter(b As Boolean) As VMSelect    'ignore
-	SetAttr(CreateMap("slot": "append-outer"))
-	Return Me
-End Sub
-
-'
-Sub SetSlotItem(b As Boolean) As VMSelect    'ignore
-	SetAttr(CreateMap("slot": "item"))
-	Return Me
-End Sub
-
-'
-Sub SetSlotLabel(b As Boolean) As VMSelect    'ignore
-	SetAttr(CreateMap("slot": "label"))
-	Return Me
-End Sub
-
-'
-Sub SetSlotMessage(b As Boolean) As VMSelect    'ignore
-	SetAttr(CreateMap("slot": "message"))
-	Return Me
-End Sub
-
-'
-Sub SetSlotNoData(b As Boolean) As VMSelect    'ignore
-	SetAttr(CreateMap("slot": "no-data"))
-	Return Me
-End Sub
-
-'
-Sub SetSlotPrepend(b As Boolean) As VMSelect    'ignore
-	SetAttr(CreateMap("slot": "prepend"))
-	Return Me
-End Sub
-
-'
-Sub SetSlotPrependInner(b As Boolean) As VMSelect    'ignore
-	SetAttr(CreateMap("slot": "prepend-inner"))
-	Return Me
-End Sub
-
-'
-Sub SetSlotPrependItem(b As Boolean) As VMSelect    'ignore
-	SetAttr(CreateMap("slot": "prepend-item"))
-	Return Me
-End Sub
-
-'
-Sub SetSlotProgress(b As Boolean) As VMSelect    'ignore
-	SetAttr(CreateMap("slot": "progress"))
-	Return Me
-End Sub
-
-'
-Sub SetSlotSelection(b As Boolean) As VMSelect    'ignore
-	SetAttr(CreateMap("slot": "selection"))
-	Return Me
-End Sub
-
-'
 Sub SetOnBlur(eventHandler As Object, methodName As String) As VMSelect
 	methodName = methodName.tolowercase
 	If SubExists(eventHandler, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, e)
-	SetAttr(CreateMap("v-on:blur": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, Array(e))
+	SetAttr(CreateMap("@blur": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -1178,7 +1323,7 @@ Sub SetOnChange(eventHandler As Object, methodName As String) As VMSelect
 	If SubExists(eventHandler, methodName) = False Then Return Me
 	Dim value As Object
 	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, Array(value))
-	SetAttr(CreateMap("v-on:change": methodName))
+	SetAttr(CreateMap("@change": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -1189,8 +1334,8 @@ Sub SetOnClick(eventHandler As Object, methodName As String) As VMSelect
 	methodName = methodName.tolowercase
 	If SubExists(eventHandler, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, e)
-	SetAttr(CreateMap("v-on:click": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, Array(e))
+	SetAttr(CreateMap("@click": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -1201,8 +1346,8 @@ Sub SetOnClickAppend(eventHandler As Object, methodName As String) As VMSelect
 	methodName = methodName.tolowercase
 	If SubExists(eventHandler, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, e)
-	SetAttr(CreateMap("v-on:click:append": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, Array(e))
+	SetAttr(CreateMap("@click:append": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -1213,8 +1358,8 @@ Sub SetOnClickAppendOuter(eventHandler As Object, methodName As String) As VMSel
 	methodName = methodName.tolowercase
 	If SubExists(eventHandler, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, e)
-	SetAttr(CreateMap("v-on:click:append-outer": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, Array(e))
+	SetAttr(CreateMap("@click:append-outer": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -1225,8 +1370,8 @@ Sub SetOnClickClear(eventHandler As Object, methodName As String) As VMSelect
 	methodName = methodName.tolowercase
 	If SubExists(eventHandler, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, e)
-	SetAttr(CreateMap("v-on:click:clear": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, Array(e))
+	SetAttr(CreateMap("@click:clear": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -1237,8 +1382,8 @@ Sub SetOnClickPrepend(eventHandler As Object, methodName As String) As VMSelect
 	methodName = methodName.tolowercase
 	If SubExists(eventHandler, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, e)
-	SetAttr(CreateMap("v-on:click:prepend": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, Array(e))
+	SetAttr(CreateMap("@click:prepend": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -1249,8 +1394,8 @@ Sub SetOnClickPrependInner(eventHandler As Object, methodName As String) As VMSe
 	methodName = methodName.tolowercase
 	If SubExists(eventHandler, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, e)
-	SetAttr(CreateMap("v-on:click:prepend-inner": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, Array(e))
+	SetAttr(CreateMap("@click:prepend-inner": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -1261,8 +1406,8 @@ Sub SetOnFocus(eventHandler As Object, methodName As String) As VMSelect
 	methodName = methodName.tolowercase
 	If SubExists(eventHandler, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, e)
-	SetAttr(CreateMap("v-on:focus": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, Array(e))
+	SetAttr(CreateMap("@focus": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -1273,8 +1418,8 @@ Sub SetOnInput(eventHandler As Object, methodName As String) As VMSelect
 	methodName = methodName.tolowercase
 	If SubExists(eventHandler, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, e)
-	SetAttr(CreateMap("v-on:input": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, Array(e))
+	SetAttr(CreateMap("@input": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -1285,8 +1430,8 @@ Sub SetOnKeydown(eventHandler As Object, methodName As String) As VMSelect
 	methodName = methodName.tolowercase
 	If SubExists(eventHandler, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, e)
-	SetAttr(CreateMap("v-on:keydown": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, Array(e))
+	SetAttr(CreateMap("@keydown": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -1297,8 +1442,8 @@ Sub SetOnMousedown(eventHandler As Object, methodName As String) As VMSelect
 	methodName = methodName.tolowercase
 	If SubExists(eventHandler, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, e)
-	SetAttr(CreateMap("v-on:mousedown": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, Array(e))
+	SetAttr(CreateMap("@mousedown": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -1309,8 +1454,8 @@ Sub SetOnMouseup(eventHandler As Object, methodName As String) As VMSelect
 	methodName = methodName.tolowercase
 	If SubExists(eventHandler, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, e)
-	SetAttr(CreateMap("v-on:mouseup": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, Array(e))
+	SetAttr(CreateMap("@mouseup": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -1321,8 +1466,8 @@ Sub SetOnUpdateError(eventHandler As Object, methodName As String) As VMSelect
 	methodName = methodName.tolowercase
 	If SubExists(eventHandler, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, e)
-	SetAttr(CreateMap("v-on:update:error": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, Array(e))
+	SetAttr(CreateMap("@update:error": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -1333,8 +1478,8 @@ Sub SetOnUpdateListIndex(eventHandler As Object, methodName As String) As VMSele
 	methodName = methodName.tolowercase
 	If SubExists(eventHandler, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, e)
-	SetAttr(CreateMap("v-on:update:list-index": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, Array(e))
+	SetAttr(CreateMap("@update:list-index": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -1345,8 +1490,8 @@ Sub SetOnUpdateSearchInput(eventHandler As Object, methodName As String) As VMSe
 	methodName = methodName.tolowercase
 	If SubExists(eventHandler, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, e)
-	SetAttr(CreateMap("v-on:update:search-input": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, Array(e))
+	SetAttr(CreateMap("@update:search-input": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me

@@ -13,13 +13,13 @@ Library1=jcore
 Library2=jfx
 Library3=banano
 Library4=bananopostprocessor
-Library5=bananovuetify
+Library5=bananovuetifycore
 Module1=modHello
 Module2=pgIndex
 NumberOfFiles=4
 NumberOfLibraries=5
 NumberOfModules=2
-Version=8.1
+Version=8.27
 @EndOfDesignText@
 #Region Project Attributes 
 	#MergeLibraries: True
@@ -72,7 +72,7 @@ Sub AppStart (Form1 As Form, Args() As String)
 	BP.StylesPath = BANano.STYLES_FOLDER
 	BP.ScriptFile = BANano.JAVASCRIPT_NAME
 	BP.UnzipFonts
-	BP.Open(True)
+	BP.OpenOnPort(True, 8080)
 	ExitApplication
 End Sub
 

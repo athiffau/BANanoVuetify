@@ -22,30 +22,128 @@ Sub Class_Globals
 	Private compx As Int
 	Private bStatic As Boolean
 	Private tTitle As String
+	Public RightHamburger As VMElement
+	Private spanCnt As Int
+	Public TitleVModel As String
+	Public Progress As VMProgressLinear
+	Public SubHeading As VMLabel
+	Private SubHeadingKey As String
+	Private BANano As BANano   'ignore
+	Private smodel As String
 End Sub
 
 Public Sub Initialize(v As BANanoVue, sid As String, eventHandler As Object) As VMToolBar
 	ID = sid.ToLowerCase
 	vue = v
+	spanCnt = 0
 	module = eventHandler
-	ToolBar.Initialize(vue, ID).SetVModel(ID)
+	ToolBar.Initialize(vue, ID)
+	SetVShow(ToolBar.showkey)
 	'
 	'build the hamburger menu
 	Hamburger.Initialize(vue, "menu").SetTag("v-app-bar-nav-icon").SetOnClickStop(Me, "menu_click")
-	objects.Initialize 
+	Hamburger.SetVShow("menushow")
+	RightHamburger.Initialize(vue, "rightmenu").SetTag("v-app-bar-nav-icon")
+	RightHamburger.SetVShow("rightmenushow")
+	RightHamburger.SetVisible(False)
+	objects.Initialize
 	DesignMode = False
 	Extension.Initialize(vue, $"${ID}tmpl"$, module).SetSlotExtension
 	Tabs.Initialize(vue, $"${ID}tabls"$, module)
+	Tabs.SetVShow($"${ID}tablsshow"$)
 	Tabs.OnToolBar = True
+	Tabs.Hide
 	'
 	tTitle = $"${ID}title"$
-	Title.Initialize(vue, "appbartitle").SetTag("v-toolbar-title")
+	TitleVModel = tTitle
+	Title.Initialize(vue, $"${ID}title"$).SetTag("v-toolbar-title")
+	Title.SetVShow($"${ID}titleshow"$)
+	Title.SetCursorPointer
+	Title.Show
 	'
-	Logo.Initialize(vue, $"${ID}logo"$, module).SetSize("46", "46").AddClass("ma-2").BindStyleSingle("opacity", "1")
-	
+	Logo.Initialize(vue, $"${ID}logo"$, module).SetSize("46", "46").AddClass("mx-2").AddClass("my-1").BindStyleSingle("opacity", "1")
+	Logo.Image.SetCursorPointer
+	Logo.SetVShow($"${ID}logoshow"$)
+	Logo.Show
+	'
 	compx = 0
 	bStatic = False
+	Progress.Initialize(vue, $"${ID}progress"$, Me)
+	Progress.SetActive(False)
+	Progress.SetBottom(True)
+	Progress.SetIndeterminate(False) 
+	Progress.SetAbsolute(True)
+	'
+	SubHeadingKey = $"${ID}subheading"$
+	SubHeading.Initialize(vue, SubHeadingKey)
+	Show
 	Return Me
+End Sub
+
+
+'add an element to the page content
+Sub AddElement(elm As VMElement)
+	ToolBar.SetText(elm.ToString)
+End Sub
+
+Sub SetData(xprop As String, xValue As Object) As VMToolBar
+	vue.SetData(xprop, xValue)
+	Return Me
+End Sub
+
+
+Sub AddSpacer1(className As String) As VMToolBar
+	Dim el As VMElement
+	el.Initialize(vue, "").SetTag("v-spacer")
+	el.AddClass(className)
+	ToolBar.SetText(el.tostring)
+	Return Me
+End Sub
+
+
+Sub AddDivider2(className As String) As VMToolBar
+	Dim el As VMElement
+	el.Initialize(vue, "").SetTag("v-divider")
+	el.AddClass(className)
+	ToolBar.SetText(el.tostring)
+	Return Me
+End Sub
+
+'add divider on the toolbar
+Sub AddDivider1 As VMToolBar
+	AddDivider(True, Null, Null, Array("mx-2"), Null)
+	Return Me
+End Sub
+
+Sub SetLoading(b As Boolean)
+	Progress.SetActive(b)
+	Progress.SetIndeterminate(b)
+End Sub
+
+Sub AddSpan(spanText As String) As VMToolBar
+	spanCnt = spanCnt + 1
+	Dim elID As String = "span" & spanCnt
+	Dim span As VMElement
+	span.Initialize(vue, elID).SetTag("span").SetText(spanText)
+	AddComponent(elID, span.ToString)
+	Return Me
+End Sub
+
+Sub SetOnMenuClick(eventHandler As Object, MethodName As String) As VMToolBar
+	Hamburger.SetOnClickStop(eventHandler, MethodName)
+	Return Me
+End Sub
+
+Sub SetOnRightMenuClick(eventHandler As Object, MethodName As String) As VMToolBar
+	RightHamburger.SetOnClickStop(eventHandler, MethodName)
+	Return Me
+End Sub
+
+Sub menu_click(e As BANanoEvent)    'ignoredeadcode
+	vue.ToggleState("drawer")
+	If SubExists(module, "menu_click") Then
+		BANano.CallSub(module, "menu_click", Null)
+	End If
 End Sub
 
 Sub SetStatic(b As Boolean) As VMToolBar
@@ -54,7 +152,9 @@ Sub SetStatic(b As Boolean) As VMToolBar
 	Hamburger.setstatic(b)
 	Extension.setstatic(b)
 	Tabs.SetStatic(b)
+	Title.SetStatic(b)
 	Logo.SetStatic(b)
+	Progress.SetStatic(b)
 	Return Me
 End Sub
 
@@ -81,8 +181,14 @@ End Sub
 'add a hamburger menu
 Sub AddHamburger As VMToolBar
 	Hamburger.SetVisible(True)
-	Hamburger.Pop(ToolBar)
-	HasContent = True
+	AddComponent(Hamburger.ID, Hamburger.ToString)
+	Return Me
+End Sub
+
+'add a right hand hamburger
+Sub AddRightHamburger As VMToolBar
+	RightHamburger.SetVisible(True)
+	AddComponent(RightHamburger.ID, RightHamburger.ToString)
 	Return Me
 End Sub
 
@@ -108,8 +214,26 @@ Sub AddDivider(bVertical As Boolean, mprops As Map, mstyles As Map, lclasses As 
 	If bVertical Then d.SetVertical
 	d.BuildModel(mprops, mstyles, lclasses, loose)
 	AddComponent(skey, d.ToString)
+	HasContent = True
 	Return Me
 End Sub
+
+
+Sub AddSubHeading1(sText As String) As VMToolBar
+	SubHeading.SetStatic(bStatic)
+	SubHeading.SetDesignMode(DesignMode)
+	If bStatic Then
+		SubHeading.SetSpan.SetText(sText)
+	Else
+		SubHeading.SetSpan.SetText($"{{ ${SubHeadingKey} }}"$)
+	End If
+	SubHeading.AddClass("subheading").AddClass("mx-2")
+	AddComponent(SubHeadingKey, SubHeading.ToString)
+	vue.SetData(SubHeadingKey, sText)
+	HasContent = True
+	Return Me
+End Sub
+
 
 Sub AddSubHeading(sText As String, mprops As Map, mstyles As Map, lclasses As List, loose As List) As VMToolBar
 	Dim skey As String = $"${ID}subheading"$
@@ -117,16 +241,23 @@ Sub AddSubHeading(sText As String, mprops As Map, mstyles As Map, lclasses As Li
 	d.Initialize(vue, skey)
 	d.SetStatic(bStatic)
 	d.SetDesignMode(DesignMode)
-	d.SetSpan.SetText($"{{ ${skey} }}"$).AddClass("subheading")
+	If bStatic Then
+		d.SetSpan.SetText(sText)
+	Else	
+		d.SetSpan.SetText($"{{ ${skey} }}"$)
+	End If
+	d.AddClass("subheading").AddClass("mx-2")
 	d.BuildModel(mprops, mstyles, lclasses, loose)
 	AddComponent(skey, d.ToString)
 	vue.SetData(skey, sText)
+	HasContent = True
 	Return Me
 End Sub
 
 Sub UpdateSubTitle(sText As String) As VMToolBar
 	Dim skey As String = $"${ID}subheading"$
 	vue.SetData(skey, sText)
+	HasContent = True
 	Return Me
 End Sub
 
@@ -139,6 +270,11 @@ Sub AddComponent(key As String, comp As String) As VMToolBar
 End Sub
 
 Sub AddButton(btn As VMButton) As VMToolBar
+	AddComponent(btn.ID, btn.ToString)
+	Return Me
+End Sub
+
+Sub AddAvatar(btn As VMAvatar) As VMToolBar
 	AddComponent(btn.ID, btn.ToString)
 	Return Me
 End Sub
@@ -188,12 +324,14 @@ End Sub
 public Sub AddLogo(url As String) As VMToolBar
 	Logo.SetVisible(True)
 	Logo.SetVModel("logo", url).Pop(ToolBar)
+	HasContent = True
 	Return Me
 End Sub
 
 Sub UpdateLogo(URL As String) As VMToolBar
 	vue.SetData("logo", URL)
 	Logo.Show
+	HasContent = True
 	Return Me
 End Sub
 
@@ -203,40 +341,66 @@ Sub AddClass(c As String) As VMToolBar
 	Return Me
 End Sub
 
-Sub menu_click(e As BANanoEvent)
-	vue.ToggleState("drawer")
-	'Drawer.Toggle
-	'NavBar.ToggleMenu
+
+Sub SetVisible(b As Boolean) As VMToolBar
+	vue.SetData(smodel, b)
+	Return Me
 End Sub
 
 Sub Hide
-	vue.SetStateSingle(ID, False)
+	vue.SetStateSingle(smodel, False)
 End Sub
 
 Sub Show
-	vue.SetStateSingle(ID, True)
-End Sub
-
-Sub SetVModel(k As String) As VMToolBar
-	ToolBar.SetVModel(k)
-	Return Me
+	vue.SetStateSingle(smodel, True)
 End Sub
 
 Sub AddSpacer As VMToolBar
 	ToolBar.AddSpacer
+	HasContent = True
 	Return Me
 End Sub
 
+Sub AddSwitch(sid As String, vmodel As String, vlabel As String) As VMToolBar
+	sid = sid.tolowercase
+	Dim el As VMCheckBox
+	el.Initialize(vue, sid, module)
+	el.SetStatic(bStatic)
+	el.SetDesignMode(DesignMode)
+	el.SetSwitch
+	el.SetInset(True)
+	el.SetFalseValue("No")
+	el.SetTrueValue("Yes")
+	el.SetVModel(vmodel)
+	el.Setlabel(vlabel)
+	el.SetHideDetails(True)
+	vue.SetData(vmodel, "No")
+	el.SetOnChange(module, $"${sid}_change"$)
+	el.show
+	el.AddClass("mx-2")
+	ToolBar.SetText(el.ToString)
+	objects.Add(sid)
+	HasContent = True
+	Return Me
+End Sub
+
+
 Sub AddSearch(key As String) As VMToolBar
 	Dim txt As VMTextField
-	txt.Initialize(vue, key, module).AddClass("mx-4").SetAttributes(Array("flat", "hide-details","solo-inverted"))
-	txt.SetLabel("Search").SetPrependInnerIcon("search").AddClass("hidden-sm-and-down").SetClearable(True).SetVModel(key)
+	txt.Initialize(vue, key, module)
+	txt.SetStatic(bStatic)
+	txt.SetDesignMode(DesignMode)
+	txt.AddClass("mx-4").SetAttributes(Array("flat", "hide-details", "single-line"))
+	txt.SetLabel("Search").SetPrependInnerIcon("mdi-magnify").AddClass("hidden-sm-and-down").SetClearable(True).SetVModel(key)
+	txt.SetOnChange(module, $"${key}_change"$)
 	ToolBar.SetText(txt.ToString)
+	objects.Add(key)
+	HasContent = True
 	Return Me
 End Sub
 
 Sub AddMenu(menu As VMMenu) As VMToolBar
-	menu.Pop(ToolBar)
+	AddComponent(menu.ID, menu.ToString)
 	Return Me
 End Sub
 
@@ -250,11 +414,34 @@ End Sub
 Sub AddIcon(key As String, iconName As String, toolTip As String, badge As String) As VMToolBar
 	key = key.tolowercase
 	Dim btn As VMButton
-	btn.Initialize(vue, key, module).SetIconButton(iconName).SetTooltip(toolTip)
-	btn.Pop(ToolBar)
-	objects.Add(key)
+	btn.Initialize(vue, key, module)
+	btn.SetStatic(bStatic)
+	btn.SetDesignMode(DesignMode)
+	btn.SetIconButton(iconName).SetTooltip(toolTip)
+	If badge <> "" Then
+		btn.SetHasBadge(True)
+		btn.SetBadge(badge)
+	End If
+	AddComponent(btn.ID, btn.ToString)
 	Return Me
 End Sub
+
+Sub AddIcon1(key As String, iconName As String, iconColor As String, toolTip As String, badge As String) As VMToolBar
+	key = key.tolowercase
+	Dim btn As VMButton
+	btn.Initialize(vue, key, module)
+	btn.SetStatic(bStatic)
+	btn.SetDesignMode(DesignMode)
+	btn.SetColor(iconColor)
+	btn.SetIconButton(iconName).SetTooltip(toolTip)
+	If badge <> "" Then
+		btn.SetHasBadge(True)
+		btn.SetBadge(badge)
+	End If
+	AddComponent(btn.ID, btn.ToString)
+	Return Me
+End Sub
+
 
 Sub SetModeFixed(b As Boolean) As VMToolBar
 	ToolBar.SetAttrSingle("fixed", b)
@@ -271,19 +458,22 @@ Sub AddTitle(tt As String, ttClass As String) As VMToolBar
 		Dim page_title As String = $"{{ ${tTitle} }}"$
 		Title.SetText(page_title)
 	End If
+	Title.SetVisible(True)
 	Title.Pop(ToolBar)
+	HasContent = True
 	Return Me
 End Sub
 
 Sub UpdateTitle(tt As String) As VMToolBar
-	Dim pp As String = $"${ID}title"$
-	vue.SetStateSingle(pp, tt)
+	vue.SetStateSingle(tTitle, tt)
+	HasContent = True
 	Return Me
 End Sub
 
 'has menu button to show drawer
 Sub SetHasMenuButton(b As Boolean) As VMToolBar
 	vue.SetStateSingle("menushow", b)
+	HasContent = True
 	Return Me
 End Sub
 
@@ -293,6 +483,7 @@ Sub Pop(p As VMElement)
 End Sub
 
 Sub ToString As String
+	ToolBar.SetText(Progress.ToString)
 	If Tabs.hascontent Then AddTabs(Tabs)
 	If Extension.HasContent Then Extension.pop(ToolBar)
 	Return ToolBar.tostring
@@ -376,6 +567,7 @@ End Sub
 'the stepLabelVModel is the vmodel to have the caption
 Sub AddTab(tabID As String, tabLabel As String, tabIcon As String, tabContent As VMContainer)
 	Tabs.AddTab(tabID, tabLabel, tabIcon, tabContent)
+	HasContent = True
 End Sub
 
 'set clipped-right
@@ -639,11 +831,16 @@ Sub SetMaxWidth(varMaxWidth As String) As VMToolBar
 End Sub
 
 'set min-height
-Sub SetMinHeight(varMinHeight As Object) As VMToolBar
-Dim pp As String = $"${ID}MinHeight"$
-vue.SetStateSingle(pp, varMinHeight)
-ToolBar.Bind(":min-height", pp)
-Return Me
+Sub SetMinHeight(varMinHeight As String) As VMToolBar
+	If varMinHeight = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("min-height", varMinHeight)
+		Return Me
+	End If
+	Dim pp As String = $"${ID}MinHeight"$
+	vue.SetStateSingle(pp, varMinHeight)
+	ToolBar.Bind(":min-height", pp)
+	Return Me
 End Sub
 
 'set min-width
@@ -778,7 +975,7 @@ End Sub
 
 'set value
 Sub SetValue(varValue As Boolean) As VMToolBar
-	SetAttrSingle("value", varValue)
+	ToolBar.SetValue(varValue)
 Return Me
 End Sub
 
@@ -838,6 +1035,8 @@ Sub SetDesignMode(b As Boolean) As VMToolBar
 	Extension.SetDesignMode(b)
 	Tabs.SetDesignMode(b)
 	Logo.SetDesignMode(b)
+	Title.SetDesignMode(b)
+	Progress.SetDesignMode(b)
 	Return Me
 End Sub
 
@@ -871,11 +1070,6 @@ End Sub
 
 Sub BuildModel(mprops As Map, mstyles As Map, lclasses As List, loose As List) As VMToolBar
 	ToolBar.BuildModel(mprops, mstyles, lclasses, loose)
-	Return Me
-End Sub
-
-Sub SetVisible(b As Boolean) As VMToolBar
-	ToolBar.SetVisible(b)
 	Return Me
 End Sub
 
@@ -928,20 +1122,40 @@ Sub AddButton1(key As String, iconName As String, text As String, toolTip As Str
 	btn.SetStatic(bStatic)
 	btn.SetDesignMode(DesignMode)
 	btn.SetToolTip(toolTip).AddIcon(iconName,"left","").SetLabel(text)
+	btn.SetTransparent(True)
 	If badge <> "" Then
-		btn.Badge.SetContent(badge)
+		btn.SetHasBadge(True)
+		btn.SetBadge(badge)
 	End If
-	btn.Pop(ToolBar)
-	HasContent = True
+	AddComponent(btn.ID, btn.ToString)
 	Return Me
 End Sub
 
-Sub SetVIf(vif As Object) As VMToolBar
+Sub AddItem(key As String, iconName As String, color As String, text As String, toolTip As String, badge As String) As VMToolBar
+	Dim btn As VMButton
+	btn.Initialize(vue, key, module)
+	btn.SetStatic(bStatic)
+	btn.SetDesignMode(DesignMode)
+	btn.SetColor(color)
+	btn.SetTransparent(True)
+	btn.SetToolTip(toolTip).AddIcon(iconName,"left","").SetLabel(text)
+	If badge <> "" Then
+		btn.SetHasBadge(True)
+		btn.SetBadge(badge)
+	End If
+	AddComponent(btn.ID, btn.ToString)
+	Return Me
+End Sub
+
+
+Sub SetVIf(vif As String) As VMToolBar
+	smodel = vif
 	ToolBar.SetVIf(vif)
 	Return Me
 End Sub
 
-Sub SetVShow(vif As Object) As VMToolBar
+Sub SetVShow(vif As String) As VMToolBar
+	smodel = vif
 	ToolBar.SetVShow(vif)
 	Return Me
 End Sub
@@ -954,14 +1168,7 @@ End Sub
 'add a child
 Sub AddChild(child As VMElement) As VMToolBar
 	Dim childHTML As String = child.ToString
-	ToolBar.SetText(childHTML)
-	HasContent = True
-	Return Me
-End Sub
-
-'set text
-Sub SetText(t As Object) As VMToolBar
-	ToolBar.SetText(t)
+	AddComponent(child.ID, childHTML)
 	Return Me
 End Sub
 

@@ -11,7 +11,7 @@ Sub Process_Globals
 	Public title As String = "Auto Complete"
 	Private vm As BANanoVM
 	Private descriptionlimit As Int
-	Private BANano As BANano
+	Private BANano As BANano 'ignore
 End Sub
 
 
@@ -244,6 +244,8 @@ End Sub
 
 
 Sub SearchItems(xval As String)
+	Dim hasIW As Boolean = BANano.CheckInternetConnectionWait
+	If hasIW = False Then Return
 	'get the already existing list of items
 	Dim items As List = vm.GetState("itemsa", Array())
 	'get the loading status

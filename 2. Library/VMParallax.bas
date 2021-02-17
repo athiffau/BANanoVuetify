@@ -10,7 +10,7 @@ Sub Class_Globals
 	Public ID As String
 	Private vue As BANanoVue
 	Private BANano As BANano  'ignore
-	Private DesignMode As Boolean
+	Private DesignMode As Boolean     'ignore
 	Private Module As Object
 	Public Container As VMContainer
 	Private bStatic As Boolean
@@ -26,6 +26,23 @@ Public Sub Initialize(v As BANanoVue, sid As String, eventHandler As Object) As 
 	vue = v
 	Container.Initialize(vue, $"${ID}par"$, Module)
 	bStatic = False
+	Return Me
+End Sub
+
+Sub SetData(xprop As String, xValue As Object) As VMParallax
+	vue.SetData(xprop, xValue)
+	Return Me
+End Sub
+
+
+
+'add an element to the page content
+Sub AddElement(elm As VMElement)
+	Parallax.SetText(elm.ToString)
+End Sub
+
+Sub SetVOnce(t As Boolean) As VMParallax
+	Parallax.setvonce(t)
 	Return Me
 End Sub
 
@@ -77,12 +94,12 @@ Sub SetVModel(k As String) As VMParallax
 	Return Me
 End Sub
 
-Sub SetVIf(vif As Object) As VMParallax
+Sub SetVIf(vif As String) As VMParallax
 	Parallax.SetVIf(vif)
 	Return Me
 End Sub
 
-Sub SetVShow(vif As Object) As VMParallax
+Sub SetVShow(vif As String) As VMParallax
 	Parallax.SetVShow(vif)
 	Return Me
 End Sub

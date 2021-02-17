@@ -10,8 +10,9 @@ Sub Class_Globals
 	Public ID As String
 	Private vue As BANanoVue
 	Private BANano As BANano  'ignore
-	Private DesignMode As Boolean
+	Private DesignMode As Boolean  'ignore
 	Private Module As Object
+	Private bStatic As Boolean
 End Sub
 
 'initialize the ListGroup
@@ -22,9 +23,28 @@ Public Sub Initialize(v As BANanoVue, sid As String, eventHandler As Object) As 
 	DesignMode = False
 	Module = eventHandler
 	vue = v
+	bStatic = False
 	Return Me
 End Sub
 
+
+'add an element to the page content
+Sub AddElement(elm As VMElement)
+	ListGroup.SetText(elm.ToString)
+End Sub
+
+
+Sub SetStatic(b As Boolean) As VMListGroup
+	bStatic = b
+	ListGroup.SetStatic(b)
+	Return Me
+End Sub
+
+
+Sub AddComponent(comp As String) As VMListGroup
+	SetText(comp)
+	Return Me
+End Sub
 
 Sub SetAttributes(attrs As List) As VMListGroup
 	For Each stra As String In attrs
@@ -33,6 +53,13 @@ Sub SetAttributes(attrs As List) As VMListGroup
 	Return Me
 End Sub
 
+Sub SetData(xprop As String, xValue As Object) As VMListGroup
+	vue.SetData(xprop, xValue)
+	Return Me
+End Sub
+
+
+
 Sub SetAttrLoose(loose As String) As VMListGroup
 	ListGroup.SetAttrLoose(loose)
 	Return Me 
@@ -40,7 +67,6 @@ End Sub
 
 'get component
 Sub ToString As String
-	
 	Return ListGroup.ToString
 End Sub
 
@@ -49,7 +75,7 @@ Sub SetVModel(k As String) As VMListGroup
 	Return Me
 End Sub
 
-Sub SetVIf(vif As Object) As VMListGroup
+Sub SetVIf(vif As String) As VMListGroup
 	ListGroup.SetVIf(vif)
 	Return Me
 End Sub
@@ -59,7 +85,7 @@ Sub SetVElseIf(t As Object) As VMListGroup
 	Return Me
 End Sub
 
-Sub SetVShow(vif As Object) As VMListGroup
+Sub SetVShow(vif As String) As VMListGroup
 	ListGroup.SetVShow(vif)
 	Return Me
 End Sub
@@ -94,7 +120,7 @@ Sub AddClass(c As String) As VMListGroup
 End Sub
 
 'set an attribute
-Sub SetAttr(attr as map) As VMListGroup
+Sub SetAttr(attr As Map) As VMListGroup
 	ListGroup.SetAttr(attr)
 	Return Me
 End Sub
@@ -113,7 +139,12 @@ Sub AddChildren(children As List)
 End Sub
 
 'set active-class
-Sub SetActiveClass(varActiveClass As Object) As VMListGroup
+Sub SetActiveClass(varActiveClass As String) As VMListGroup
+	If varActiveClass = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("active-class", varActiveClass)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}ActiveClass"$
 	vue.SetStateSingle(pp, varActiveClass)
 	ListGroup.Bind(":active-class", pp)
@@ -121,7 +152,12 @@ Sub SetActiveClass(varActiveClass As Object) As VMListGroup
 End Sub
 
 'set append-icon
-Sub SetAppendIcon(varAppendIcon As Object) As VMListGroup
+Sub SetAppendIcon(varAppendIcon As String) As VMListGroup
+	If varAppendIcon = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("append-icon", varAppendIcon)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}AppendIcon"$
 	vue.SetStateSingle(pp, varAppendIcon)
 	ListGroup.Bind(":append-icon", pp)
@@ -129,7 +165,12 @@ Sub SetAppendIcon(varAppendIcon As Object) As VMListGroup
 End Sub
 
 'set color
-Sub SetColor(varColor As Object) As VMListGroup
+Sub SetColor(varColor As String) As VMListGroup
+	If varColor = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("color", varColor)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Color"$
 	vue.SetStateSingle(pp, varColor)
 	ListGroup.Bind(":color", pp)
@@ -137,13 +178,18 @@ Sub SetColor(varColor As Object) As VMListGroup
 End Sub
 
 'set disabled
-Sub SetDisabled(varDisabled As boolean) As VMListGroup
+Sub SetDisabled(varDisabled As Boolean) As VMListGroup
 	ListGroup.SetDisabled(varDisabled)
 	Return Me
 End Sub
 
 'set eager
-Sub SetEager(varEager As Object) As VMListGroup
+Sub SetEager(varEager As Boolean) As VMListGroup
+	If varEager = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("eager", varEager)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Eager"$
 	vue.SetStateSingle(pp, varEager)
 	ListGroup.Bind(":eager", pp)
@@ -151,7 +197,11 @@ Sub SetEager(varEager As Object) As VMListGroup
 End Sub
 
 'set group
-Sub SetGroup(varGroup As Object) As VMListGroup
+Sub SetGroup(varGroup As String) As VMListGroup
+	If varGroup = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("group", varGroup)
+	End If
 	Dim pp As String = $"${ID}Group"$
 	vue.SetStateSingle(pp, varGroup)
 	ListGroup.Bind(":group", pp)
@@ -159,7 +209,12 @@ Sub SetGroup(varGroup As Object) As VMListGroup
 End Sub
 
 'set no-action
-Sub SetNoAction(varNoAction As Object) As VMListGroup
+Sub SetNoAction(varNoAction As Boolean) As VMListGroup
+	If varNoAction = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("no-action", varNoAction)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}NoAction"$
 	vue.SetStateSingle(pp, varNoAction)
 	ListGroup.Bind(":no-action", pp)
@@ -167,7 +222,12 @@ Sub SetNoAction(varNoAction As Object) As VMListGroup
 End Sub
 
 'set prepend-icon
-Sub SetPrependIcon(varPrependIcon As Object) As VMListGroup
+Sub SetPrependIcon(varPrependIcon As String) As VMListGroup
+	If varPrependIcon = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("prepend-icon", varPrependIcon)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}PrependIcon"$
 	vue.SetStateSingle(pp, varPrependIcon)
 	ListGroup.Bind(":prepend-icon", pp)
@@ -175,7 +235,12 @@ Sub SetPrependIcon(varPrependIcon As Object) As VMListGroup
 End Sub
 
 'set ripple
-Sub SetRipple(varRipple As Object) As VMListGroup
+Sub SetRipple(varRipple As Boolean) As VMListGroup
+	If varRipple Then Return Me
+	If bStatic Then
+		SetAttrSingle("ripple", varRipple)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Ripple"$
 	vue.SetStateSingle(pp, varRipple)
 	ListGroup.Bind(":ripple", pp)
@@ -183,7 +248,12 @@ Sub SetRipple(varRipple As Object) As VMListGroup
 End Sub
 
 'set sub-group
-Sub SetSubGroup(varSubGroup As Object) As VMListGroup
+Sub SetSubGroup(varSubGroup As Boolean) As VMListGroup
+	If varSubGroup = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("sub-group", varSubGroup)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}SubGroup"$
 	vue.SetStateSingle(pp, varSubGroup)
 	ListGroup.Bind(":sub-group", pp)
@@ -191,11 +261,10 @@ Sub SetSubGroup(varSubGroup As Object) As VMListGroup
 End Sub
 
 'set value
-Sub SetValue(varValue As Object) As VMListGroup
-	SetAttrSingle("value", varValue)
+Sub SetValue(varValue As String) As VMListGroup
+	ListGroup.SetValue(varValue)
 	Return Me
 End Sub
-
 '
 Sub SetSlotActivator(b As Boolean) As VMListGroup    'ignore
 	SetAttr(CreateMap("slot": "activator"))
@@ -219,8 +288,8 @@ Sub SetOnClick(methodName As String) As VMListGroup
 	methodName = methodName.tolowercase
 	If SubExists(Module, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, e)
-	SetAttr(CreateMap("v-on:click": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
+	SetAttr(CreateMap("@click": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me

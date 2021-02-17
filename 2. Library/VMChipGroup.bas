@@ -10,8 +10,14 @@ Sub Class_Globals
 	Public ID As String
 	Private vue As BANanoVue
 	Private BANano As BANano  'ignore
-	Private DesignMode As Boolean
-	Private Module As Object
+	Private DesignMode As Boolean   'ignore
+	Private Module As Object   'ignore
+	Private itemKey As String
+	Private items As List
+	Private hasSubHeading As Boolean
+	Private heading As String
+	Private vmodel As String
+	Private bStatic As Boolean
 End Sub
 
 'initialize the ChipGroup
@@ -22,25 +28,138 @@ Public Sub Initialize(v As BANanoVue, sid As String, eventHandler As Object) As 
 	DesignMode = False
 	Module = eventHandler
 	vue = v
+	itemKey = $"${ID}items"$
+	vue.SetData(itemKey, vue.NewList)
+	items.Initialize 
+	hasSubHeading = False
+	heading = ""
+	SetOnChange(Module, $"${ID}_change"$)
+	bStatic = False
+	Return Me
+End Sub
+
+
+
+'add an element to the page content
+Sub AddElement(elm As VMElement)
+	ChipGroup.SetText(elm.ToString)
+End Sub
+
+
+Sub SetStatic(b As Boolean) As VMChipGroup
+	bStatic = b
+	ChipGroup.SetStatic(b)
+	Return Me
+End Sub
+
+Sub SetSubHeading(hdr As String) As VMChipGroup
+	hasSubHeading = True
+	Dim el As VMElement
+	el.Initialize(vue, $"${ID}hdr"$)
+	el.SetTag("span")
+	el.SetText(hdr)
+	el.AddClass("subheading") 
+	heading = el.tostring
+	Return Me
+End Sub
+
+'add an actual chip, does not work with clear
+Sub AddChip(chip As VMChip) As VMChipGroup
+	SetText(chip.ToString)
+	Return Me
+End Sub
+
+Sub SetData(prop As String, value As Object) As VMChipGroup
+	vue.SetData(prop, value)
+	Return Me
+End Sub
+
+'add a chip from own specs
+Sub AddChip1(mkey As String, mtext As String, mprops As Map, mstyles As Map, lclasses As List) As VMChipGroup
+	Dim mchip As VMChip
+	mchip.Initialize(vue, mkey, Module)
+	mchip.BuildModel(mprops, mstyles, lclasses, Null)
+	mchip.SetText(mtext)
+	SetText(mchip.ToString)
+	Return Me
+End Sub
+
+'update contents and refresh UI
+Sub Update
+	vue.SetData(itemKey, items)
+End Sub
+
+'add a chip to the group, works with clear
+Sub AddItem(cKey As String, bOutlined As Boolean, bFilter As Boolean, cText As String)
+	Dim mchip As Map = CreateMap()
+	mchip.Put("key", cKey)
+	mchip.Put("outlined", bOutlined)
+	mchip.Put("filter", bFilter)
+	mchip.Put("outlined", bOutlined)
+	mchip.Put("label", cText)
+	items.Add(mchip)
+End Sub
+
+'add a chip to the group, works with clear
+Sub AddItems(cText As List) As VMChipGroup
+	For Each k As String In cText
+		Dim mchip As Map = CreateMap()
+		mchip.Put("label", k)
+		mchip.Put("key", k)
+		items.Add(mchip)
+	Next
+	Return Me
+End Sub
+
+'clear the items
+Sub Clear As VMChipGroup
+	vue.SetData(itemKey, vue.NewList)
+	items.clear
 	Return Me
 End Sub
 
 'get component
 Sub ToString As String
-	Return ChipGroup.ToString
+	If vue.ShowWarnings Then
+		Dim eName As String = $"${ID}_change"$
+		If SubExists(Module, eName) = False Then
+			Log($"VMChipGroup.${eName} event has not been defined!"$)
+		End If
+	End If
+	If items.Size > 0 Then
+		Dim xchip As VMChip
+		xchip.Initialize(vue, "", Module)
+		xchip.SetVFor("item", itemKey)
+		xchip.SetAttrSingle(":outlined", "item.outlined")
+		xchip.SetAttrSingle(":filter", "item.filter")
+		xchip.SetAttrSingle(":key", "item.key")
+		xchip.SetAttrSingle(":id", "item.key")
+		xchip.SetAttrSingle(":value", "item.key")
+		xchip.SetText("{{ item.label }}")
+		SetText(xchip.ToString)
+		Update
+	End If
+	Dim sb As StringBuilder
+	sb.Initialize 
+	If hasSubHeading Then 
+		sb.Append(heading)
+	End If
+	sb.Append(ChipGroup.ToString)
+	Return sb.tostring
 End Sub
 
 Sub SetVModel(k As String) As VMChipGroup
+	vmodel = k
 	ChipGroup.SetVModel(k)
 	Return Me
 End Sub
 
-Sub SetVIf(vif As Object) As VMChipGroup
+Sub SetVIf(vif As String) As VMChipGroup
 	ChipGroup.SetVIf(vif)
 	Return Me
 End Sub
 
-Sub SetVShow(vif As Object) As VMChipGroup
+Sub SetVShow(vif As String) As VMChipGroup
 	ChipGroup.SetVShow(vif)
 	Return Me
 End Sub
@@ -75,7 +194,7 @@ Sub AddClass(c As String) As VMChipGroup
 End Sub
 
 'set an attribute
-Sub SetAttr(attr as map) As VMChipGroup
+Sub SetAttr(attr As Map) As VMChipGroup
 	ChipGroup.SetAttr(attr)
 	Return Me
 End Sub
@@ -95,6 +214,10 @@ End Sub
 
 'set active-class
 Sub SetActiveClass(varActiveClass As Object) As VMChipGroup
+	If bStatic Then
+		SetAttrSingle("active-class", varActiveClass)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}ActiveClass"$
 	vue.SetStateSingle(pp, varActiveClass)
 	ChipGroup.Bind(":active-class", pp)
@@ -103,6 +226,10 @@ End Sub
 
 'set center-active
 Sub SetCenterActive(varCenterActive As Object) As VMChipGroup
+	If bStatic Then
+		SetAttrSingle("center-active", varCenterActive)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}CenterActive"$
 	vue.SetStateSingle(pp, varCenterActive)
 	ChipGroup.Bind(":center-active", pp)
@@ -111,6 +238,10 @@ End Sub
 
 'set color
 Sub SetColor(varColor As Object) As VMChipGroup
+	If bStatic Then
+		SetAttrSingle("color", varColor)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Color"$
 	vue.SetStateSingle(pp, varColor)
 	ChipGroup.Bind(":color", pp)
@@ -119,6 +250,10 @@ End Sub
 
 'set column
 Sub SetColumn(varColumn As Object) As VMChipGroup
+	If bStatic Then
+		SetAttrSingle("column", varColumn)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Column"$
 	vue.SetStateSingle(pp, varColumn)
 	ChipGroup.Bind(":column", pp)
@@ -127,6 +262,10 @@ End Sub
 
 'set dark
 Sub SetDark(varDark As Object) As VMChipGroup
+	If bStatic Then
+		SetAttrSingle("dark", varDark)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Dark"$
 	vue.SetStateSingle(pp, varDark)
 	ChipGroup.Bind(":dark", pp)
@@ -135,6 +274,10 @@ End Sub
 
 'set light
 Sub SetLight(varLight As Object) As VMChipGroup
+	If bStatic Then
+		SetAttrSingle("light", varLight)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Light"$
 	vue.SetStateSingle(pp, varLight)
 	ChipGroup.Bind(":light", pp)
@@ -143,6 +286,10 @@ End Sub
 
 'set mandatory
 Sub SetMandatory(varMandatory As Object) As VMChipGroup
+	If bStatic Then
+		SetAttrSingle("mandatory", varMandatory)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Mandatory"$
 	vue.SetStateSingle(pp, varMandatory)
 	ChipGroup.Bind(":mandatory", pp)
@@ -151,6 +298,10 @@ End Sub
 
 'set max
 Sub SetMax(varMax As Object) As VMChipGroup
+	If bStatic Then
+		SetAttrSingle("max", varMax)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Max"$
 	vue.SetStateSingle(pp, varMax)
 	ChipGroup.Bind(":max", pp)
@@ -159,6 +310,10 @@ End Sub
 
 'set mobile-break-point
 Sub SetMobileBreakPoint(varMobileBreakPoint As Object) As VMChipGroup
+	If bStatic Then
+		SetAttrSingle("mobile-break-point", varMobileBreakPoint)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}MobileBreakPoint"$
 	vue.SetStateSingle(pp, varMobileBreakPoint)
 	ChipGroup.Bind(":mobile-break-point", pp)
@@ -167,6 +322,10 @@ End Sub
 
 'set multiple
 Sub SetMultiple(varMultiple As Object) As VMChipGroup
+	If bStatic Then
+		SetAttrSingle("multiple", varMultiple)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Multiple"$
 	vue.SetStateSingle(pp, varMultiple)
 	ChipGroup.Bind(":multiple", pp)
@@ -175,6 +334,10 @@ End Sub
 
 'set next-icon
 Sub SetNextIcon(varNextIcon As Object) As VMChipGroup
+	If bStatic Then
+		SetAttrSingle("next-icon", varNextIcon)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}NextIcon"$
 	vue.SetStateSingle(pp, varNextIcon)
 	ChipGroup.Bind(":next-icon", pp)
@@ -183,6 +346,10 @@ End Sub
 
 'set prev-icon
 Sub SetPrevIcon(varPrevIcon As Object) As VMChipGroup
+	If bStatic Then
+		SetAttrSingle("prev-icon", varPrevIcon)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}PrevIcon"$
 	vue.SetStateSingle(pp, varPrevIcon)
 	ChipGroup.Bind(":prev-icon", pp)
@@ -191,6 +358,10 @@ End Sub
 
 'set show-arrows
 Sub SetShowArrows(varShowArrows As Object) As VMChipGroup
+	If bStatic Then
+		SetAttrSingle("show-arrows", varShowArrows)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}ShowArrows"$
 	vue.SetStateSingle(pp, varShowArrows)
 	ChipGroup.Bind(":show-arrows", pp)
@@ -199,8 +370,22 @@ End Sub
 
 'set value
 Sub SetValue(varValue As Object) As VMChipGroup
-	SetAttrSingle("value", varValue)
+	If bStatic Then
+		SetAttrSingle("value", varValue)
+		Return Me
+	End If
+	If vmodel = "" Then
+		vmodel = $"${ID}value"$
+		SetVModel(vmodel)
+	End If
+	vue.SetData(vmodel, varValue)
+	ChipGroup.SetValue(varValue)
 	Return Me
+End Sub
+
+Sub GetValue As String
+	Dim svalue As String = vue.GetData(vmodel)
+	Return svalue
 End Sub
 
 '
@@ -208,8 +393,8 @@ Sub SetOnChange(eventHandler As Object, methodName As String) As VMChipGroup
 	methodName = methodName.tolowercase
 	If SubExists(eventHandler, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, e)
-	SetAttr(CreateMap("v-on:change": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, Array(e))
+	SetAttr(CreateMap("@change": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -268,6 +453,10 @@ End Sub
 
 'set color intensity
 Sub SetColorIntensity(varColor As String, varIntensity As String) As VMChipGroup
+	If bStatic Then
+		SetAttrSingle("color", varColor)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Color"$
 	Dim scolor As String = $"${varColor} ${varIntensity}"$
 	vue.SetStateSingle(pp, scolor)
@@ -413,6 +602,7 @@ Sub BuildModel(mprops As Map, mstyles As Map, lclasses As List, loose As List) A
 ChipGroup.BuildModel(mprops, mstyles, lclasses, loose)
 Return Me
 End Sub
+
 Sub SetVisible(b As Boolean) As VMChipGroup
 ChipGroup.SetVisible(b)
 Return Me

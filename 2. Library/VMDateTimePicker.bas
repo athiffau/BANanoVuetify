@@ -16,7 +16,10 @@ Sub Class_Globals
 	Private vmodel As String
 	Public TextField As VMTextField
 	Private bTimePicker As Boolean
+	Private bDatePicker As Boolean
 	Private bStatic As Boolean
+	Private bHideIcons As Boolean
+	Private bShowButtons As Boolean
 End Sub
 
 'initialize the DateTimePicker
@@ -33,7 +36,41 @@ Public Sub Initialize(v As BANanoVue, sid As String, eventHandler As Object) As 
 	DateTimePicker.fieldType = "date"
 	TextField.Initialize(vue, $"${ID}txt"$, Module)
 	bTimePicker = False
+	bDatePicker = True
 	bStatic = False
+	bHideIcons = False
+	SetOnChange(Module, $"${ID}_change"$)
+	SetOnClickDate($"${ID}_clickdate"$)
+	SetOnClickMinute($"${ID}_clickminute"$)
+	SetShowButtons(True)
+	Return Me
+End Sub
+
+'show or hide ok cancel buttons
+Sub SetShowButtons(b As Boolean)
+	bShowButtons = b
+End Sub
+
+'add an element to the page content
+Sub AddElement(elm As VMElement)
+	DateTimePicker.SetText(elm.ToString)
+End Sub
+
+Sub SetData(prop As String, value As Object) As VMDateTimePicker
+	vue.SetData(prop, value)
+	Return Me
+End Sub
+
+'set autofocus
+Sub SetAutofocus(varAutofocus As Boolean) As VMDateTimePicker
+	If varAutofocus = False Then Return Me
+	If bStatic Then
+		TextField.SetAttrSingle("autofocus", varAutofocus)
+	Else
+		Dim pp As String = $"${ID}Autofocus"$
+		vue.SetStateSingle(pp, varAutofocus)
+		TextField.Bind(":autofocus", pp)
+	End If
 	Return Me
 End Sub
 
@@ -50,11 +87,29 @@ End Sub
 
 Sub SetTimePicker As VMDateTimePicker
 	bTimePicker = True
+	bDatePicker = False
 	DateTimePicker.SetTag("v-time-picker")
 	DateTimePicker.typeOf = "timepicker"
 	DateTimePicker.fieldType = "string"
 	Return Me
 End Sub
+'
+'Sub SetDateTimePicker As VMDateTimePicker
+'	bTimePicker = False
+'	bDatePicker = False
+'	DateTimePicker.SetTag("v-datetime-picker")
+'	DateTimePicker.typeOf = "datetimepicker"
+'	DateTimePicker.fieldType = "string"
+'	SetForInput
+'	'
+''	If vue.ModuleExist("v-datetime-picker") = False Then
+''		Dim co As BANanoObject
+''		co.Initialize("VuetifyDatetimePicker")
+''		vue.AddComponentBO("v-datetime-picker", co)
+''		vue.AddModule("v-datetime-picker")
+''	End If
+'	Return Me
+'End Sub
 
 Sub SetHideDetails(b As Boolean) As VMDateTimePicker
 	TextField.SetHideDetails(b)
@@ -68,18 +123,6 @@ End Sub
 
 Sub SetDate As VMDateTimePicker
 	DateTimePicker.fieldType = "date"
-	Return Me
-End Sub
-
-'backward compatibility
-Sub SetInvalidMessage(ErrText As String) As VMDateTimePicker
-	TextField.SetErrorText(ErrText)
-	Return Me
-End Sub
-
-Sub SetErrorText(Error As String) As VMDateTimePicker
-	If Error = "" Then Return Me
-	TextField.SetErrorText(Error)
 	Return Me
 End Sub
 
@@ -205,100 +248,114 @@ End Sub
 
 'get component
 Sub ToString As String
+	If vue.ShowWarnings Then
+	Dim eName As String = $"${ID}_change"$
+	If SubExists(Module, eName) = False Then
+		Log($"VMDateTimePicker.${eName} event has not been defined!"$)
+	End If
+	eName = $"${ID}_clickdate"$
+	If SubExists(Module, eName) = False Then
+		Log($"VMDateTimePicker.${eName} event has not been defined!"$)
+	End If
+	End If
 	If bForInput Then
-		If bTimePicker Then
-			'create a menu
-			vue.SetStateSingle($"${ID}menu2"$, False)
-			Dim dMenu As VMElement
-			dMenu.Initialize(vue, $"${ID}menu"$).SetTag("v-menu")
-			dMenu.SetStatic(bStatic)
-			dMenu.SetDesignMode(DesignMode)
-			dMenu.SetAttrSingle("ref", $"${ID}menu"$)
-			dMenu.SetVModel($"${ID}menu2"$)
-			dMenu.SetAttrSingle(":close-on-content-click", False)
-			dMenu.SetAttrSingle(":nudge-right", "40")
-			dMenu.SetAttrSingle(":return-value.sync", vmodel)
-			dMenu.SetAttrSingle("transition", "scale-transition")
-			dMenu.SetAttrloose("offset-y")
-			dMenu.SetAttrSingle("min-width", "290px")
-			dMenu.SetAttrSingle("max-width", "290px")
-			'
-			Dim tmpl As VMTemplate
-			tmpl.Initialize(vue, $"${ID}tmpl"$, Module).SetStatic(bStatic).SetDesignMode(DesignMode).SetSlotActivatorOn
-			'
-			TextField.SetPrependIcon("access_time").SetAttrloose("readonly").SetAttrSingle("v-on", "on")
-			TextField.SetVModel(vmodel)
-			TextField.Pop(tmpl.Template)
-			dMenu.SetText(tmpl.ToString)
-			'
-			DateTimePicker.SetVIf($"${ID}menu2"$)
-			DateTimePicker.SetAttrLoose("full-width")
-			Dim ssave As String = "$refs." & ID & "menu.save(" & vmodel & ")"
-			DateTimePicker.SetAttrSingle("@click:minute", ssave)				
-			'
-			dMenu.SetText(DateTimePicker.ToString)
-		
-			Return dMenu.tostring
+		DateTimePicker.AddAttr(":landscape", True)
+		If DateTimePicker.typeOf = "datetimepicker" Then
+			Return DateTimePicker.ToString
 		End If
-		'date picker
 		'create a menu
-		vue.SetStateSingle($"${ID}menu"$, False)
+		vue.SetStateSingle($"${ID}dtmenu"$, False)
 		Dim dMenu As VMElement
-		dMenu.Initialize(vue, $"${ID}menu"$).SetTag("v-menu")
+		dMenu.Initialize(vue, $"${ID}dtmenu"$).SetTag("v-menu")
 		dMenu.SetStatic(bStatic)
 		dMenu.SetDesignMode(DesignMode)
-		dMenu.SetAttrSingle("ref", $"${ID}menu"$)
-		dMenu.SetVModel($"${ID}menu"$)
+		dMenu.SetAttrSingle("ref", $"${ID}dtmenu"$)
+		dMenu.SetVModel($"${ID}dtmenu"$)
 		dMenu.SetAttrSingle(":close-on-content-click", False)
 		dMenu.SetAttrSingle(":return-value.sync", vmodel)
 		dMenu.SetAttrSingle("transition", "scale-transition")
 		dMenu.SetAttrloose("offset-y")
-		dMenu.SetAttrSingle("min-width", "290px")
+		dMenu.AddAttr("min-width", "460px")
+		dMenu.AddAttr("max-width", "460px")
+		dMenu.AddAttr(":nudge-right", "40")
 		'
 		Dim tmpl As VMTemplate
-		tmpl.Initialize(vue, $"${ID}tmpl"$, Module).SetStatic(bStatic).SetDesignMode(DesignMode).SetSlotActivatorOn
+		tmpl.Initialize(vue, $"${ID}tmpl"$, Module)
+		tmpl.SetStatic(bStatic)
+		tmpl.SetDesignMode(DesignMode)
+		tmpl.SetSlotActivator1($"on"$)
 		'
-		
-		TextField.SetPrependIcon("event").SetAttrloose("readonly").SetAttrSingle("v-on", "on")
-		TextField.SetVModel(vmodel)
+		TextField.SetAttrSingle("v-on", $"on"$)
+		'TextField.SetAttrSingle("v-bind", "attrs")
+		'TextField.SetAttrSingle("@blur", $"${ID}menu = false"$)
+		If bHideIcons = False Then
+			If bTimePicker Then
+				TextField.SetAppendIcon("mdi-clock")
+				TextField.SetAttrSingle("@click:append", $"${ID}dtmenu = !${ID}dtmenu"$)
+			Else
+				TextField.SetAppendIcon("mdi-calendar-today")
+				TextField.SetAttrSingle("@click:append", $"${ID}dtmenu = !${ID}dtmenu"$)
+			End If
+		End If
+		'
+		If bTimePicker Then
+		Else
+			TextField.SetAttrSingle("v-model", $"${ID}date"$)
+			vue.SetMethod(Me, "formatDate")
+			vue.SetComputed($"${ID}date"$, Me, "computedDateFormatted")
+		End If
 		'
 		TextField.Pop(tmpl.Template)
-				'
 		dMenu.SetText(tmpl.ToString)
 		'
-		DateTimePicker.SetAttrLoose("no-title")
-		DateTimePicker.SetAttrLoose("scrollable")
+		DateTimePicker.SetVIf($"${ID}dtmenu"$)
+		Dim ssave As String = "$refs." & ID & "dtmenu.save(" & vmodel & ")"
+		If bTimePicker Then
+			DateTimePicker.SetAttrSingle("@click:minute", ssave)
+		Else
+			DateTimePicker.SetAttrLoose("scrollable")
+			DateTimePicker.SetAttrSingle("@click:date", ssave)
+		End If
 		'
-		AddSpacer
+		If bShowButtons Then
+			DateTimePicker.SetText($"<v-btn text outlined color="error" @click="${vmodel}=''">Clear</v-btn>"$)
+			DateTimePicker.SetText("<v-spacer></v-spacer>")
+			DateTimePicker.SetText($"<v-btn text outlined color="primary" @click="${ID}dtmenu = false">Cancel</v-btn>"$)
+			DateTimePicker.SetText($"<v-btn text outlined color="primary" @click="${ssave}">OK</v-btn>"$)
+		End If
 		'
-		Dim btnCancel As VMButton
-		btnCancel.Initialize(vue, $"${ID}cancel"$, Me)
-		btnCancel.SetStatic(bStatic)
-		btnCancel.SetDesignMode(DesignMode)
-		btnCancel.SetTransparent(True)
-		btnCancel.SetColor("primary")
-		btnCancel.setattrsingle("@click", $"${ID}menu = false"$)
-		btnCancel.SetLabel("Cancel")
-		
-		DateTimePicker.SetText(btnCancel.ToString)
-		'
-		Dim btnOk As VMButton
-		btnOk.Initialize(vue, $"${ID}ok"$, Me)
-		btnOk.SetStatic(bStatic)
-		btnOk.SetDesignMode(DesignMode)
-		btnOk.SetTransparent(True)
-		btnOk.SetColor("primary")
-		Dim ssave As String = "$refs." & ID & "menu.save(" & vmodel & ")"
-		btnOk.SetAttrSingle("@click", ssave)
-		btnOk.SetLabel("Ok")
-		
-		DateTimePicker.SetText(btnOk.ToString)
 		dMenu.SetText(DateTimePicker.ToString)
-		
 		Return dMenu.tostring
 	Else
 		Return DateTimePicker.ToString
 	End If
+End Sub
+
+private Sub computedDateFormatted As String   'IgnoreDeadCode
+	Try
+		'get the saved model
+		Dim rdate As String = vue.GetData(vmodel)
+		If rdate = "" Then Return ""
+		Return vue.RunMethod("formatDate", Array(rdate)).Result
+	Catch
+		Return ""
+	End Try
+End Sub
+
+'format the date
+private Sub formatDate(date As Object) As String  'IgnoreDeadCode
+	Try
+		date = "" & date
+		If date = "" Then Return Null
+	    If BANano.isnull(date) Or BANano.IsUndefined(date) Then Return Null 
+		Dim bo As BANanoObject = BANano.RunJavascriptMethod("dayjs", Array(date))
+		Dim sdf As String = vue.DateDisplayFormat
+		If sdf = "" Then sdf = "YYYY-MM-DD"
+		Dim sdate As String = bo.RunMethod("format", Array(sdf)).Result
+		Return sdate
+	Catch
+		Return ""
+	End Try
 End Sub
 
 private Sub AddSpacer As VMDateTimePicker
@@ -315,16 +372,17 @@ End Sub
 Sub SetVModel(k As String) As VMDateTimePicker
 	k =k.tolowercase
 	DateTimePicker.SetVModel(k)
+	TextField.SetVModel(k)
 	vmodel = k
 	Return Me
 End Sub
 
-Sub SetVIf(vif As Object) As VMDateTimePicker
+Sub SetVIf(vif As String) As VMDateTimePicker
 	DateTimePicker.SetVIf(vif)
 	Return Me
 End Sub
 
-Sub SetVShow(vif As Object) As VMDateTimePicker
+Sub SetVShow(vif As String) As VMDateTimePicker
 	DateTimePicker.SetVShow(vif)
 	Return Me
 End Sub
@@ -426,7 +484,6 @@ End Sub
 
 'set disabled
 Sub SetDisabled(varDisabled As Boolean) As VMDateTimePicker
-	If varDisabled = False Then Return Me
 	DateTimePicker.SetDisabled(varDisabled)
 	Return Me
 End Sub
@@ -662,13 +719,14 @@ End Sub
 
 'set readonly
 Sub SetReadonly(varReadonly As Boolean) As VMDateTimePicker
-	If varReadonly = False Then Return Me
+	bHideIcons = varReadonly
 	If bStatic Then
-		DateTimePicker.SetAttrSingle("readonly", varReadonly)
+		TextField.SetAttrSingle("readonly", varReadonly)
 		Return Me
 	End If
 	Dim pp As String = $"${ID}Readonly"$
 	vue.SetStateSingle(pp, varReadonly)
+	TextField.Bind(":readonly", pp)
 	DateTimePicker.Bind(":readonly", pp)
 	Return Me
 End Sub
@@ -751,9 +809,50 @@ Sub SetType(varType As String) As VMDateTimePicker
 	Return Me
 End Sub
 
+
+Sub SetFieldType(ft As String) As VMDateTimePicker
+	DateTimePicker.fieldType = ft
+	Return Me
+End Sub
+
+Sub GetValue As String
+	Dim svalue As String = vue.GetData(vmodel)
+	Return svalue
+End Sub
+
 'set value
-Sub SetValue(varValue As Object) As VMDateTimePicker
-	SetAttrSingle("value", varValue)
+Sub SetValue(varValue As String) As VMDateTimePicker
+	DateTimePicker.SetValue(varValue)
+	TextField.SetValue(varValue)
+	If bStatic Then
+		SetAttrSingle("value", varValue)
+		Return Me
+	End If
+	If vmodel = "" Then
+		vmodel = $"${ID}value"$
+		SetVModel(vmodel)
+	End If
+	vue.SetData(vmodel, varValue)
+	Return Me
+End Sub
+
+Sub SetIsNow(b As Boolean) As VMDateTimePicker
+	If b = False Then Return Me
+	Dim lNow As Long
+	Dim dt As String
+	lNow = DateTime.Now
+	Select Case bTimePicker
+	Case False
+		'is date picker
+		DateTime.DateFormat = "yyyy-MM-dd"
+		dt = DateTime.Date(lNow)
+		SetValue(dt)
+	Case True
+		'is time picker
+		DateTime.DateFormat = "HH:mm"
+		dt = DateTime.Date(lNow)
+		SetValue(dt)
+	End Select
 	Return Me
 End Sub
 
@@ -814,8 +913,8 @@ Sub SetOnChange(eventHandler As Object, methodName As String) As VMDateTimePicke
 	methodName = methodName.tolowercase
 	If SubExists(eventHandler, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, e)
-	SetAttr(CreateMap("v-on:change": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, Array(e))
+	SetAttr(CreateMap("@change": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -826,8 +925,8 @@ Sub SetOnClickDate(methodName As String) As VMDateTimePicker
 	methodName = methodName.tolowercase
 	If SubExists(Module, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, e)
-	SetAttr(CreateMap("v-on:click:date": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
+	SetAttr(CreateMap("@click:date": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -838,8 +937,8 @@ Sub SetOnClickMonth(methodName As String) As VMDateTimePicker
 	methodName = methodName.tolowercase
 	If SubExists(Module, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, e)
-	SetAttr(CreateMap("v-on:click:month": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
+	SetAttr(CreateMap("@click:month": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -850,8 +949,8 @@ Sub SetOnDblclickMonth(methodName As String) As VMDateTimePicker
 	methodName = methodName.tolowercase
 	If SubExists(Module, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, e)
-	SetAttr(CreateMap("v-on:dblclick:month": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
+	SetAttr(CreateMap("@dblclick:month": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -862,8 +961,8 @@ Sub SetOnDblclickDate(methodName As String) As VMDateTimePicker
 	methodName = methodName.tolowercase
 	If SubExists(Module, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, e)
-	SetAttr(CreateMap("v-on:dblclick:date": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
+	SetAttr(CreateMap("@dblclick:date": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -874,8 +973,8 @@ Sub SetOnInput(methodName As String) As VMDateTimePicker
 	methodName = methodName.tolowercase
 	If SubExists(Module, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, e)
-	SetAttr(CreateMap("v-on:input": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
+	SetAttr(CreateMap("@input": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -886,8 +985,8 @@ Sub SetOnUpDatePickerDate(methodName As String) As VMDateTimePicker
 	methodName = methodName.tolowercase
 	If SubExists(Module, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, e)
-	SetAttr(CreateMap("v-on:update:picker-date": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
+	SetAttr(CreateMap("@update:picker-date": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -1069,8 +1168,8 @@ Sub SetOnClickHour(methodName As String) As VMDateTimePicker
 	methodName = methodName.tolowercase
 	If SubExists(Module, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, e)
-	SetAttr(CreateMap("v-on:click:hour": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
+	SetAttr(CreateMap("@click:hour": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -1081,8 +1180,8 @@ Sub SetOnClickMinute(methodName As String) As VMDateTimePicker
 	methodName = methodName.tolowercase
 	If SubExists(Module, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, e)
-	SetAttr(CreateMap("v-on:click:minute": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
+	SetAttr(CreateMap("@click:minute": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -1093,8 +1192,8 @@ Sub SetOnClickSecond(methodName As String) As VMDateTimePicker
 	methodName = methodName.tolowercase
 	If SubExists(Module, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, e)
-	SetAttr(CreateMap("v-on:click:second": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
+	SetAttr(CreateMap("@click:second": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -1105,8 +1204,8 @@ Sub SetOnUpdatePeriod(methodName As String) As VMDateTimePicker
 	methodName = methodName.tolowercase
 	If SubExists(Module, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, e)
-	SetAttr(CreateMap("v-on:update:period": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
+	SetAttr(CreateMap("@update:period": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me

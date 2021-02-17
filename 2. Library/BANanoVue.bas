@@ -4,67 +4,26 @@ ModulesStructureVersion=1
 Type=Class
 Version=7.8
 @EndOfDesignText@
-#IgnoreWarnings:12
+#IgnoreWarnings:12, 9
 Sub Class_Globals
-	Type FileObject(FileName As String, FileDate As String, FileSize As Long, FileType As String)
 	Public BOVue As BANanoObject
 	Private BANAno As BANano  'ignore
 	Public methods As Map
+	Public filters As Map
 	Public data As Map
-	'Public store As Map
+	Public el As BANanoObject
 	Public refs As BANanoObject
+	Public emit As BANanoObject
 	Public body As BANanoElement
 	Public Template As VueHTML
 	Public computed As Map
 	Public watches As Map
-	Private created As BANanoObject
-	Private mounted As BANanoObject
-	Private beforeCreate As BANanoObject
-	Private destroyed As BANanoObject
-	Private beforeMount As BANanoObject
-	Private updated As BANanoObject
-	Private beforeDestroy As BANanoObject
-	Private activated As BANanoObject
-	Private deactivated As BANanoObject
-	Private beforeUpdate As BANanoObject
-	Private TypeOfString As BANanoObject   'ignore
-	Private TypeOfNumber As BANanoObject   'ignore
-	Private TypeOfBoolean As BANanoObject  'ignore
-	Private TypeOfArray As BANanoObject    'ignore
-	Private TypeOfObject As BANanoObject   'ignore
-	Private TypeOfDate As BANanoObject     'ignore
-	Private TypeOfFunction As BANanoObject  'ignore
-	Private TypeOfSymbol As BANanoObject    'ignore
-	Private BORouter As BANanoObject      'ignore
 	Private routes As List
 	Public components As Map
 	Public Options As Map
 	Private dynamicStyle As Map
-	Public JQuery As BANanoObject
 	Public GetTemplate As String
-	Public const colors_red As String = "#F44336"
-	Public const colors_pink As String = "#E91E63"
-	Public const colors_purple As String = "#9C27B0"
-	Public const colors_deepPurple As String = "#673AB7"
-	Public const colors_indigo As String = "#3F51B5"
-	Public const colors_blue As String = "#2196F3"
-	Public const colors_lightBlue As String = "#03A9F4"
-	Public const colors_cyan As String = "#00BCD4"
-	Public const colors_teal As String = "#009688"
-	Public const colors_green As String = "#4CAF50"
-	Public const colors_lightGreen As String = "#8BC34A"
-	Public const colors_lime As String = "#CDDC39"
-	Public const colors_yellow As String = "#ffe821"
-	Public const colors_amber As String = "#FFC107"
-	Public const colors_orange As String = "#FF9800"
-	Public const colors_deepOrange As String = "#FF5722"
-	Public const colors_brown As String = "#795548"
-	Public const colors_grey As String = "#9E9E9E"
-	Public const colors_blueGrey As String = "#607D8B"
-	Public const colors_black As String = "#000000"
-	Public const colors_white As String = "#ffffff"
-	Public const colors_transparent As String = "transparent"
-	'
+	Public ShowWarnings As Boolean
 	Public const BORDER_DEFAULT As String = ""
 	Public const BORDER_DASHED As String = "dashed"
 	Public const BORDER_DOTTED As String = "dotted"
@@ -125,6 +84,16 @@ Sub Class_Globals
 	Public const SIZE_P As String = "p"
 	Public const SIZE_SPAN As String = "span"
 	Public const SIZE_BLOCKQUOTE As String = "blockquote"
+	Public const SIZE_DIV As String = "div"
+	'
+	Public const TEXT_LEFT As String = "text-left"
+	Public const TEXT_CENTER As String = "text-center"
+	Public const TEXT_RIGHT As String = "text-right"
+	Public const TEXT_NO_WRAP As String = "text-no-wrap"
+	Public const TEXT_TRUNCATE As String = "text-truncate"
+	Public const TEXT_LOWERCASE As String = "text-lowercase"
+	Public const TEXT_UPPERCASE As String = "text-uppercase"
+	Public const TEXT_CAPITALIZE As String = "text-capitalize"
 	'
 	Type ColorTypes(red As String, pink As String, purple As String, deepPurple As String, _
 	indigo As String, blue As String, lightBlue As String, cyan As String, teal As String, green As String, _
@@ -133,125 +102,65 @@ Sub Class_Globals
 	Public Colors As ColorTypes
 	
 	Private ColorMap As Map
-	'animations
-	Public Attention_Seekers_bounce As String = "bounce"
-	Public Attention_Seekers_flash As String = "flash"
-	Public Attention_Seekers_pulse As String="pulse"
-	Public Attention_Seekers_rubberBand As String="rubberBand"
-	Public Attention_Seekers_shake As String="shake"
-	Public Attention_Seekers_swing As String="swing"
-	Public Attention_Seekers_tada As String="tada"
-	Public Attention_Seekers_wobble As String="wobble"
-	Public Attention_Seekers_jello As String="jello"
-	Public Bouncing_Entrances_bounceIn As String="bounceIn"
-	Public Bouncing_Entrances_bounceInDown As String="bounceInDown"
-	Public Bouncing_Entrances_bounceInLeft As String="bounceInLeft"
-	Public Bouncing_Entrances_bounceInRight As String="bounceInRight"
-	Public Bouncing_EntrancesbounceInUp As String="bounceInUp"
-	Public Bouncing_Exits_bounceOut As String="bounceOut"
-	Public Bouncing_Exits_bounceOutDown As String="bounceOutDown"
-	Public Bouncing_Exits_bounceOutLeft As String="bounceOutLeft"
-	Public Bouncing_Exits_bounceOutRight As String="bounceOutRight"
-	Public Bouncing_Exits_bounceOutUp As String="bounceOutUp"
-	Public Fading_Entrances_fadeIn As String="fadeIn"
-	Public Fading_Entrances_fadeInDown As String="fadeInDown"
-	Public Fading_Entrances_fadeInDownBig As String="fadeInDownBig"
-	Public Fading_Entrances_fadeInLeft As String="fadeInLeft"
-	Public Fading_Entrances_fadeInLeftBig As String="fadeInLeftBig"
-	Public Fading_Entrances_fadeInRight As String="fadeInRight"
-	Public Fading_Entrances_fadeInRightBig As String="fadeInRightBig"
-	Public Fading_Entrances_fadeInUp As String="fadeInUp"
-	Public Fading_Entrances_fadeInUpBig As String="fadeInUpBig"
-	Public Fading_Exits_fadeOut As String="fadeOut"
-	Public Fading_Exits_fadeOutDown As String="fadeOutDown"
-	Public Fading_Exits_fadeOutDownBig As String="fadeOutDownBig"
-	Public Fading_Exits_fadeOutLeft As String="fadeOutLeft"
-	Public Fading_Exits_fadeOutLeftBig As String="fadeOutLeftBig"
-	Public Fading_Exits_fadeOutRight As String="fadeOutRight"
-	Public Fading_Exits_fadeOutRightBig As String="fadeOutRightBig"
-	Public Fading_Exits_fadeOutUp As String="fadeOutUp"
-	Public Fading_Exits_fadeOutUpBig As String="fadeOutUpBig"
-	Public Flippers_flip As String="flip"
-	Public Flippers_flipInX As String="flipInX"
-	Public Flippers_flipInY As String="flipInY"
-	Public Flippers_flipOutX As String="flipOutX"
-	Public Flippers_flipOutY As String="flipOutY"
-	Public Lightspeed_lightSpeedIn As String="lightSpeedIn"
-	Public Lightspeed_lightSpeedOut As String="lightSpeedOut"
-	Public Rotating_Entrances_rotateIn As String="rotateIn"
-	Public Rotating_Entrances_rotateInDownLeft As String="rotateInDownLeft"
-	Public Rotating_Entrances_rotateInDownRight As String="rotateInDownRight"
-	Public Rotating_Entrances_rotateInUpLeft As String="rotateInUpLeft"
-	Public Rotating_Entrances_rotateInUpRight As String="rotateInUpRight"
-	Public Rotating_Exits_rotateOut As String="rotateOut"
-	Public Rotating_Exits_rotateOutDownLeft As String="rotateOutDownLeft"
-	Public Rotating_Exits_rotateOutDownRight As String="rotateOutDownRight"
-	Public Rotating_Exits_rotateOutUpLeft As String="rotateOutUpLeft"
-	Public Rotating_Exits_rotateOutUpRight As String="rotateOutUpRight"
-	Public Sliding_Entrances_slideInUp As String="slideInUp"
-	Public Sliding_Entrances_slideInDown As String="slideInDown"
-	Public Sliding_Entrances_slideInLeft As String="slideInLeft"
-	Public Sliding_Entrances_slideInRight As String="slideInRight"
-	Public Sliding_Exits_slideOutUp As String="slideOutUp"
-	Public Sliding_Exits_slideOutDown As String="slideOutDown"
-	Public Sliding_Exits_slideOutLeft As String="slideOutLeft"
-	Public Sliding_Exits_slideOutRight As String="slideOutRight"
-	Public Zoom_Entrances_zoomIn As String="zoomIn"
-	Public Zoom_Entrances_zoomInDown As String="zoomInDown"
-	Public Zoom_Entrances_zoomInLeft As String="zoomInLeft"
-	Public Zoom_Entrances_zoomInRight As String="zoomInRight"
-	Public Zoom_Entrances_zoomInUp As String="zoomInUp"
-	Public Zoom_Exits_zoomOut As String="zoomOut"
-	Public Zoom_Exits_zoomOutDown As String="zoomOutDown"
-	Public Zoom_Exits_zoomOutLeft As String="zoomOutLeft"
-	Public Zoom_Exits_zoomOutRight As String="zoomOutRight"
-	Public Zoom_Exits_zoomOutUp As String="zoomOutUp"
-	Public Specials_hinge As String="hinge"
-	Public Specials_rollIn As String="rollIn"
-	Public Specials_rollOut As String="rollOut"
 	Public Themes As Map
+	Public TargetOptions As Map
+	Public ColumnTypes As Map
+	Public ColumnAlign As Map
+	Public DataTypes As Map
+	Public ControlTypes As Map
+	Public Modules As Map
+	Public SourceCode As StringBuilder
+	Public HashType As Map
+	Public Algorithm As Map
+	Public Errors As Map
+	Public Position As Map
+	Public Module As Object
+	Public store As BANanoObject
+	Public state As Map
+	Public bindings As Map
+	Public Router As BANanoObject
+	Public DateDisplayFormat As String
 End Sub
 
 'initialize view
-Public Sub Initialize()
-	Themes.Initialize 
-	BOVue.Initialize("Vue")
-	JQuery.Initialize("$")
-	'store = BOVue.RunMethod("observable", Null).Result
+Public Sub Initialize(EventHandler As Object)
 	'empty the body of the page
 	body = BANAno.GetElement("#body")
 	body.empty
-	'add an empty div
-	body.Append($"<div id="app"></div>"$)
-	Template.Initialize("app","div")
-	Template.SetVCloak
+	body.Append($"<div id="app"><div id="placeholder" v-if="placeholder"></div><div id="appendholder" v-if="appendholder"></div></div>"$)
+	'
+	SetData("placeholder", False)
+	SetData("appendholder", False)
+	'
+	Template.Initialize("app1", "div")
+	Module = EventHandler
+	'
+	Errors.Initialize
+	SourceCode.Initialize
+	Themes.Initialize
+	Modules.Initialize
+	BOVue.Initialize("Vue")
+	
 	methods.Initialize
+	filters.initialize
 	data.Initialize
 	computed.Initialize  
 	watches.Initialize
-	routes.Initialize 
-	beforeMount = Null
-	beforeUpdate = Null
-	created = Null
-	mounted = Null
-	destroyed = Null
-	updated = Null
-	beforeCreate = Null
-	activated = Null
-	deactivated = Null
-	beforeDestroy = Null
+	routes.Initialize
 	'
-	TypeOfString = BOVue.GetField("String")
-	TypeOfNumber = BOVue.GetField("Number")
-	TypeOfBoolean = BOVue.GetField("Boolean")
-	TypeOfArray = BOVue.GetField("Array")
-	TypeOfObject = BOVue.GetField("Object")
-	TypeOfDate = BOVue.GetField("Date")
-	TypeOfFunction = BOVue.GetField("Function")
-	TypeOfSymbol = BOVue.GetField("Symbol")
+	'***use a global prototype
+	state.Initialize
+		
+	Position.initialize
+	Position.Put("static","static")
+	Position.Put("relative","relative")
+	Position.Put("fixed","fixe")
+	Position.Put("absolute","absolute")
+	Position.Put("sticky", "sticky")
+	Position.Put("", "none")
+	
 	Options = CreateMap()
 	dynamicStyle = CreateMap()
-	SetFontFamily("'Roboto', 'Helvetica', Arial, sans-serif")
 	'
 	Colors.initialize
 	Colors.red = "red"
@@ -535,10 +444,725 @@ Public Sub Initialize()
 	ColorMap.put("black", "#000000")
 	ColorMap.put("white", "#ffffff")
 	ColorMap.put("transparent", "transparent")
+	'
+	TargetOptions.Put("","None")
+	TargetOptions.Put("_blank","Blank")
+	TargetOptions.Put("_self","Self")
+	TargetOptions.Put("_parent","Parent")
+	TargetOptions.Put("_top","Top")
+	'
+	ColumnTypes.Initialize
+	ColumnTypes.put("date","Date")
+	ColumnTypes.put("text", "Text")
+	ColumnTypes.put("icon", "Icon")
+	ColumnTypes.put("checkbox", "Check Box")
+	ColumnTypes.put("", "None")
+	ColumnTypes.put("time","Time")
+	ColumnTypes.put("datetime","Date Time")
+	ColumnTypes.put("image","Image")
+	ColumnTypes.Put("money","Money")
+	ColumnTypes.put("filesize", "File Size")
+	ColumnTypes.put("chip","Chip")
+	ColumnTypes.put("edit","Edit")
+	ColumnTypes.put("delete","Delete")
+	ColumnTypes.put("action","Action")
+	ColumnTypes.put("save","Save")
+	ColumnTypes.put("cancel","Cancel")
+	ColumnTypes.Put("switch", "Switch")
+	ColumnTypes.put("avatarimg", "Avatar")
+	ColumnTypes.Put("rating", "Rating")
+	ColumnTypes.Put("progresscircular", "ProgressCircular")
+	ColumnTypes.Put("progresslinear", "ProgressLinear")
+	'
+	ColumnAlign.Initialize
+	ColumnAlign.Put("start", "Start")
+	ColumnAlign.Put("center", "Center")
+	ColumnAlign.Put("end", "End")
+	'
+	DataTypes.Initialize
+	DataTypes.Put("BOOL", "Boolean")
+	DataTypes.Put("INT", "Integer")
+	DataTypes.Put("TEXT", "Text")
+	DataTypes.Put("FLOAT", "Double")
+	DataTypes.Put("BLOB", "Blob")
+	DataTypes.Put("DATE", "Date")
+	DataTypes.Put("None", "None")
+	'
+	HashType.Initialize
+	HashType.Put("MD5", "MD5")
+	HashType.Put("SHA1", "SHA1")
+	HashType.Put("SHA256", "SHA256")
+	HashType.Put("SHA512", "SHA512")
+	HashType.Put("RMD160", "RMD160")
+	HashType.Put("", "None")
+	 
+	Algorithm.Initialize
+	Algorithm.Put("hex", "hex")
+	Algorithm.Put("b64", "b64")
+	Algorithm.Put("hex_hmac", "hex_hmac")
+	Algorithm.Put("b64_hmac", "b64_hmac")
+	Algorithm.Put("", "None")
+	'
+	ControlTypes.Initialize
+	ControlTypes.put("text", "Text")
+	ControlTypes.put("textarea", "Text Area")
+	ControlTypes.put("checkbox", "Check Box")
+	ControlTypes.put("date", "Date")
+	ControlTypes.put("file", "File")
+	ControlTypes.put("radio", "Radio")
+	ControlTypes.put("select", "Select")
+	ControlTypes.put("slider", "Slider")
+	ControlTypes.put("switch", "Switch")
+	ControlTypes.put("label", "Label")
+	ControlTypes.put("email", "Email")
+	ControlTypes.put("rating", "Rating")
+	ControlTypes.put("password", "Password")
+	ControlTypes.put("tel", "Telephone")
+	ControlTypes.put("time", "Time")
+	ControlTypes.put("combo", "Combo")
+	ControlTypes.put("auto", "Auto Complete")
+	ControlTypes.put("profile", "Profile")
+	ControlTypes.put("image", "Image")
+	ControlTypes.put("button", "Button")
+	ControlTypes.put("icon", "Icon")
+	ControlTypes.put("parallax", "Parallax")
+	ControlTypes.put("container", "Container")
+	ControlTypes.put("menu", "Menu")
+	ControlTypes.put("carousel", "Carousel")
+	ControlTypes.put("speeddial", "Speed Dial")
+	ControlTypes.Put("quill", "Quill Editor")
+	ControlTypes.Put("None", "None")
+	ControlTypes.Put("rangeslider", "Range Slider")
+	ControlTypes.Put("infobox", "Info Box")
+	ControlTypes.Put("fileselect", "File Select")
+	ControlTypes.Put("sparkline", "Sparkline")
+	ControlTypes.Put("number", "Number")
+	'
+	'If SubExists(Module, "ReadyChange") = False Then
+	'	Log("Initialize.ReadyChange - please consider adding this optional callback!")
+	'End If
+	
+	ShowWarnings = True
+	bindings.Initialize 
+	DateDisplayFormat = "YYYY-MM-DD"
+End Sub
+
+Sub SetVCloak As BANanoVue
+	Template.SetVCloak
+	Return Me
+End Sub
+
+'create an element with a 'component' tag
+Sub CreateOwnComponent(id As String, compName As String) As VueElement
+	Dim elx As VueElement
+	elx.Initialize(Me, id, compName)
+	Return elx
+End Sub
+
+'create a dynamic component
+Sub CreateDynamicComponent(id As String, viewID As String, compID As String) As VueElement
+	Dim elx As VueElement
+	elx.Initialize(Me, id, "component")
+	elx.BindDynamicComponent(viewID, compID)
+	Return elx
+End Sub
+
+'add html content to template
+public Sub AddToTemplate(html As String) As BANanoVue
+	Dim mTarget As BANanoElement = BANAno.GetElement("#app1")
+	mTarget.Append(html)
+	Return Me
+End Sub
+
+#if css
+.preloadcontainer {
+    height: 100vh;
+    width: 100vw;
+    font-family: Helvetica
+}
+
+.loader {
+    height: 20px;
+    width: 250px;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin: auto
+}
+
+.loader--dot {
+    animation-name: loader;
+    animation-timing-function: ease-in-out;
+    animation-duration: 3s;
+    animation-iteration-count: infinite;
+    height: 20px;
+    width: 20px;
+    border-radius: 100%;
+    background-color: #000;
+    position: absolute;
+    border: 2px solid #fff
+}
+
+.loader--dot:first-child {
+    background-color: #8cc759;
+    animation-delay: .5s
+}
+
+.loader--dot:nth-child(2) {
+    background-color: #8c6daf;
+    animation-delay: .4s
+}
+
+.loader--dot:nth-child(3) {
+    background-color: #ef5d74;
+    animation-delay: .3s
+}
+
+.loader--dot:nth-child(4) {
+    background-color: #f9a74b;
+    animation-delay: .2s
+}
+
+.loader--dot:nth-child(5) {
+    background-color: #60beeb;
+    animation-delay: .1s
+}
+
+.loader--dot:nth-child(6) {
+    background-color: #fbef5a;
+    animation-delay: 0s
+}
+
+.loader--text {
+    position: absolute;
+    top: 200%;
+    left: 0;
+    right: 0;
+    width: 4rem;
+    margin: auto
+}
+
+.loader--text:after {
+    content: "Loading";
+    font-weight: 700;
+    animation-name: loading-text;
+    animation-duration: 3s;
+    animation-iteration-count: infinite
+}
+
+@keyframes loader {
+    15% {
+        transform: translateX(0)
+    }
+
+    45% {
+        transform: translateX(230px)
+    }
+
+    65% {
+        transform: translateX(230px)
+    }
+
+    95% {
+        transform: translateX(0)
+    }
+}
+
+@keyframes loading-text {
+    0% {
+        content: "Loading"
+    }
+
+    25% {
+        content: "Loading."
+    }
+
+    50% {
+        content: "Loading.."
+    }
+
+    75% {
+        content: "Loading..."
+    }
+}
+#End If
+
+#if javascript
+	var pl = document.createElement("div");
+	pl.id = "preloader";
+	pl.className = "preloadcontainer";
+	var ldr = document.createElement("div");
+	ldr.className = "loader";
+	var dot = document.createElement("div");
+	dot.className = "loader--dot";
+	var lot = document.createElement("div");
+	lot.className = "loader--text";
+	ldr.appendChild(dot.cloneNode(true));
+	ldr.appendChild(dot.cloneNode(true));
+	ldr.appendChild(dot.cloneNode(true));
+	ldr.appendChild(dot.cloneNode(true));
+	ldr.appendChild(dot.cloneNode(true));
+	ldr.appendChild(dot.cloneNode(true));
+	ldr.appendChild(lot);
+	pl.appendChild(ldr);
+	document.body.appendChild(pl);
+	 
+	document.onreadystatechange = function() { 
+            if (document.readyState !== "complete") { 
+                document.querySelector("body").style.visibility = "hidden"; 
+                document.querySelector("#preloader").style.visibility = "visible"; 
+            } else { 
+                // document.querySelector("#preloader").style.display = "none"; 
+                // document.querySelector("body").style.visibility = "visible"; 
+            } 
+        }; 
+#End If
+
+
+Sub NewList1(lst As List) As List
+	Dim nl As List
+	nl.Initialize
+	nl.AddAll(lst)
+	Return nl
+End Sub
+
+
+'set global state data
+Sub SetDataGlobal(prop As String, value As Object) As BANanoVue
+	prop = prop.ToLowerCase
+	state.Put(prop, value)
+	'
+	Try
+		Dim bo As BANanoObject = store.GetField(prop)
+		If BANAno.IsNull(bo) Then Return Me
+		If BANAno.IsUndefined(bo) Then Return Me
+		'update the store
+		store.GetField(prop).SetField(prop, value)
+	Catch
+		'Log($"Error - BANanoVue.SetDataGlobal: ${prop}.${value}"$)
+	End Try   'ignore
+	'
+	'computed is not set
+	If computed.ContainsKey(prop) = False Then
+		Dim cb As BANanoObject = BANAno.CallBackExtra(Me, "getglobalstate", Null, Array(prop))
+		computed.Put(prop, cb.Result)
+	End If
+	Return Me
+End Sub
+
+'read the value of the prop we need
+private Sub getglobalstate(prop As String) As Object
+	prop = prop.tolowercase
+	Dim rslt As Object = GetDataGlobal(prop)
+	Return rslt
+End Sub
+
+'get global state data
+Sub GetDataGlobal(prop As String) As Object
+	prop = prop.tolowercase
+	Dim rslt As Object
+	rslt = state.GetDefault(prop, Null)
+	Try
+		Dim bo As BANanoObject = store.GetField(prop)
+		If BANAno.IsNull(bo) Then Return ""
+		If BANAno.IsUndefined(bo) Then Return ""
+		rslt = store.GetField(prop).Result
+	Catch
+		'Log($"Error - BANanoVue.GetData: ${prop}"$)
+	End Try   'ignore
+	Return rslt
+End Sub
+
+'remove list last item
+Sub ListPopGlobal(lstname As String)
+	lstname = lstname.tolowercase
+	store.GetField(lstname).RunMethod("pop", Null)
+End Sub
+
+Sub ListFirstItemGlobal(lstName As String) As Object
+	lstName = lstName.tolowercase
+	Dim lst As List = store.GetField(lstName).result
+	Dim obj As Object = lst.Get(0)
+	Return obj
+End Sub
+
+'add item at end of the list
+Sub ListPushGlobal(listName As String, item As Object)
+	listName = listName.ToLowerCase
+	store.GetField(listName).RunMethod("push", item)
+End Sub
+
+'add item at beginning of list
+Sub ListUnshiftGlobal(lstname As String, obj As Object)
+	lstname = lstname.tolowercase
+	store.GetField(lstname).RunMethod("unshift", obj)
+End Sub
+
+'increment state
+Sub IncrementGlobal(prop As String, addVal As Int)
+	prop = prop.tolowercase
+	'get the value of the coun
+	Dim cc As Int = GetDataGlobal(prop)
+	If BANAno.IsNull(cc) Or cc = "" Then cc = 0
+	cc = BANAno.parseInt(cc)
+	'increment by 1
+	cc = cc + addVal
+	'save back to state
+	SetDataGlobal(prop, cc)
+End Sub
+
+'decremenent state
+Sub DecrementGlobal(prop As String, addVal As Int)
+	prop = prop.tolowercase
+	'get the value of the coun
+	Dim cc As Int = GetDataGlobal(prop)
+	If BANAno.IsNull(cc) Or cc = "" Then cc = 0
+	cc = BANAno.parseInt(cc)
+	'decrement by 1
+	cc = cc - addVal
+	'save back to state
+	SetDataGlobal(prop, cc)
+End Sub
+
+Sub CorrectName(oldName As String) As String
+	Dim strName As String = StringBreakAtUpperCase(oldName)
+	strName = strName.replace(" ", "-")
+	strName = strName.tolowercase
+	Return strName
+End Sub
+
+'double quote each item of the mv
+Sub MVQuoteItems(delim As String, mvstring As String) As String
+	Dim sbOut As StringBuilder
+	sbOut.Initialize 
+	Dim lItems As List = StrParse(delim, mvstring)
+	For Each k As String In lItems
+		k = CStr(k)
+		k = k.Trim
+		sbOut.Append($""${k}""$).Append(delim)
+	Next
+	Dim sout As String = sbOut.ToString
+	sout = RemDelim(sout, delim)
+	Return sout
+End Sub
+
+'download code from a prism component
+Sub DownloadCode(prismID As String, fileName As String)
+	prismID = prismID.tolowercase
+	Dim codeKey As String = $"${prismID}code"$
+	Dim sCode As String = GetData(codeKey)
+	SaveText2File(sCode, fileName)
+End Sub
+
+'copy code from a prism component
+Sub CopyCode2Clipboard(prismID As String)
+	prismID = prismID.tolowercase
+	Dim codeKey As String = $"${prismID}code"$
+	'get the object
+	Dim sCode As String = GetData(codeKey)
+	BOVue.RunMethod("$copyText", Array(sCode))
+End Sub
+
+'double quote each item of the mv
+Sub MVSingleQuoteItems(delim As String, mvstring As String) As String
+	Dim sbOut As StringBuilder
+	sbOut.Initialize 
+	Dim lItems As List = StrParse(delim, mvstring)
+	For Each k As String In lItems
+		k = CStr(k)
+		k = k.Trim
+		sbOut.Append($"'${k}'"$).Append(delim)
+	Next
+	Dim sout As String = sbOut.ToString
+	sout = RemDelim(sout, delim)
+	Return sout
+End Sub
+
+Sub CreateB4xList(lst As List) As List
+	Dim nl As List
+	nl.Initialize
+	nl.AddAll(lst)
+	Return nl
+End Sub
+
+Sub FormValidate(frmID As String) As Boolean
+	frmID = frmID.tolowercase
+	Dim bValid As Boolean = refs.GetField(frmID).RunMethod("validate", Null).Result
+	Return bValid
+End Sub
+
+Sub FormReset(frmID As String)
+	frmID = frmID.tolowercase
+	refs.GetField(frmID).RunMethod("reset", Null)
+End Sub
+
+'format the text
+Sub FormatText(sText As String) As String
+	Dim RM As Map
+	RM.Initialize
+	RM.clear
+	RM.Put("{U}", "<ins>")
+	RM.Put("{/U}", "</ins>")
+	RM.Put("¢","&cent;")
+	RM.put("£","&pound;")
+	RM.Put("{SUP}", "<sup>")
+	RM.Put("{/SUP}", "</sup>")
+	RM.Put("¥","&yen;")
+	RM.Put("€","&euro;")
+	RM.put("©","&copy;")
+	RM.Put("®","&reg;")
+	RM.Put("{POUND}","&pound;")
+	RM.Put("{/B}", "</b>")
+	RM.Put("{I}", "<i>")
+	RM.Put("{YEN}","&yen;")
+	RM.Put("{EURO}","&euro;")
+	RM.Put("{CODE}","<code>")
+	RM.Put("{/CODE}","</code>")
+	RM.put("{COPYRIGHT}","&copy;")
+	RM.Put("{REGISTERED}","&reg;")
+	RM.Put("®", "&reg;")
+	RM.Put("{B}", "<b>")
+	RM.Put("{SMALL}", "<small>")
+	RM.Put("{/SMALL}", "</small>")
+	RM.Put("{EM}", "<em>")
+	RM.Put("{/EM}", "</em>")
+	RM.Put("{MARK}", "<mark>")
+	RM.Put("{/MARK}", "</mark>")
+	RM.Put("{/I}", "</i>")
+	RM.Put("{SUB}", "<sub>")
+	RM.Put("{/SUB}", "</sub>")
+	RM.Put("{BR}", "<br/>")
+	RM.Put("{WBR}","<wbr>")
+	RM.Put("{STRONG}", "<strong>")
+	RM.Put("{/STRONG}", "</strong>")
+	RM.Put("{NBSP}", "&nbsp;")
+	RM.Put("“","")
+	RM.Put("”","")
+	RM.Put("’","'")
+	Dim kTot As Int = RM.Size - 1
+	Dim kCnt As Int
+	For kCnt = 0 To kTot
+		Dim strValue As String = RM.GetKeyAt(kCnt)
+		Dim strRep As String = RM.Get(strValue)
+		sText = sText.Replace(strValue, strRep)
+	Next
+	sText = BANAno.SF(sText)
+	Return sText
+End Sub
+
+'get document ready state
+Sub GetReadyState As String
+	Dim rs As String = BANAno.Window.GetField("document").GetField("readyState").Result
+	Return rs
+End Sub
+
+'set ready change event
+Sub SetOnReadyChange(EventHandler As Object) As BANanoVue
+	If SubExists(EventHandler, "ReadyChange") = False Then Return Me
+	Dim e As BANanoEvent
+	Dim cb As BANanoObject = BANAno.callback(EventHandler, "ReadyChange", Array(e))
+	BANAno.Window.GetField("document").AddEventListener("readystatechange", cb, True)
+	Return Me
+End Sub
+'
+private Sub HideBody As BANanoVue
+	Dim stylem As Map = CreateMap("visibility":"hidden")
+	body.SetStyle(BANAno.ToJson(stylem))
+	Return Me
+End Sub
+
+
+private Sub ShowBody As BANanoVue
+	Dim stylem As Map = CreateMap("visibility":"visible")
+	body.SetStyle(BANAno.ToJson(stylem))
+	Return Me
+End Sub
+
+
+Sub ShowPreloader As BANanoVue
+	Dim stylem As Map = CreateMap("visibility":"visible")
+	BANAno.GetElement("#preloader").SetStyle(BANAno.ToJson(stylem))
+	HideBody
+	Return Me
+End Sub
+
+
+Sub HidePreloader As BANanoVue
+	Dim stylem As Map = CreateMap("display":"none")
+	BANAno.GetElement("#preloader").SetStyle(BANAno.ToJson(stylem))
+	ShowBody
+	Return Me
+End Sub
+
+Sub RemovePreloader
+	BANAno.GetElement("#preloader").Remove
+End Sub
+
+'add an error to the collection
+Sub AddError(vmodel As String, vError As String)
+	vmodel = vmodel.tolowercase
+	Errors.Put(vmodel, vError)
+End Sub
+
+Sub SourceCodeBuilder
+	SourceCode.Initialize
+End Sub
+
+Sub AddNewLine
+	SourceCode.append(CRLF)
+End Sub
+
+Sub AddCode(scomment As String)
+	SourceCode.append(scomment).append(CRLF)
+End Sub
+
+Sub AddComment(sc As String)
+	SourceCode.append($"'${sc}"$).append(CRLF)
+End Sub
+
+Sub AddNewLine1(sbx As StringBuilder)
+	sbx.append(CRLF)
+End Sub
+
+Sub AddCode1(sbx As StringBuilder, scomment As String)
+	sbx.append(scomment).append(CRLF)
+End Sub
+
+Sub AddComment1(sbx As StringBuilder, sc As String)
+	sbx.append($"'${sc}"$).append(CRLF)
+End Sub
+
+Sub GetSourceCode As String
+	Dim sout As String = SourceCode.tostring
+	sout = sout.Replace("~", "$")
+	Return SourceCode.tostring
+End Sub
+
+Sub YesNoToBoolean(xvalue As String) As Boolean
+	Select Case xvalue
+		Case "Yes","yes"
+			Return True
+		Case Else
+			Return False
+	End Select
+End Sub
+
+Sub AddModule(tagName As String) As BANanoVue
+	tagName = tagName.tolowercase
+	Modules.Put(tagName, tagName)
+	Return Me
+End Sub
+
+Sub DateIsAfter(date1 As String, date2 As String) As Boolean
+	Dim d1 As Int = DateIconv(date1)
+	Dim d2 As Int = DateIconv(date2)
+	d1 = BANAno.parseint(d1)
+	d2 = BANAno.parseInt(d2)
+	Dim b As Boolean = BANAno.IIf(d1 > d2, True, False)
+	Return b
+End Sub
+
+Sub ModuleExist(tagName As String) As Boolean
+	tagName = tagName.tolowercase
+	Dim b As Boolean = Modules.ContainsKey(tagName)
+	Return b
+End Sub
+
+'remove the delimiter from stringbuilder
+Sub RemDelim(sValue As String, Delim As String) As String
+	Dim sw As Boolean = sValue.EndsWith(Delim)
+	If sw Then
+		Dim lDelim As Int = Delim.Length
+		Dim nValue As String = sValue
+		sw = nValue.EndsWith(Delim)
+		If sw Then
+			nValue = nValue.SubString2(0, nValue.Length-lDelim)
+		End If
+		Return nValue
+	Else
+		Return sValue
+	End If
+End Sub
+
+Sub DateIconv(sdate As String) As Long
+	Dim lps As Long = DateTime.DateParse(sdate)
+	Return lps
+End Sub
+
+Sub DateOconv(lDate As Long) As String
+	DateTime.DateFormat = "yyyy-MM-dd"
+	Dim sdate As String = DateTime.Date(lDate)
+	Return sdate
+End Sub
+
+'break a string at uppercase to have a space
+Sub StringBreakAtUpperCase(st As String) As String
+	If st.Length = 0 Then Return ""
+	Dim k As Int
+	Dim s As String
+	Dim newst As String = st.CharAt(0)
+	For i = 1 To st.Length - 1
+		s = st.CharAt(i)
+		k = Asc(s)
+		If (k > 64) And (k < 91) And (st.CharAt(i-1) <> " ") Then
+			newst = newst & " " & s
+		Else
+			newst = newst & s
+		End If
+	Next
+	Return newst
+End Sub
+
+Sub JoinMapKeys(m As Map, delim As String) As String
+	Dim sb As StringBuilder
+	sb.Initialize
+	Dim kTot As Int = m.Size - 1
+	Dim kCnt As Int
+	Dim strKey As String = m.getkeyat(0)
+	sb.Append(strKey)
+	For kCnt = 1 To kTot
+		Dim strKey As String = m.getkeyat(kCnt)
+		sb.Append(delim).append(strKey)
+	Next
+	Return sb.ToString
+End Sub
+
+'return sentences of lorem ipsum
+Sub Rand_LoremIpsum(count As Int) As String
+	Dim str As String = $"Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."$
+	Dim sb As StringBuilder
+	sb.Initialize
+	For i = 1 To count
+		sb.Append(str).Append(CRLF)
+	Next
+	Return sb.tostring
+End Sub
+
+Sub NewList As List
+	Dim lst As List
+	lst.Initialize
+	Return lst
+End Sub
+
+'get the record position from saved items
+Sub ListOfMapsRecordPos(lst As List, k As String, v As String) As Int
+	Dim lTot As Int = lst.Size - 1
+	Dim lCnt As Int
+	For lCnt = 0 To lTot
+		Dim m As Map = lst.Get(lCnt)
+		Dim sk As String = m.GetDefault(k, "")
+		If sk.EqualsIgnoreCase(v) Then
+			Return lCnt
+		End If
+	Next
+	Return -1
 End Sub
 
 'join list to mv string
 Sub Join(delimiter As String, lst As List) As String
+	If lst.Size = 0 Then Return ""
 	Dim i As Int
 	Dim sb As StringBuilder
 	Dim fld As String
@@ -550,6 +1174,20 @@ Sub Join(delimiter As String, lst As List) As String
 		sb.Append(delimiter).Append(fld)
 	Next
 	Return sb.ToString
+End Sub
+
+Sub MvDistinct(delim As String, strmv As String) As String
+	Dim items As List = StrParse(delim, strmv)
+	Dim mi As Map = CreateMap()
+	For Each k As String In items
+		mi.Put(k, k)
+	Next
+	Dim nl As List = NewList
+	For Each k As String In mi.Keys
+		nl.Add(k)
+	Next
+	Dim sout As String = Join(delim, nl)
+	Return sout
 End Sub
 
 'convert delimited values and keys to a map
@@ -573,6 +1211,12 @@ Sub KeyValues2Map(delim As String, keys As String, values As String) As Map
 	Return optm
 End Sub
 
+Sub NewMap As Map
+	Dim nm As Map
+	nm.Initialize
+	Return nm
+End Sub
+
 'javascript getElementById
 Sub getElementById(sid As String) As BANanoObject
 	Dim el As BANanoObject = BANAno.Window.GetField("document").RunMethod("getElementById", Array(sid))
@@ -580,10 +1224,21 @@ Sub getElementById(sid As String) As BANanoObject
 End Sub
 
 Sub DateDiff(currentDate As String, otherDate As String) As Int
-	Dim dateS, dateE As BANanoObject
-	dateS.Initialize4("moment", currentDate)
-	dateE.Initialize4("moment", otherDate)
-	Return dateS.RunMethod("diff", Array(dateE, "days"))
+	If BANAno.IsNull(currentDate) Or BANAno.IsUndefined(currentDate) Then Return 0
+	If BANAno.IsNull(otherDate) Or BANAno.IsUndefined(otherDate) Then Return 0
+	
+	Dim bo As BANanoObject = BANAno.RunJavascriptMethod("dayjs", Array(currentDate))
+	Dim bo1 As BANanoObject = BANAno.RunJavascriptMethod("dayjs", Array(otherDate))
+	'
+	Dim rslt As String = bo.RunMethod("diff", Array(bo1, "day")).Result
+	Return rslt
+End Sub
+
+Sub RemoveDataItems(items As List) As BANanoVue
+	For Each k As String In items
+		RemoveData(k)
+	Next
+	Return Me
 End Sub
 
 Sub RemoveData(key As String) As BANanoVue
@@ -600,6 +1255,80 @@ End Sub
 Sub GetData(prop As String) As Object
 	Dim obj As Object = GetState(prop, Null)
 	Return obj
+End Sub
+
+'get list first item
+Sub ListFirstItem(lstName As String) As Object
+	lstName = lstName.tolowercase
+	Dim lst As List = BOVue.GetField(lstName).result
+	Dim obj As Object = lst.Get(0)
+	Return obj
+End Sub
+
+'add at beginning of list
+Sub ListUnshift(lstname As String, obj As Object)
+	lstname = lstname.tolowercase
+	Dim lst As List = BOVue.GetField(lstname).result
+	lst.InsertAt(0, obj)
+End Sub
+
+Sub ListGet(lstname As String) As List
+	lstname = lstname.tolowercase
+	Dim lst As List = BOVue.GetField(lstname).result
+	Return lst
+End Sub
+
+Sub ListSet(lstname As String, lst As List) As List
+	lstname = lstname.tolowercase
+	BOVue.SetField(lstname, lst)
+	Return lst
+End Sub
+
+
+'add at end of list
+Sub ListPush(lstname As String, obj As Object)
+	lstname = lstname.tolowercase
+	Dim lst As List = BOVue.GetField(lstname).result
+	lst.Add(obj)
+End Sub
+
+'remove list last item
+Sub ListPop(lstname As String)
+	lstname = lstname.tolowercase
+	Dim lst As List = BOVue.GetField(lstname).result
+	Dim arsize As Int = lst.Size - 1
+	lst.RemoveAt(arsize)
+End Sub
+'
+Sub StateIncrement(itemName As String) As Int
+	itemName = itemName.tolowercase
+	Dim intX As Int = BOVue.GetField(itemName).result
+	If BANAno.IsNull(intX) Or intX = "" Then intX = 0
+	intX = BANAno.parseint(intX) + 1
+	BOVue.GetField(itemName)
+	BOVue.SetField(itemName, intX)
+	Return intX
+End Sub
+
+'set state value 
+Sub StateSet(key As String, value As Object)
+	BOVue.RunMethod("set", Array(key, value))
+End Sub
+
+'get state value 
+Sub StateGet(key As String) As Object
+	Dim rslt As Object = BOVue.RunMethod("get", Array(key))
+	Return rslt
+End Sub
+
+Sub StateDecrement(itemName As String) As Int
+	itemName = itemName.tolowercase
+	Dim intX As Int = BOVue.GetField(itemName).result
+	If BANAno.IsNull(intX) Or intX = "" Then intX = 0
+	intX = BANAno.parseint(intX) - 1
+	BOVue.GetField(itemName)
+	BOVue.SetField(itemName, intX)
+	Return intX
 End Sub
 
 Sub ListRemoveDuplicates(lst As List) As List
@@ -630,29 +1359,57 @@ End Sub
 
 Sub GetFileDetails(fileObj As Map) As FileObject
 	Dim sname As String = fileObj.Get("name")
-	Dim slastModifiedDate As String = fileObj.Get("lastModifiedDate")
-	slastModifiedDate = Date2YYYYMMDDHHMM(slastModifiedDate)
+	Dim slastModifiedDate As BANanoObject = fileObj.Get("lastModifiedDate")
 	Dim ssize As String = fileObj.Get("size")
 	Dim stype As String = fileObj.Get("type")
 	'
+	Dim yyyy As String = slastModifiedDate.RunMethod("getFullYear", Null).Result
+	Dim dd As String = slastModifiedDate.RunMethod("getDate", Null).Result
+	Dim mm As String = slastModifiedDate.RunMethod("getMonth", Null).Result
+	Dim hh As String = slastModifiedDate.RunMethod("getHours", Null).Result
+	Dim minutes As String = slastModifiedDate.RunMethod("getMinutes", Null).Result
+	'pad the details
+	dd = PadRight(dd, 2, "0")
+	mm = PadRight(mm, 2, "0")
+	hh = PadRight(hh, 2, "0")
+	minutes = PadRight(minutes, 2, "0")
+	'
+	Dim fd As String = $"${yyyy}-${mm}-${dd} ${hh}:${minutes}"$
+	'
+	
 	Dim ff As FileObject
 	ff.Initialize
 	ff.FileName = sname
-	ff.FileDate = slastModifiedDate
+	ff.FileDate = fd
 	ff.FileSize = ssize
 	ff.FileType = stype
 	Return ff
 End Sub
 
+'add html of component to app and this binds events and states
+Sub BindVueElement(elx As VueElement)
+	Dim mbindings As Map = elx.bindings
+	Dim mmethods As Map = elx.methods
+	'apply the binding for the control
+	For Each k As String In mbindings.Keys
+		Dim v As String = mbindings.Get(k)
+		SetData(k, v)
+	Next
+	'apply the events
+	For Each k As String In mmethods.Keys
+		Dim cb As BANanoObject = mmethods.Get(k)
+		SetCallBack(k, cb)
+	Next
+End Sub
 
-Sub BeautifySourceCode(slang As String, sourceCode As String) As String
+Sub BeautifySourceCode(slang As String, sc As String) As String
 	Select Case slang
 	Case "js"
-		Dim res As String = BANAno.RunJavascriptMethod("js_beautify", Array(sourceCode))
+		Dim res As String = BANAno.RunJavascriptMethod("js_beautify", Array(sc))
 	Case "css"
-		Dim res As String = BANAno.RunJavascriptMethod("css_beautify", Array(sourceCode))
+		Dim res As String = BANAno.RunJavascriptMethod("css_beautify", Array(sc))
 	Case "html"
-		Dim res As String = BANAno.RunJavascriptMethod("html_beautify", Array(sourceCode))
+		Dim res As String = BANAno.RunJavascriptMethod("html_beautify", Array(sc))
 	End Select
 	Return res
 End Sub
@@ -705,7 +1462,7 @@ private Sub DoUpload(fileObj As Object) As String   'ignore
 	xhr.Send2(fd)
 End Sub
 
-Sub HTTPUpload(fileObj As Object, module As Object, methodname As String)
+Sub HTTPUpload(fileObj As Object, EventHandler As Object, methodname As String)
 	Dim promise As BANanoPromise 'ignore
 	' some vars to hold our results
 	Dim Error As String
@@ -714,9 +1471,9 @@ Sub HTTPUpload(fileObj As Object, module As Object, methodname As String)
 	' call the http request
 	promise.CallSub(Me, "DoUpload", Array(fileObj))
 	promise.ThenWait(json)
-	BANAno.CallSub(module, methodname, Array(fileObj, json))
+	BANAno.CallSub(EventHandler, methodname, Array(fileObj, json))
 	promise.ElseWait(Error)  'ignore
-	BANAno.CallSub(module, methodname, Array(fileObj, Error))
+	BANAno.CallSub(EventHandler, methodname, Array(fileObj, Error))
 	promise.End
 End Sub
 
@@ -725,6 +1482,27 @@ End Sub
 Sub State2Another(source As String, target As String, defaultValue As Object)
 	Dim readObj As Object = GetState(source, defaultValue)
 	SetStateSingle(target, readObj)
+End Sub
+
+Sub GetAlphaNumeric(value As String) As String
+	value = CStr(value)
+	Try
+		value = value.Trim
+		If value = "" Then value = ""
+		Dim sout As String = ""
+		Dim mout As String = ""
+		Dim slen As Int = value.Length
+		Dim i As Int = 0
+		For i = 0 To slen - 1
+			mout = value.CharAt(i)
+			If InStr("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", mout) <> -1 Then
+				sout = sout & mout
+			End If
+		Next
+		Return sout
+	Catch
+		Return value
+	End Try	
 End Sub
 
 
@@ -755,13 +1533,6 @@ Sub JSONPretty(m As Object) As String
 	Return pretty
 End Sub
 
-'get an element using jquery
-Sub JQueryElement(sid As String) As BANanoObject
-	sid = sid.ToLowerCase
-	Dim bo As BANanoObject = JQuery.Selector($"#${sid}"$)
-	Return bo
-End Sub
-
 'create a map subset from list of keys
 Sub ExtractMap(source As Map, keys As List) As Map
 	Dim nm As Map = CreateMap()
@@ -778,6 +1549,7 @@ End Sub
 
 'join list to mv string
 Sub JoinNonBlanks(delimiter As String, lst As List) As String
+	If lst.size = 0 Then Return ""
 	'ensure we have non blanks
 	Dim nl As List
 	nl.Initialize
@@ -806,6 +1578,7 @@ End Sub
 'join maps
 Sub JoinMaps(lst As List) As Map
 	Dim nm As Map = CreateMap()
+	If lst.Size = 0 Then Return nm
 	For Each mr As Map In lst
 		For Each k As String In mr.Keys
 			Dim v As Object = mr.Get(k)
@@ -883,19 +1656,22 @@ Public Sub MonthNow() As String
 End Sub
 
 Sub DateAdd(mDate As String, HowManyDays As Int) As String
+	HowManyDays = BANAno.parseInt(HowManyDays)
 	Dim ConvertDate, NewDateDay As Long
 	ConvertDate = DateTime.DateParse(mDate)
 	NewDateDay = DateTime.Add(ConvertDate, 0, 0, HowManyDays)
 	Return DateTime.Date(NewDateDay)
 End Sub
 
-Sub Age(birthDay As String) As Int
-	DateTime.DateFormat = "yyyy-MM-dd"
-	Dim tDay As String = DateTime.Date(DateTime.Now)
-	Dim cDay As String = DateTime.Date(DateTime.DateParse(birthDay))
-	Dim aDays As Int = DateDiff(tDay, cDay)
-	Dim aYears As Int = aDays / 365.25
-	Return BANAno.parseInt(aYears)
+'Returns the number of days that have passed between two dates.
+'Pass the dates as a String
+Sub NumberOfDaysBetweenDates(CurrentDate As String, OtherDate As String) As Int
+	Dim CurrDate, OthDate As Long
+	CurrDate = DateTime.DateParse(CurrentDate)
+	OthDate = DateTime.DateParse(OtherDate)
+	Dim tpd As Long = DateTime.TicksPerDay
+	Dim iOut As Long = (CurrDate - OthDate)/tpd
+	Return iOut
 End Sub
 
 Public Sub CDbl(value As String) As Double
@@ -937,6 +1713,10 @@ End Sub
 
 
 Sub FormatFileSize(Bytes As Float) As String
+	If BANAno.IsNull(Bytes) Or BANAno.IsUndefined(Bytes) Then
+		Bytes = 0
+	End If
+	Bytes = BANAno.parsefloat(Bytes)
 	Try
 		Private Unit() As String = Array As String(" Byte", " KB", " MB", " GB", " TB", " PB", " EB", " ZB", " YB")
 		If Bytes = 0 Then
@@ -945,10 +1725,11 @@ Sub FormatFileSize(Bytes As Float) As String
 			Private Po, Si As Double
 			Private I As Int
 			Bytes = Abs(Bytes)
-			I = Floor(Logarithm(Bytes, 1024))
+			I = Logarithm(Bytes, 1024)
+			i = Floor(I)
 			Po = Power(1024, I)
 			Si = Bytes / Po
-			Return NumberFormat(Si, 1, 3) & Unit(I)
+			Return NumberFormat2(Si,1,3,3,True) & Unit(I)
 		End If
 	Catch
 		Return "0 Bytes"
@@ -1254,6 +2035,16 @@ Sub GeneratePassword(IntNum As Int) As String
 	Return RandomString(IntNum,True,True,True,"")
 End Sub
 
+'remove a delimiter from a string
+Sub RemDelimSB(delimiter As String, value As StringBuilder) As StringBuilder
+	If value.tostring.EndsWith(delimiter) = True Then
+		Dim delimLen As Int = delimiter.length
+		value.Remove(value.Length-delimLen,value.Length)
+	End If
+	Return value
+End Sub
+
+
 Sub Space(HM As Int) As String
 	Dim RS As String = ""
 	Do While Len(RS) < HM
@@ -1263,11 +2054,18 @@ Sub Space(HM As Int) As String
 End Sub
 
 Sub MakeMoney(sValue As String) As String
-	If sValue.Length = 0 Then Return "0.00"
-	If sValue = "null" Then sValue = "0.00"
-	sValue = sValue.Replace(",","")
+	If BANAno.IsNull(sValue) Or BANAno.IsUndefined(sValue) Then 
+		sValue = "0.00"
+		Return sValue
+	End If
+	sValue = CStr(sValue)
+	sValue = sValue.trim
+	If sValue.Length = 0 Then 
+		Return "0.00"
+	End If
 	sValue = Val(sValue)
-	If sValue = "0" Then sValue = "000"
+	If sValue = "0" Then sValue = "0.00"
+	sValue = BANAno.parsefloat(sValue)
 	sValue = Round2(sValue,2)
 	Return NumberFormat2(sValue, 1, 2, 2, True)
 End Sub
@@ -1318,6 +2116,27 @@ Sub LongDate(sDate As String) As String
 	End Try
 End Sub
 
+'format date to meet your needs
+Sub FormatDisplayDate(item As String, sFormat As String) As String
+	item = "" & item
+	If item = "" Then Return ""
+	If BANAno.isnull(item) Or BANAno.IsUndefined(item) Then Return ""
+	Dim bo As BANanoObject = BANAno.RunJavascriptMethod("dayjs", Array(item))
+	Dim sDate As String = bo.RunMethod("format", Array(sFormat)).Result
+	Return sDate
+End Sub
+
+'format numeric display
+Sub FormatDisplayNumber(item As String, sFormat As String) As String
+	item = "" & item
+	If item = "" Then Return ""
+	If BANAno.isnull(item) Or BANAno.IsUndefined(item) Then Return ""
+	Dim bo As BANanoObject = BANAno.RunJavascriptMethod("numeral", Array(item))
+	Dim sDate As String = bo.RunMethod("format", Array(sFormat)).Result
+	Return sDate
+End Sub
+
+
 Sub LongDateTime(sDate As String) As String
 	If sDate.Length = 0 Then Return ""
 	Try
@@ -1362,12 +2181,87 @@ Sub ProperCase(myStr As String) As String
 	End Try
 End Sub
 
+Sub BeautifyName(idName As String) As String
+	idName = idName.trim
+	If idName = "" Then Return ""
+	Dim ls As StringBuilder
+	ls.Initialize 
+	Dim slen As Int = idName.Length
+	Dim i As Int = 0
+	For i = 0 To slen - 1
+		Dim mout As String = idName.CharAt(i)
+		If "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".IndexOf(mout) = -1 Then
+			ls.Append("-")
+		Else
+			ls.Append(mout)
+		End If
+	Next
+	Dim sname As String = ls.tostring
+	sname = ProperSubName(sname, False)
+	Return sname
+End Sub
+
+Sub BeautifyRest(idName As String) As String
+	idName = idName.trim
+	If idName = "" Then Return ""
+	Dim ls As StringBuilder
+	ls.Initialize 
+	Dim slen As Int = idName.Length
+	Dim i As Int = 0
+	For i = 0 To slen - 1
+		Dim mout As String = idName.CharAt(i)
+		If "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".IndexOf(mout) = -1 Then
+			ls.Append("-")
+		Else
+			ls.Append(mout)
+		End If
+	Next
+	Dim sname As String = ls.tostring
+	sname = ProperSubNameRest(sname, False)
+	Return sname
+End Sub
+
+Sub ProperSubNameRest(vx As String, removePref As Boolean) As String
+	vx = vx.Replace(":", "-")
+	vx = vx.Replace(".", "-")
+	Dim varList As List = StrParse("-", vx)
+	If removePref Then
+		varList.RemoveAt(0)
+	End If
+	Dim varTot As Int = varList.Size - 1
+	Dim varCnt As Int
+	For varCnt = 0 To varTot
+		Dim varItem As String = varList.Get(varCnt)
+		If varCnt > 0 Then
+			varItem = ProperCase(varItem)
+		End If
+		varList.Set(varCnt, varItem)
+	Next
+	Dim subName1 As String = Join("",varList)
+	Return subName1
+End Sub
+
+
+Sub ProperSubName(vx As String, removePref As Boolean) As String
+	vx = vx.Replace(":", "-")
+	vx = vx.Replace(".", "-")
+	Dim varList As List = StrParse("-", vx)
+	If removePref Then
+		varList.RemoveAt(0)
+	End If
+	Dim varTot As Int = varList.Size - 1
+	Dim varCnt As Int
+	For varCnt = 0 To varTot
+		Dim varItem As String = varList.Get(varCnt)
+		varItem = ProperCase(varItem)
+		varList.Set(varCnt, varItem)
+	Next
+	Dim subName1 As String = Join("",varList)
+	Return subName1
+End Sub
+
 Sub Capitalize(t As String) As String
-	Dim s , r , o As String
-	s = t.SubString2(0,1)
-	r = t.SubString2(1, t.Length)
-	o = s.ToUpperCase & r
-	Return o
+	Return ProperCase(t)
 End Sub
 
 'lowercase map keys
@@ -1441,47 +2335,6 @@ Public Sub GetNumbers(value As String) As String
 	Catch
 		Return value
 	End Try
-End Sub
-
-'convert date picker value to correct date
-Sub ToYYYYMMDD(vmodel As String)
-	Dim sk As String = GetState(vmodel,"")
-	If sk = "" Then Return
-	sk = Date2YYYYMMDD(sk)
-	SetStateSingle(vmodel, sk)
-End Sub
-
-
-Sub Date2YYYYMMDD(value As Object) As String
-	Try
-		If CStr(value) = "" Then Return ""
-		If value = Null Then Return ""
-		Dim m As BANanoObject = BANAno.RunJavascriptMethod("moment", Array(value))
-		Dim res As String = m.RunMethod("format", "YYYY-MM-DD").result
-		If res.IndexOf("Invalid") > 0 Then res = ""
-		Return res
-	Catch
-		Return ""
-	End Try
-End Sub
-
-Sub Date2YYYYMMDDHHMM(value As Object) As String
-	Try
-		If CStr(value) = "" Then Return ""
-		If value = Null Then Return ""
-		Dim m As BANanoObject = BANAno.RunJavascriptMethod("moment", Array(value))
-		Dim res As String = m.RunMethod("format", "YYYY-MM-DD HH:MM").result
-		If res.IndexOf("Invalid") > 0 Then res = ""
-		Return res
-	Catch
-		Return ""
-	End Try
-End Sub
-
-'get md5hash
-Sub Md5Hash(value As String, key As String, raw As Boolean) As String
-	Dim res As Object = BANAno.RunJavascriptMethod("md5", Array(value, key, raw))
-	Return res
 End Sub
 
 Sub SortMap(m As Map) As Map
@@ -1559,6 +2412,15 @@ Sub ShowItems(items As List)
 	Next
 End Sub
 
+Sub List2MapSimple(lst As List, bSort As Boolean) As Map
+	If bSort Then lst.Sort(True)
+	Dim nm As Map = CreateMap()
+	For Each k As String In lst
+		nm.Put(k, k)	
+	Next
+	Return nm
+End Sub
+
 
 'convert a list to key value pairs map records
 Sub List2Options(lst As List, keyName As String, valueName As String) As Map
@@ -1617,13 +2479,6 @@ Sub SetBackgroundImage(elid As String, url As String)
 	BANAno.GetElement(elid).SetStyle(BANAno.ToJson(CreateMap("background-image": $"url('${url}')"$, "background-size": "100% 100%")))
 End Sub
 
-
-'compile html to render
-Sub Compile(html As String) As BANanoObject
-	Dim bo As BANanoObject = BOVue.RunMethod("compile", Array(html))
-	Return bo
-End Sub
-
 'set a property in a json string
 Sub JSONSetProperty(sjson As String, updates As Map) As String
 	Dim m As Map = BANAno.FromJson(sjson)
@@ -1637,17 +2492,17 @@ End Sub
 
 'create an OPTION element
 Sub CreateOPTION(sid As String) As VMElement
-	Dim el As VMElement
-	el.Initialize(Me,sid).SetTag("option")
-	Return el
+	Dim elx As VMElement
+	elx.Initialize(Me,sid).SetTag("option")
+	Return elx
 End Sub
 
 
 'create a 'select' element
 Sub CreateSELECT(sid As String) As VMElement
-	Dim el As VMElement
-	el.Initialize(Me,sid).SetTag("select")
-	Return el
+	Dim elx As VMElement
+	elx.Initialize(Me,sid).SetTag("select")
+	Return elx
 End Sub
 
 
@@ -1663,6 +2518,35 @@ End Sub
 Sub SetCloak(b As Boolean) As BANanoVue
 	If b = False Then Return Me
 	Template.SetAttr("v-cloak","true")
+	Return Me
+End Sub
+
+'add custom element to VApp
+Sub AddCustomElement(eltag As String, elid As String, elprops As Map, eltext As String)
+	AddElement1(elid, eltag, eltext, elprops, Null, Null)
+End Sub
+
+Sub AddElement1(elID As String, elTag As String, elText As String, mprops As Map, mstyles As Map, lclasses As List) As BANanoVue
+	Dim d As VMElement
+	d.Initialize(Me, elID).SetTag(elTag)
+	d.SetText(elText)
+	d.BuildModel(mprops, mstyles, lclasses, Null)
+	Template.SetText(d.ToString)
+	Return Me
+End Sub
+
+'add placeholder to VAPP
+Sub AddPlaceholder() As BANanoVue
+	Dim stemplate As String = BANanoGetHTML("placeholder")
+	Template.SetText(stemplate)
+	Return Me
+End Sub
+
+'add anything from the appendholder
+Sub AppendHolderTo(target As String) As BANanoVue
+	Dim stemplate As String = BANanoGetHTMLAsIs("appendholder")
+	Dim elx As BANanoElement = BANAno.GetElement(target)
+	elx.append(stemplate)
 	Return Me
 End Sub
 
@@ -1770,33 +2654,33 @@ Sub MakePx(sValue As String) As String
 End Sub
 
 Sub CreateFORM(id As String) As VMElement
-	Dim el As VMElement
-	el.Initialize(Me, id).SetTag("form")
-	Return el
+	Dim elx As VMElement
+	elx.Initialize(Me, id).SetTag("form")
+	Return elx
 End Sub
 
 Sub CreateLABEL(id As String) As VMElement
-	Dim el As VMElement
-	el.Initialize(Me, id).SetTag("label")
-	Return el
+	Dim elx As VMElement
+	elx.Initialize(Me, id).SetTag("label")
+	Return elx
 End Sub
 
 Sub CreateINPUT(id As String) As VMElement
-	Dim el As VMElement
-	el.Initialize(Me, id).SetTag("input")
-	Return el
+	Dim elx As VMElement
+	elx.Initialize(Me, id).SetTag("input")
+	Return elx
 End Sub
 
 Sub CreateTEXTAREA(id As String) As VMElement
-	Dim el As VMElement
-	el.Initialize(Me, id).SetTag("textarea")
-	Return el
+	Dim elx As VMElement
+	elx.Initialize(Me, id).SetTag("textarea")
+	Return elx
 End Sub
 
 Sub CreateBUTTON1(id As String) As VMElement
-	Dim el As VMElement
-	el.Initialize(Me, id).SetTag("button")
-	Return el
+	Dim elx As VMElement
+	elx.Initialize(Me, id).SetTag("button")
+	Return elx
 End Sub
 
 'add a style to be applied after rendering
@@ -1823,6 +2707,16 @@ Sub SaveText2File(content As String, fileName As String)
 	BANAno.RunJavascriptMethod("saveAs",Array(blob,fileName))
 End Sub
 
+Sub SaveBinaryArray2File(iUint8Array As Object, dbName As String)
+	Dim fc As List
+	fc.Initialize
+	fc.Add(iUint8Array)
+	'
+	Dim blob As BANanoObject
+	blob.Initialize2("Blob",Array(fc, CreateMap("type": "application/octet-stream")))
+	BANAno.RunJavascriptMethod("saveAs",Array(blob, dbName))
+End Sub
+
 
 Sub EnableItem(elID As String)
 	elID = elID.tolowercase
@@ -1838,10 +2732,12 @@ End Sub
 Sub HideItem(elID As String)
 	elID = elID.tolowercase
 	SetStateSingle($"${elID}show"$, False)
+	SetStateSingle($"${elID}badgeshow"$, False)	
 End Sub
 
 Sub ShowItem(elID As String)
 	SetStateSingle($"${elID}show"$, True)
+	SetStateSingle($"${elID}badgeshow"$, True)
 End Sub
 
 
@@ -1854,41 +2750,56 @@ Sub SetOptionBO(optionName As String, optionObject As BANanoObject)
 	Options.Put(optionName, optionObject)
 End Sub
 
-Sub AddComponent(comp As VMElement) As BANanoVue
+Sub RegisterComponent(compName As String, compOptions As Map) As BANanoVue
+	compName = compName.tolowercase
+	BOVue.RunMethod("component", Array(compName, compOptions))
+	Return Me
+End Sub
+
+'import a component, the module should have the Initilize method without parameters
+Sub Import(compname As String, comp As VMComponent) As BANanoVue
+	compname = compname.tolowercase
+	If components.ContainsKey(compname) = True Then Return Me
+	components.Put(compname, comp.Component)
+	Return Me
+End Sub
+
+Sub AddComponent(comp As VMComponent) As BANanoVue
 	Dim sid As String = comp.id
+	If components.ContainsKey(sid) = True Then Return Me
 	components.Put(sid, comp.Component)
 	Return Me
 End Sub
 
 Sub AddComponentBO(compName As String, comp As BANanoObject) As BANanoVue
+	If components.ContainsKey(compName) = True Then Return Me
 	components.Put(compName, comp)
 	Return Me
 End Sub
 
-
-Sub AddRoute(path As String, comp As VMElement)
+Sub AddRoute(comp As VMComponent)
 	If comp.name = "" Then
 		Log("AddRoute: Please specify the name of the Route!")
 	End If
 	'
 	Dim eachroute As Map = CreateMap()
-	eachroute.Put("path", path)
+	eachroute.Put("path", comp.path)
 	eachroute.Put("name", comp.name)
 	eachroute.Put("component", comp.component)
 	'
 	routes.Add(eachroute)
 End Sub
 
-Sub CreateRouterLink(Text As String) As VueHTML
-	Dim el As VueHTML
-	el.Initialize("","router-link").SetText(Text)
-	Return el
+Sub CreateRouterLink(rID As String, rTo As String, Text As String) As VueHTML
+	Dim elx As VueHTML
+	elx.Initialize(rID,"router-link").SetTo(rTo).SetText(Text)
+	Return elx
 End Sub
 
-Sub CreateRouterView As VueHTML
-	Dim el As VueHTML
-	el.Initialize("","router-view")
-	Return el
+Sub CreateRouterView(rID As String) As VueHTML
+	Dim elx As VueHTML
+	elx.Initialize(rID, "router-view")
+	Return elx
 End Sub
 
 Sub AuditTrail(oldM As Map, newM As Map) As Map
@@ -1916,7 +2827,16 @@ Sub AuditTrail(oldM As Map, newM As Map) As Map
 	Return df
 End Sub
 
-Public Sub DateTimeNow() As String
+Public Sub TimeNow() As String
+	Dim lNow As Long
+	Dim dt As String
+	lNow = DateTime.Now
+	DateTime.DateFormat = "HH:mm"
+	dt = DateTime.Date(lNow)
+	Return dt
+End Sub
+
+Public Sub DateNow() As String
 	Dim lNow As Long
 	Dim dt As String
 	lNow = DateTime.Now
@@ -1925,7 +2845,7 @@ Public Sub DateTimeNow() As String
 	Return dt
 End Sub
 
-Public Sub DateNow() As String
+Public Sub DateTimeNow() As String
 	Dim lNow As Long
 	Dim dt As String
 	lNow = DateTime.Now
@@ -1958,21 +2878,39 @@ Sub CopyMap(source As Map, keys As List) As Map
 	Return nm
 End Sub
 
+'return the first error in the list
+Sub GetError As String
+	Dim strError As String = Errors.GetValueAt(0)
+	Return strError
+End Sub
 
 Sub Validate(rec As Map, required As Map) As Boolean
+	Errors.Initialize
 	Dim iv As Int = 0
 	For Each k As String In required.Keys
+		'get the error description
+		Dim error As String = required.GetDefault(k, "")
+		If error = "" Then
+			error = $"The ${k} should be specified!"$
+		End If
+		'if the record contains this key
 		If rec.ContainsKey(k) Then
-			Dim v As String = rec.GetDefault(k,"")
-			v = CStr(v)
-			v = v.trim
-			If v = "" Then
-				Log("Validate: " & k)
+			Dim v As Object = rec.Get(k)
+			If BANAno.IsNull(v) Then v = ""
+			If BANAno.IsUndefined(v) Then v = ""
+			'Dim v As String = rec.GetDefault(k,"")
+			Dim vv As String = CStr(v)
+			vv = vv.trim
+			If vv = "" Then
 				iv = iv + 1
-				ShowError(k)
+				ShowError(k, error)
+				Errors.Put(k, error)
 			Else
 				HideError(k)
 			End If
+		Else
+			iv = iv + 1
+			Errors.Put(k, error)
 		End If
 	Next
 	If iv = 0 Then
@@ -1982,13 +2920,49 @@ Sub Validate(rec As Map, required As Map) As Boolean
 	End If
 End Sub
 
+Sub ListOfMap2Strings(lst As List) As List
+	Dim nl As List
+	nl = NewList
+	For Each m As Map In lst
+		Dim nm As Map = Map2Strings(m)
+		nl.Add(nm)
+	Next
+	Return nl
+End Sub
 
-Sub ShowError(elID As String)
-	SetStateSingle($"${elID}error"$, True)
+
+'ensure record meets the form requirements for display
+Sub Map2Strings(m As Map) As Map
+	Dim nm As Map = CreateMap()
+	For Each k As String In m.keys
+		Dim v As Object = m.get(k)
+		If BANAno.IsNull(v) Then v = ""
+		If BANAno.IsUndefined(v) Then v = ""
+		Dim vv As String = CStr(v)
+		nm.put(k, vv)
+	Next
+	Return nm
+End Sub
+
+Sub ShowError(elID As String, elError As String)
+	elID = elID.tolowercase
+	Dim pp As String = $"${elID}ErrorMessages"$
+	Dim nl As List
+	nl = NewList
+	nl.Add(elError)
+	SetData(pp, nl)
+	Dim pp1 As String = $"${elID}Error"$
+	SetData(pp1, True)
 End Sub
 
 Sub HideError(elID As String)
-	SetStateSingle($"${elID}error"$, False)
+	elID = elID.tolowercase
+	Dim pp As String = $"${elID}ErrorMessages"$
+	Dim nl As List
+	nl = NewList
+	SetData(pp, nl)
+	Dim pp1 As String = $"${elID}Error"$
+	SetData(pp1, False)
 End Sub
 
 Sub GetFileParentPath(Path As String) As String
@@ -2079,6 +3053,24 @@ Sub MakeDouble(m As Map, xkeys As List)
 	Next
 End Sub
 
+Sub MakeYesNo(m As Map, xkeys As List)
+	For Each k As String In xkeys
+		If m.ContainsKey(k) Then
+			Dim v As String = m.GetDefault(k,"No")
+			v = CStr(v)
+			v = v.trim
+			Select Case v
+				Case "","0", "false", "False",False,0,"no","No"
+					m.Put(k, "No")
+				Case "1", "true", "True",True,1,"yes","Yes"
+					m.Put(k, "Yes")
+			End Select
+		End If
+	Next
+End Sub
+
+
+
 Sub MakeBoolean(m As Map, xkeys As List)
 	For Each k As String In xkeys
 		If m.ContainsKey(k) Then
@@ -2086,9 +3078,9 @@ Sub MakeBoolean(m As Map, xkeys As List)
 			v = CStr(v)
 			v = v.trim
 			Select Case v
-			Case "","0", "false", "False",False,0
+			Case "","0", "false", "False",False,0,"no","No"
 				m.Put(k, False)
-			Case "1", "true", "True",True,1
+			Case "1", "true", "True",True,1,"yes","Yes"
 				m.Put(k, True)
 			End Select
 		End If
@@ -2139,6 +3131,38 @@ Sub MakeDate(m As Map, xkeys As List)
 	Next
 End Sub
 
+'convert data type to field type
+Sub DataType2FieldType(fldtype As String) As String
+	fldtype = fldtype.ToUpperCase
+	If fldtype.EqualsIgnoreCase("double") Then fldtype = "FLOAT"
+	If fldtype.EqualsIgnoreCase("integer") Then fldtype = "INT"
+	If fldtype.EqualsIgnoreCase("long") Then fldtype = "INT"
+	If fldtype.EqualsIgnoreCase("short") Then fldtype = "INT"
+	If fldtype.endswith("INT") Then fldtype = "INT"
+	If fldtype.endswith("CHAR") Then fldtype = "TEXT"
+	If fldtype.endswith("TEXT") Then fldtype = "TEXT"
+	If fldtype.endswith("REAL") Then fldtype = "FLOAT"
+	If fldtype.endswith("BIT") Then fldtype = "INT"
+	'
+	fldtype = fldtype.tolowercase
+	fldtype = fldtype.replace("text", "string")
+	fldtype = fldtype.replace("float", "dbl")
+	fldtype = fldtype.replace("blob", "string")
+	fldtype = fldtype.replace("none", "string")
+	fldtype = fldtype.replace("varchar", "string")
+	Return fldtype
+End Sub
+
+
+Sub MapRemovePrefix(m As Map) As Map
+	Dim nm As Map = CreateMap()
+	For Each k As String In m.keys
+		Dim v As String = m.Get(k)
+		k = MvField(k,2,"_")
+		nm.Put(k, v)
+	Next
+	Return nm
+End Sub
 
 'get id from event
 Sub GetIDFromEvent(e As BANanoEvent) As String
@@ -2159,6 +3183,17 @@ Sub GetEventTargetProperty(e As BANanoEvent, prop As String) As String
 	Return sid
 End Sub
 
+Sub GetFileListFromTarget(e As BANanoEvent) As List
+	Dim files As List = e.OtherField("target").GetField("files").Result
+	Return files
+End Sub
+
+
+Sub RefReset(frmID As String)
+	frmID = frmID.tolowercase
+	refs.GetField(frmID).RunMethod("reset", Null)
+End Sub
+
 Sub CallComputed(methodName As String) As Object
 	methodName = methodName.tolowercase
 	Return BOVue.GetField(methodName)
@@ -2169,8 +3204,14 @@ Sub CallMethod(methodName As String)
 	BOVue.RunMethod(methodName, Null)
 End Sub
 
-Sub RunMethod(methodName As String, params As Object) As BANanoObject
-	Return BOVue.RunMethod(methodName, params)
+Sub CallMethod1(methodName As String, args As List) As BANanoObject
+	methodName = methodName.tolowercase
+	Return BOVue.RunMethod(methodName, args)
+End Sub
+
+Sub RunMethod(methodName As String, args As List) As BANanoObject
+	methodName = methodName.tolowercase
+	Return BOVue.RunMethod(methodName, args)
 End Sub
 
 Sub SetStateTrue(k As String) As BANanoVue
@@ -2185,6 +3226,7 @@ End Sub
 
 Sub SetStateIncrement(k As String) As BANanoVue
 	Dim oldV As String = GetState(k, "0")
+	If BANAno.IsNull(oldV) Or oldV = "" Then oldV = 0
 	oldV = BANAno.parseInt(oldV) + 1
 	SetStateSingle(k, oldV)
 	Return Me
@@ -2192,22 +3234,50 @@ End Sub
 
 Sub SetStateDecrement(k As String) As BANanoVue
 	Dim oldV As String = GetState(k, "0")
+	If BANAno.IsNull(oldV) Or oldV = "" Then oldV = 0
 	oldV = BANAno.parseInt(oldV) - 1
 	SetStateSingle(k, oldV)
 	Return Me
 End Sub
 
 Sub SetStateList(k As String, l As List) As BANanoVue
+	If BANAno.IsNull(k) Or BANAno.IsUndefined(k) Then k = ""
 	k = k.tolowercase
+	If k = "" Then Return Me
 	data.Put(k, l)
 	Return Me
 End Sub
 
 'a single state change
 Sub SetStateSingle(k As String, v As Object) As BANanoVue
+	If BANAno.IsNull(k) Or BANAno.IsUndefined(k) Then k = ""
 	k = k.tolowercase
+	If k = "" Then Return Me
 	data.Put(k, v)
 	Return Me 
+End Sub
+
+Sub SetBoolean(k As String, b As Boolean) As BANanoVue
+	If BANAno.IsNull(k) Or BANAno.IsUndefined(k) Then k = ""
+	k = k.tolowercase
+	If k = "" Then Return Me
+	data.Put(k, b)
+	Return Me
+End Sub
+
+Sub SetList(k As String, l As Boolean) As BANanoVue
+	If BANAno.IsNull(k) Or BANAno.IsUndefined(k) Then k = ""
+	k = k.tolowercase
+	If k = "" Then Return Me
+	data.Put(k, l)
+	Return Me
+End Sub
+
+Sub NotState(stateName As String) As Boolean
+	Dim bcurrent As Boolean = GetState(stateName,False)
+	If bcurrent = Null Then bcurrent = True
+	bcurrent = Not(bcurrent)
+	Return bcurrent
 End Sub
 
 Sub ToggleState(stateName As String) As BANanoVue
@@ -2215,7 +3285,15 @@ Sub ToggleState(stateName As String) As BANanoVue
 	If bcurrent = Null Then bcurrent = True
 	bcurrent = Not(bcurrent)
 	SetStateSingle(stateName, bcurrent)
-	Return Me	
+	Return Me
+End Sub
+
+Sub ToggleStateGlobal(stateName As String) As BANanoVue
+	Dim bcurrent As Boolean = GetDataGlobal(stateName)
+	If bcurrent = Null Then bcurrent = True
+	bcurrent = Not(bcurrent)
+	SetDataGlobal(stateName, bcurrent)
+	Return Me
 End Sub
 
 Sub ToggleNamedState(stateName As String, state1 As String, state2 As String) As BANanoVue
@@ -2228,6 +3306,16 @@ Sub ToggleNamedState(stateName As String, state1 As String, state2 As String) As
 		Dim opt As Map = CreateMap()
 		opt.Put(stateName, state1)
 		SetState(opt)
+	End If
+	Return Me
+End Sub
+
+Sub ToggleNamedStateGlobal(stateName As String, state1 As String, state2 As String) As BANanoVue
+	Dim bcurrent As String = GetDataGlobal(stateName)
+	If bcurrent.EqualsIgnoreCase(state1) Then
+		SetDataGlobal(stateName, state2)
+	Else
+		SetDataGlobal(stateName, state1)
 	End If
 	Return Me	
 End Sub
@@ -2391,16 +3479,6 @@ End Sub
 Sub Use1(bo As BANanoObject, opt As Map)
 	BOVue.RunMethod("use", Array(bo, opt))
 End Sub
-'
-'Sub SetFocus(sid As String) As BANanoVue
-'	If sid <> "" Then
-'		sid = sid.tolowercase
-'		Dim input As BANanoObject = refs.Get(sid)
-'		Dim el As String = "$el"
-'		input.GetField(el).RunMethod("focus", Null)
-'	End If
-'	Return Me
-'End Sub
 
 Sub SetFrameWork(optName As String, boFrameWork As BANanoObject)
 	Options.Put(optName, boFrameWork)
@@ -2408,33 +3486,25 @@ End Sub
 
 'render the ux
 Sub UX()
-	Dim tmp As String = Template.tostring
-	GetTemplate = tmp
+	GetTemplate = Template.tostring
 	If routes.Size > 0 Then
 		Dim ropt As Map = CreateMap()
-		ropt.Put("mode", "history") 
+		'ropt.Put("mode", "history") 
 		ropt.Put("routes", routes)
-		Dim router As BANanoObject
-		router.Initialize2("VueRouter", Array(ropt))
-		Options.Put("router", router)
+		Router.Initialize2("VueRouter", Array(ropt))
+		Options.Put("router", Router)
 	End If
 	Options.Put("el", "#app")
 	If data.Size > 0 Then Options.put("data", data)
 	If methods.Size > 0 Then Options.Put("methods", methods)
+	If filters.Size > 0 Then Options.Put("filters", filters)
 	If computed.Size > 0 Then Options.Put("computed", computed)
 	If watches.Size > 0 Then Options.Put("watch", watches)
 	If components.Size > 0 Then Options.Put("components", components)
-	If updated <> Null Then Options.Put("updated", updated)
-	If destroyed <> Null Then Options.Put("destroyed", destroyed)
-	If mounted <> Null Then	Options.Put("mounted", mounted)
-	If beforeCreate <> Null Then Options.Put("beforeCreate", beforeCreate)
-	If created <> Null Then Options.Put("created", created)
-	If beforeMount <> Null Then Options.Put("beforeMount", beforeMount)
-	If beforeUpdate <> Null Then Options.Put("beforeUpdate", beforeUpdate)
-	If activated <> Null Then Options.Put("activated", activated)
-	If deactivated <> Null Then Options.Put("deactivated", deactivated)
-	If beforeDestroy <> Null Then Options.Put("beforeDestroy", beforeDestroy)
-	Options.Put("template", tmp)
+	'
+	store = BOVue.RunMethod("observable", Array(state))
+	BOVue.GetField("prototype").SetField("$store", store)
+	Options.Put("template", GetTemplate)
 	BOVue.Initialize2("Vue", Options)
 	'get the state
 	Dim dKey As String = "$data"
@@ -2442,8 +3512,20 @@ Sub UX()
 	'get the refs
 	Dim rKey As String = "$refs"
 	refs = BOVue.GetField(rKey)
-	'enable data to be available globally
-	'BOVue.GetField("prototype").SetField("$store", store)
+	Dim elKey As String = "$el"
+	el = BOVue.GetField(elKey)
+	Dim emitKey As String = "$emit"
+	emit = BOVue.GetField(emitKey)
+	Dim srouter As String = "$router"
+	Router = BOVue.GetField(srouter)
+End Sub
+
+'Use router To navigate
+Sub NavigateTo(sPath As String)
+	sPath = sPath.tolowercase
+	Dim namem As Map = CreateMap()
+	namem.put("path", sPath)
+	Router.RunMethod("push", Array(namem))
 End Sub
 
 Sub ForceUpdate
@@ -2458,90 +3540,154 @@ Sub ForceUpdate
 End Sub
 
 'set mounted
-Sub SetMounted(module As Object, methodName As String) As BANanoVue
+Sub SetMounted(EventHandler As Object, methodName As String) As BANanoVue
 	methodName = methodName.ToLowerCase
-	mounted = BANAno.CallBack(module, methodName, Null)
+	If SubExists(EventHandler, methodName) = False Then Return Me
+	Dim e As BANanoEvent
+	Dim mounted As BANanoObject = BANAno.CallBack(EventHandler, methodName, Array(e))
+	Options.Put("mounted", mounted)
+	SetMethod(EventHandler, methodName)
 	Return Me
 End Sub
 
 
 'set destroyed
-Sub SetDestroyed(module As Object, methodName As String) As BANanoVue
+Sub SetDestroyed(EventHandler As Object, methodName As String) As BANanoVue
 	methodName = methodName.ToLowerCase
-	destroyed = BANAno.CallBack(module, methodName, Null)
+	If SubExists(Module, methodName) = False Then Return Me
+	Dim e As BANanoEvent
+	Dim destroyed As BANanoObject = BANAno.CallBack(EventHandler, methodName, Array(e))
+	Options.Put("destroyed", destroyed)
+	SetMethod(EventHandler, methodName)
 	Return Me
 End Sub
 
 
 'set activated
-Sub SetActivated(module As Object, methodName As String) As BANanoVue
+Sub SetActivated(EventHandler As Object, methodName As String) As BANanoVue
 	methodName = methodName.ToLowerCase
-	activated = BANAno.CallBack(module, methodName, Null)
+	If SubExists(EventHandler, methodName) = False Then Return Me
+	Dim e As BANanoEvent
+	Dim activated As BANanoObject = BANAno.CallBack(EventHandler, methodName, Array(e))
+	Options.Put("activated", activated)
+	SetMethod(EventHandler, methodName)
 	Return Me
 End Sub
 
 
 'set deactivated
-Sub SetDeActivated(module As Object, methodName As String) As BANanoVue
+Sub SetDeActivated(EventHandler As Object, methodName As String) As BANanoVue
 	methodName = methodName.ToLowerCase
-	deactivated = BANAno.CallBack(module, methodName, Null)
+	If SubExists(EventHandler, methodName) = False Then Return Me
+	Dim e As BANanoEvent
+	Dim deactivated As BANanoObject = BANAno.CallBack(EventHandler, methodName, Array(e))
+	Options.Put("deactivated", deactivated)
+	SetMethod(EventHandler, methodName)
 	Return Me
 End Sub
 
 
 'set updated
-Sub SetUpdated(module As Object, methodName As String) As BANanoVue
+Sub SetUpdated(EventHandler As Object, methodName As String) As BANanoVue
 	methodName = methodName.ToLowerCase
-	updated = BANAno.CallBack(module, methodName, Null)
+	If SubExists(EventHandler, methodName) = False Then Return Me
+	Dim e As BANanoEvent
+	Dim updated As BANanoObject = BANAno.CallBack(EventHandler, methodName, Array(e))
+	Options.Put("updated", updated)
+	SetMethod(EventHandler, methodName)
 	Return Me
 End Sub
 
 'set beforemount
-Sub SetBeforeMount(module As Object, methodName As String) As BANanoVue
+Sub SetBeforeMount(EventHandler As Object, methodName As String) As BANanoVue
 	methodName = methodName.ToLowerCase
-	beforeMount = BANAno.CallBack(module, methodName, Null)
+	If SubExists(EventHandler, methodName) = False Then Return Me
+	Dim e As BANanoEvent
+	Dim beforeMount As BANanoObject = BANAno.CallBack(EventHandler, methodName, Array(e))
+	Options.Put("beforeMount", beforeMount)
+	SetMethod(EventHandler, methodName)
 	Return Me
 End Sub
 
 'set beforeupdate
-Sub SetBeforeUpdate(module As Object, methodName As String) As BANanoVue
+Sub SetBeforeUpdate(EventHandler As Object, methodName As String) As BANanoVue
 	methodName = methodName.ToLowerCase
-	beforeMount = BANAno.CallBack(module, methodName, Null)
+	If SubExists(EventHandler, methodName) = False Then Return Me
+	Dim e As BANanoEvent
+	Dim beforeUpdate As Boolean = BANAno.CallBack(EventHandler, methodName, Array(e))
+	Options.Put("beforeUpdate", beforeUpdate)
+	SetMethod(EventHandler, methodName)
 	Return Me
 End Sub
 
 'set before destroy
-Sub SetBeforeDestroy(module As Object, methodName As String) As BANanoVue
+Sub SetBeforeDestroy(EventHandler As Object, methodName As String) As BANanoVue
 	methodName = methodName.ToLowerCase
-	beforeDestroy = BANAno.CallBack(module, methodName, Null)
+	If SubExists(EventHandler, methodName) = False Then Return Me
+	Dim e As BANanoEvent
+	Dim beforeDestroy As Boolean = BANAno.CallBack(EventHandler, methodName, Array(e))
+	Options.Put("beforeDestroy", beforeDestroy)
+	SetMethod(EventHandler, methodName)
 	Return Me
 End Sub
 
 
 'set before created
-Sub SetBeforeCreate(module As Object, methodName As String) As BANanoVue
+Sub SetBeforeCreate(EventHandler As Object, methodName As String) As BANanoVue
 	methodName = methodName.ToLowerCase
-	beforeCreate = BANAno.CallBack(module, methodName, Null)
+	If SubExists(EventHandler, methodName) = False Then Return Me
+	Dim e As BANanoEvent
+	Dim beforeCreate As BANanoObject = BANAno.CallBack(EventHandler, methodName, Array(e))
+	Options.Put("beforeCreate", beforeCreate)
+	SetMethod(EventHandler, methodName)
 	Return Me
 End Sub
 
 
 'set created
-Sub SetCreated(module As Object, methodName As String) As BANanoVue
+Sub SetCreated(EventHandler As Object, methodName As String) As BANanoVue
 	methodName = methodName.ToLowerCase
-	created = BANAno.CallBack(module, methodName, Null)
+	If SubExists(EventHandler, methodName) = False Then Return Me
+	Dim e As BANanoEvent
+	Dim created As BANanoObject = BANAno.CallBack(EventHandler, methodName, Array(e))
+	Options.Put("created", created)
+	SetMethod(EventHandler, methodName)
 	Return Me
 End Sub
 
 'set direct method
-Sub SetMethod(module As Object, methodName As String) As BANanoVue
+Sub SetMethod(EventHandler As Object, methodName As String) As BANanoVue
 	methodName = methodName.ToLowerCase
-	If SubExists(module, methodName) Then
+	If SubExists(EventHandler, methodName) Then
 		Dim e As BANanoEvent
-		Dim cb As BANanoObject = BANAno.CallBack(module, methodName, Array(e))
+		Dim cb As BANanoObject = BANAno.CallBack(EventHandler, methodName, Array(e))
 		methods.Put(methodName, cb)
 	Else
 		Log($"SetMethod.${methodName} could not be found!"$)
+	End If
+	Return Me
+End Sub
+
+'set direct method
+Sub SetMethod1(EventHandler As Object, methodName As String, args As List) As BANanoVue
+	methodName = methodName.ToLowerCase
+	If SubExists(EventHandler, methodName) Then
+		Dim cb As BANanoObject = BANAno.CallBack(EventHandler, methodName, args)
+		methods.Put(methodName, cb)
+	End If
+	Return Me
+End Sub
+
+'set direct method
+Sub SetFilter(k As String, EventHandler As Object, methodName As String) As BANanoVue
+	k = k.tolowercase
+	methodName = methodName.ToLowerCase
+	If SubExists(EventHandler, methodName) Then
+		Dim value As Object
+		Dim cb As BANanoObject = BANAno.CallBack(EventHandler, methodName, Array(value))
+		filters.Put(k, cb.Result)
+	Else
+		Log($"SetFilter.${methodName} could not be found!"$)
 	End If
 	Return Me
 End Sub
@@ -2560,37 +3706,32 @@ Sub RemoveMethod(methodName As String) As BANanoVue
 End Sub
 
 'set computed
-Sub SetComputed(k As String, module As Object, methodName As String) As BANanoVue
+Sub SetComputed(k As String, EventHandler As Object, methodName As String) As BANanoVue
+	k = k.tolowercase
 	methodName = methodName.ToLowerCase
-	If SubExists(module, methodName) Then
-		k = k.tolowercase
-		If data.ContainsKey(k) Then
-			SetStateSingle(k, Null)
-		End If
+	If SubExists(EventHandler, methodName) Then
 		Dim e As BANanoEvent
-		Dim cb As BANanoObject = BANAno.CallBack(module, methodName, Array(e))
-		computed.Put(k, cb)
+		Dim cb As BANanoObject = BANAno.CallBack(EventHandler, methodName, Array(e))
+		computed.Put(k, cb.Result)
 	End If
 	Return Me
 End Sub
 
-Sub SetNextTick(module As Object, methodName As String) As BANanoVue
+Sub SetNextTick(EventHandler As Object, methodName As String) As BANanoVue
 	methodName = methodName.ToLowerCase
-	Dim cb As BANanoObject = BANAno.CallBack(module, methodName, Null)
+	Dim e As BANanoEvent
+	Dim cb As BANanoObject = BANAno.CallBack(EventHandler, methodName, Array(e))
 	BOVue.RunMethod("nextTick", cb)
 	Return Me
 End Sub
 
 'set watches 
-Sub SetWatch(k As String, bImmediate As Boolean, bDeep As Boolean, module As Object, methodName As String) As BANanoVue
+Sub SetWatch(k As String, bImmediate As Boolean, bDeep As Boolean, EventHandler As Object, methodName As String) As BANanoVue
 	methodName = methodName.tolowercase
-	If SubExists(module, methodName) Then
-		k = k.tolowercase
-		If data.ContainsKey(k) Then
-			SetStateSingle(k, Null)
-		End If
+	k = k.tolowercase
+	If SubExists(EventHandler, methodName) Then
 		Dim newVal As Object
-		Dim cb As BANanoObject = BANAno.CallBack(module, methodName, Array(newVal))
+		Dim cb As BANanoObject = BANAno.CallBack(EventHandler, methodName, Array(newVal))
 		Dim deepit As Map = CreateMap()
 		deepit.Put("handler", methodName)
 		deepit.Put("deep", bDeep)
@@ -2618,8 +3759,10 @@ End Sub
 Sub SetState(m As Map) As BANanoVue
 	Try
 	For Each k As String In m.Keys
+		If BANAno.IsNull(k) Or BANAno.IsUndefined(k) Then k = ""
 		Dim v As Object = m.Get(k)
 		k = k.tolowercase
+		If k = "" Then Continue
 		data.Put(k, v)
 	Next
 	Catch
@@ -2638,8 +3781,8 @@ Sub GetStates(lst As List) As Map
 	Dim sm As Map = CreateMap()
 	For Each lstrec As String In lst
 		lstrec = lstrec.tolowercase
-		Dim state As Object = GetState(lstrec, Null)
-		sm.Put(lstrec, state)
+		Dim xstate As Object = GetState(lstrec, Null)
+		sm.Put(lstrec, xstate)
 	Next
 	Return sm
 End Sub
@@ -2670,102 +3813,102 @@ Sub GetState(k As String, v As Object) As Object
 End Sub
 
 Sub CreateTag(id As String, tag As String) As VMElement
-	Dim el As VMElement
-	el.Initialize(Me,id).SetTag(tag)
-	Return el
+	Dim elx As VMElement
+	elx.Initialize(Me,id).SetTag(tag)
+	Return elx
 End Sub
 
 Sub CreateDiv(id As String) As VMElement
-	Dim el As VMElement
-	el.Initialize(Me,id).SetTag("div")
-	Return el
+	Dim elx As VMElement
+	elx.Initialize(Me,id).SetTag("div")
+	Return elx
 End Sub
 
 Sub CreateSPAN(id As String) As VMElement
-	Dim el As VMElement
-	el.Initialize(Me,id).SetTag("span")
-	Return el
+	Dim elx As VMElement
+	elx.Initialize(Me,id).SetTag("span")
+	Return elx
 End Sub
 
 Sub CreateUL(id As String) As VMElement
-	Dim el As VMElement
-	el.Initialize(Me,id).SetTag("ul")
-	Return el
+	Dim elx As VMElement
+	elx.Initialize(Me,id).SetTag("ul")
+	Return elx
 End Sub
 
 Sub CreateLI(id As String) As VMElement
-	Dim el As VMElement
-	el.Initialize(Me,id).SetTag("li")
-	Return el
+	Dim elx As VMElement
+	elx.Initialize(Me,id).SetTag("li")
+	Return elx
 End Sub
 
 
 Sub CreateOL(id As String) As VMElement
-	Dim el As VMElement
-	el.Initialize(Me,id).SetTag("ol")
-	Return el
+	Dim elx As VMElement
+	elx.Initialize(Me,id).SetTag("ol")
+	Return elx
 End Sub
 
 
 Sub CreateP(id As String) As VMElement
-	Dim el As VMElement
-	el.Initialize(Me, id).SetTag("p")
-	Return el
+	Dim elx As VMElement
+	elx.Initialize(Me, id).SetTag("p")
+	Return elx
 End Sub
 
 Sub CreateKeepAlive(sid As String) As VMElement
-	Dim el As VMElement
-	el.Initialize(Me,sid).SetTag("keep-alive")
-	Return el
+	Dim elx As VMElement
+	elx.Initialize(Me,sid).SetTag("keep-alive")
+	Return elx
 End Sub
 
 'create an element with a 'component' tag
 Sub CreateComponent(id As String) As VMElement
-	Dim el As VMElement
-	el.Initialize(Me, id).SetTag("component")
-	Return el
+	Dim elx As VMElement
+	elx.Initialize(Me, id).SetTag("component")
+	Return elx
 End Sub
 
 Sub CreateIMG(img As String) As VMElement
-	Dim el As VMElement
-	el.Initialize(Me, img).SetTag("img")
-	Return el
+	Dim elx As VMElement
+	elx.Initialize(Me, img).SetTag("img")
+	Return elx
 End Sub
 
 Sub CreateH1(id As String) As VMElement
-	Dim el As VMElement
-	el.Initialize(Me, id).SetTag("h1")
-	Return el
+	Dim elx As VMElement
+	elx.Initialize(Me, id).SetTag("h1")
+	Return elx
 End Sub
 
 Sub CreateH2(id As String) As VMElement
-	Dim el As VMElement
-	el.Initialize(Me, id).SetTag("h2")
-	Return el
+	Dim elx As VMElement
+	elx.Initialize(Me, id).SetTag("h2")
+	Return elx
 End Sub
 
 Sub CreateH3(id As String) As VMElement
-	Dim el As VMElement
-	el.Initialize(Me, id).SetTag("h3")
-	Return el
+	Dim elx As VMElement
+	elx.Initialize(Me, id).SetTag("h3")
+	Return elx
 End Sub
 
 Sub CreateH4(id As String) As VMElement
-	Dim el As VMElement
-	el.Initialize(Me, id).SetTag("h4")
-	Return el
+	Dim elx As VMElement
+	elx.Initialize(Me, id).SetTag("h4")
+	Return elx
 End Sub
 
 Sub CreateH5(id As String) As VMElement
-	Dim el As VMElement
-	el.Initialize(Me, id).SetTag("h5")
-	Return el
+	Dim elx As VMElement
+	elx.Initialize(Me, id).SetTag("h5")
+	Return elx
 End Sub
 
 Sub CreateH6(id As String) As VMElement
-	Dim el As VMElement
-	el.Initialize(Me, id).SetTag("h6")
-	Return el
+	Dim elx As VMElement
+	elx.Initialize(Me, id).SetTag("h6")
+	Return elx
 End Sub
 
 
@@ -2939,6 +4082,7 @@ End Sub
 
 'join list to multi value string
 Sub JoinFields(delimiter As String, lst As List) As String
+	If lst.Size = 0 Then Return ""
 	Dim i As Int
 	Dim sb As StringBuilder
 	Dim fld As String
@@ -2954,6 +4098,25 @@ Sub JoinFields(delimiter As String, lst As List) As String
 	Return sb.ToString
 End Sub
 
+'join list to multi value string with a quote
+Sub JoinFields1(delimiter As String, sQuote As String, lst As List) As String
+	If lst.Size = 0 Then Return ""
+	Dim i As Int
+	Dim sb As StringBuilder
+	Dim fld As String
+	sb.Initialize
+	fld = lst.Get(0)
+	Dim xfld As String = $"${fld}"$
+	xfld = sQuote & xfld & sQuote
+	sb.Append(xfld)
+	For i = 1 To lst.size - 1
+		Dim fld As String = lst.Get(i)
+		Dim xfld As String = $"${fld}"$
+		xfld = sQuote & xfld & sQuote
+		sb.Append(delimiter).Append(xfld)
+	Next
+	Return sb.ToString
+End Sub
 
 Sub SetRequired(elID As String, b As Boolean)
 	elID = elID.tolowercase
@@ -2977,11 +4140,11 @@ End Sub
 
 Sub Hide(elID As String)
 	elID = elID.tolowercase
-	SetStateSingle($"${elID}show"$, False)
+	SetStateSingle($"${elID}value"$, False)
 End Sub
 
 Sub Show(elID As String)
-	SetStateSingle($"${elID}show"$, True)
+	SetStateSingle($"${elID}value"$, True)
 End Sub
 
 
@@ -3049,4 +4212,214 @@ Sub Unflatten(tdata As List, childname As String) As List
 		If childs.Size = 0 Then mi.Remove(childname)
 	Next
 	Return tree
+End Sub
+
+public Sub readAsText(fr As Map) As BANanoPromise
+	Dim promise As BANanoPromise 'ignore
+		
+	' calling a single upload
+	promise.CallSub(Me, "ReadFile", Array(fr, "readAsText"))
+	Return promise
+End Sub
+
+Sub readAsBinaryString(fr As Map) As BANanoPromise
+	Dim promise As BANanoPromise 'ignore
+		
+	' calling a single upload
+	promise.CallSub(Me, "ReadFile", Array(fr, "readAsBinaryString"))
+	Return promise
+End Sub
+
+Sub readAsDataURL(fr As Map) As BANanoPromise
+	Dim promise As BANanoPromise 'ignore
+		
+	' calling a single upload
+	promise.CallSub(Me, "ReadFile", Array(fr, "readAsDataURL"))
+	Return promise
+End Sub
+
+Sub readAsArrayBuffer(fr As Map) As BANanoPromise
+	Dim promise As BANanoPromise 'ignore
+		
+	' calling a single upload
+	promise.CallSub(Me, "ReadFile", Array(fr, "readAsArrayBuffer"))
+	Return promise
+End Sub
+
+private Sub ReadFile(FileToRead As Object, MethodName As String)
+	' make a filereader
+	Dim FileReader As BANanoObject
+	FileReader.Initialize2("FileReader", Null)
+	' attach the file (to get the name later)
+	FileReader.SetField("file", FileToRead)
+	
+	' make a callback for the onload event
+	' an onload of a FileReader requires a 'event' param
+	Dim event As Map
+	FileReader.SetField("onload", BANAno.CallBack(Me, "OnLoad", Array(event)))
+	FileReader.SetField("onerror", BANAno.CallBack(Me, "OnError", Array(event)))
+	' start reading the DataURL
+	FileReader.RunMethod(MethodName, FileToRead)
+End Sub
+
+private Sub OnLoad(event As Map) As String 'ignore
+	' getting our file again (set in UploadFileAndGetDataURL)
+	Dim FileReader As BANanoObject = event.Get("target")
+	Dim UploadedFile As BANanoObject = FileReader.GetField("file")
+	' return to the then of the UploadFileAndGetDataURL
+	BANAno.ReturnThen(CreateMap("name": UploadedFile.GetField("name"), "result": FileReader.Getfield("result")))
+End Sub
+
+private Sub OnError(event As Map) As String 'ignore
+	Dim FileReader As BANanoObject = event.Get("target")
+	Dim UploadedFile As BANanoObject = FileReader.GetField("file")
+	Dim Abort As Boolean = False
+	' uncomment this if you want to abort the whole operatio
+	' Abort = true
+	' FileReader.RunMethod("abort", Null)
+	
+	BANAno.ReturnElse(CreateMap("name": UploadedFile.GetField("name"), "result": FileReader.GetField("error"), "abort": Abort))
+End Sub
+
+'
+'join list to multi value string with a quote
+Sub JoinItems(delimiter As String, sQuote As String, lst As List) As String
+	If lst.Size = 0 Then Return ""
+	Dim i As Int
+	Dim sb As StringBuilder
+	Dim fld As String
+	sb.Initialize
+	fld = lst.Get(0)
+	Dim xfld As String = $"${fld}"$
+	xfld = sQuote & xfld & sQuote
+	sb.Append(xfld)
+	For i = 1 To lst.size - 1
+		Dim fld As String = lst.Get(i)
+		Dim xfld As String = $"${fld}"$
+		xfld = sQuote & xfld & sQuote
+		sb.Append(delimiter).Append(xfld)
+	Next
+	Return sb.ToString
+End Sub
+
+
+'focus on a ref
+Sub SetFocus(refID As String)
+	refID = refID.tolowercase
+	refs.GetField(refID).RunMethod("focus", Null)
+End Sub
+
+
+'nullify the file select
+Sub NullifyFileSelect(refID As String)
+	RefNull(refID)
+End Sub
+
+Sub RefNull(refID As String)
+	refID = refID.tolowercase
+	refs.GetField(refID).SetField("value", Null)
+End Sub
+
+
+'click a reference
+Sub RefClick(refID As String)
+	refID = refID.tolowercase
+	refs.GetField(refID).RunMethod("click", Null)
+End Sub
+
+Sub ShowFileSelect(fsName As String)
+	RefClick(fsName)
+End Sub
+
+
+Sub RefreshKey(keyName As String) As BANanoVue
+	keyName = keyName.ToLowerCase
+	SetData(keyName, DateTime.now)
+	Return Me
+End Sub
+
+
+Sub Increment(elID As String, valueOf As Int) As BANanoVue
+	elID = elID.tolowercase
+	Dim oldv As Int = GetState(elID,0)
+	If BANAno.IsNull(oldv) Or oldv = "" Then oldv = 0
+	oldv = BANAno.parseInt(oldv) + valueOf
+	SetStateSingle(elID, oldv)
+	Return Me
+End Sub
+
+Sub Decrement(elID As String, valueOf As Int) As BANanoVue
+	elID = elID.tolowercase
+	Dim oldv As Int = GetState(elID,0)
+	If BANAno.IsNull(oldv) Or oldv = "" Then oldv = 0
+	oldv = BANAno.parseInt(oldv) - valueOf
+	SetStateSingle(elID, oldv)
+	Return Me
+End Sub
+
+'add a rule
+Sub AddRule(ruleName As String, EventHandler As Object,  MethodName As String) As BANanoVue
+	If BANAno.IsNull(ruleName) Or BANAno.IsUndefined(ruleName) Then ruleName = ""
+	If ruleName = "" Then Return Me
+	ruleName = ruleName.ToLowerCase
+	MethodName = MethodName.ToLowerCase
+	Dim rules As List
+	If data.ContainsKey(ruleName) Then
+		rules = data.Get(ruleName)
+	Else
+		rules = NewList
+	End If
+	'
+	Dim v As Object
+	Dim cb As BANanoObject = BANAno.CallBack(EventHandler, MethodName, Array(v))
+	If SubExists(Module, MethodName) Then
+		rules.Add(cb.Result)
+	End If
+	data.put(ruleName, rules)
+	Return Me
+End Sub
+
+'get the html part of a bananoelement
+Sub BANanoGetHTML(id As String) As String
+	id = id.tolowercase
+	Dim be As BANanoElement
+	be.Initialize($"#${id}"$)
+	Dim xTemplate As String = be.GetHTML
+	be.Empty
+	xTemplate = xTemplate.Replace("v-template", "template")
+	Return xTemplate
+End Sub
+
+'get the html part of a bananoelement
+Sub BANanoGetHTMLAsIs(id As String) As String
+	id = id.tolowercase
+	Dim be As BANanoElement
+	be.Initialize($"#${id}"$)
+	Dim xTemplate As String = be.GetHTML
+	be.Empty
+	Return xTemplate
+End Sub
+
+
+'get html from source and append it on target
+Sub BANanoMoveHTML(source As String, target As String)
+	source = source.tolowercase
+	target = target.tolowercase
+	Dim ssource As String = BANanoGetHTML(source)
+	'append the html to the target
+	BANAno.GetElement($"#${target}"$).Append(ssource)
+End Sub
+
+'add anything from the appendholder
+Sub AppendPlaceHolderTo(target As String)
+	Dim stemplate As String = BANanoGetHTMLAsIs("placeholder")
+	Dim elx As BANanoElement
+	elx.Initialize($"#${target}"$)
+	elx.append(stemplate)
+End Sub
+
+'set the template from the placeholder
+Sub AppendPlaceholderToTemplate
+	Dim ssource As String = BANanoGetHTML("placeholder")
+	SetTemplate(ssource)
 End Sub

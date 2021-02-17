@@ -9,8 +9,8 @@ Sub Class_Globals
 	Public Skeleton As VMElement
 	Public ID As String
 	Private vue As BANanoVue
-	Private module As Object
-	Private DesignMode As Boolean
+	Private module As Object   'ignore
+	Private DesignMode As Boolean    'ignore
 End Sub
 
 Public Sub Initialize(v As BANanoVue, sid As String, eventHandler As Object) As VMSkeleton
@@ -22,6 +22,17 @@ Public Sub Initialize(v As BANanoVue, sid As String, eventHandler As Object) As 
 	Return Me
 End Sub
 
+Sub SetData(xprop As String, xValue As Object) As VMSkeleton
+	vue.SetData(xprop, xValue)
+	Return Me
+End Sub
+
+
+
+'add an element to the page content
+Sub AddElement(elm As VMElement)
+	Skeleton.SetText(elm.ToString)
+End Sub
 
 Sub SetAttrLoose(loose As String) As VMSkeleton
 	Skeleton.SetAttrLoose(loose)
@@ -118,12 +129,12 @@ Sub SetDisabled(b As Boolean) As VMSkeleton
 	Return Me
 End Sub
 
-Sub SetVIf(vif As Object) As VMSkeleton
+Sub SetVIf(vif As String) As VMSkeleton
 	Skeleton.SetVIf(vif)
 	Return Me
 End Sub
 
-Sub SetVShow(vif As Object) As VMSkeleton
+Sub SetVShow(vif As String) As VMSkeleton
 	Skeleton.SetVShow(vif)
 	Return Me
 End Sub

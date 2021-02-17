@@ -4,7 +4,7 @@ ModulesStructureVersion=1
 Type=Class
 Version=8.1
 @EndOfDesignText@
-#IgnoreWarnings:12
+#IgnoreWarnings:12, 9
 Sub Class_Globals
 	Public CardText As VMElement
 	Public ID As String
@@ -12,7 +12,8 @@ Sub Class_Globals
 	Private BANano As BANano  'ignore
 	Private DesignMode As Boolean
 	Private Module As Object
-	
+	Private bStatic As Boolean
+	Public HasContent As Boolean
 End Sub
 
 'initialize the CardText
@@ -23,9 +24,33 @@ Public Sub Initialize(v As BANanoVue, sid As String, eventHandler As Object) As 
 	DesignMode = False
 	Module = eventHandler
 	vue = v
+	bStatic = False
+	HasContent = False
 	Return Me
 End Sub
 
+
+
+'add an element to the page content
+Sub AddElement(elm As VMElement)
+	CardText.SetText(elm.ToString)
+End Sub
+
+Sub AddElement1(elID As String, elTag As String, elText As String, mprops As Map, mstyles As Map, lclasses As List) As VMCardText
+	Dim d As VMElement
+	d.Initialize(vue,elID).SetDesignMode(DesignMode).SetTag(elTag)
+	d.SetText(elText)
+	d.BuildModel(mprops, mstyles, lclasses, Null)
+	SetText(d.ToString)
+	HasContent = True
+	Return Me
+End Sub
+
+Sub SetStatic(b As Boolean) As VMCardText
+	bStatic = b
+	CardText.SetStatic(b)
+	Return Me
+End Sub
 
 Sub SetAttrLoose(loose As String) As VMCardText
 	CardText.SetAttrLoose(loose)
@@ -40,17 +65,27 @@ Sub SetAttributes(attrs As List) As VMCardText
 End Sub
 
 Sub AddContent(scontent As String) As VMCardText
+	If scontent = "" Then Return Me
 	SetText(scontent)
+	HasContent = True
 	Return Me
 End Sub
 
 Sub AddSpacer As VMCardText
 	CardText.AddSpacer
+	HasContent = True
 	Return Me
 End Sub
 
+Sub SetData(prop As String, value As Object) As VMCardText
+	vue.SetData(prop, value)
+	Return Me
+End Sub
+
+
 Sub AddDivider As VMCardText
 	CardText.AddDivider
+	HasContent = True
 	Return Me
 End Sub
 
@@ -66,13 +101,20 @@ Sub UseTheme(themeName As String) As VMCardText
 End Sub
 
 'set color intensity
-Sub SetColorIntensity(varColor As String, varIntensity As String) As VMCardText
-	Dim pp As String = $"${ID}Color"$
-	Dim scolor As String = $"${varColor} ${varIntensity}"$
-	vue.SetStateSingle(pp, scolor)
-	CardText.Bind(":color", pp)
+Sub SetColor(varColor As String) As VMCardText
+	If varColor = "" Then Return Me
+	AddClass(varColor)
 	Return Me
 End Sub
+
+'set color intensity
+Sub SetColorIntensity(varColor As String, varIntensity As String) As VMCardText
+	If varColor = "" Then Return Me
+	Dim scolor As String = $"${varColor} ${varIntensity}"$
+	AddClass(scolor)
+	Return Me
+End Sub
+
 
 'get component
 Sub ToString As String
@@ -85,12 +127,12 @@ Sub SetVModel(k As String) As VMCardText
 	Return Me
 End Sub
 
-Sub SetVIf(vif As Object) As VMCardText
+Sub SetVIf(vif As String) As VMCardText
 	CardText.SetVIf(vif)
 	Return Me
 End Sub
 
-Sub SetVShow(vif As Object) As VMCardText
+Sub SetVShow(vif As String) As VMCardText
 	CardText.SetVShow(vif)
 	Return Me
 End Sub
@@ -104,12 +146,15 @@ End Sub
 Sub AddChild(child As VMElement) As VMCardText
 	Dim childHTML As String = child.ToString
 	CardText.SetText(childHTML)
+	HasContent = True
 	Return Me
 End Sub
 
 'set text
-Sub SetText(t As Object) As VMCardText
+Sub SetText(t As String) As VMCardText
+	If t = "" Then Return Me
 	CardText.SetText(t)
+	HasContent = True
 	Return Me
 End Sub
 
@@ -221,6 +266,7 @@ Sub BuildModel(mprops As Map, mstyles As Map, lclasses As List, loose As List) A
 CardText.BuildModel(mprops, mstyles, lclasses, loose)
 Return Me
 End Sub
+
 Sub SetVisible(b As Boolean) As VMCardText
 CardText.SetVisible(b)
 Return Me
@@ -233,10 +279,11 @@ Sub SetTextColor(varColor As String) As VMCardText
 	Return Me
 End Sub
 
-'set color intensity
-Sub SetTextColorIntensity(varColor As String, varIntensity As String) As VMCardText
-	Dim sColor As String = $"${varColor}--text"$
-	Dim sIntensity As String = $"text--${varIntensity}"$
+'set color intensity - built in
+Sub SetTextColorIntensity(textcolor As String, textintensity As String) As VMCardText
+	If textcolor = "" Then Return Me
+	Dim sColor As String = $"${textcolor}--text"$
+	Dim sIntensity As String = $"text--${textintensity}"$
 	Dim mcolor As String = $"${sColor} ${sIntensity}"$
 	AddClass(mcolor)
 	Return Me

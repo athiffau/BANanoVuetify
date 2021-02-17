@@ -4,7 +4,7 @@ ModulesStructureVersion=1
 Type=Class
 Version=8.1
 @EndOfDesignText@
-#IgnoreWarnings:12
+#IgnoreWarnings:12, 9
 Sub Class_Globals
 	Public DataFooter As VMElement
 	Public ID As String
@@ -25,6 +25,19 @@ Public Sub Initialize(v As BANanoVue, sid As String, eventHandler As Object) As 
 	Return Me
 End Sub
 
+
+
+'add an element to the page content
+Sub AddElement(elm As VMElement)
+	DataFooter.SetText(elm.ToString)
+End Sub
+
+Sub SetData(prop As String, value As Object) As VMDataFooter
+	vue.SetData(prop, value)
+	Return Me
+End Sub
+
+
 'get component
 Sub ToString As String
 	Return DataFooter.ToString
@@ -35,12 +48,12 @@ Sub SetVModel(k As String) As VMDataFooter
 	Return Me
 End Sub
 
-Sub SetVIf(vif As Object) As VMDataFooter
+Sub SetVIf(vif As String) As VMDataFooter
 	DataFooter.SetVIf(vif)
 	Return Me
 End Sub
 
-Sub SetVShow(vif As Object) As VMDataFooter
+Sub SetVShow(vif As String) As VMDataFooter
 	DataFooter.SetVShow(vif)
 	Return Me
 End Sub
@@ -75,7 +88,7 @@ Sub AddClass(c As String) As VMDataFooter
 End Sub
 
 'set an attribute
-Sub SetAttr(attr as map) As VMDataFooter
+Sub SetAttr(attr As Map) As VMDataFooter
 	DataFooter.SetAttr(attr)
 	Return Me
 End Sub
@@ -216,8 +229,8 @@ Sub SetOnUpdateOptions(methodName As String) As VMDataFooter
 	methodName = methodName.tolowercase
 	If SubExists(Module, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, e)
-	SetAttr(CreateMap("v-on:update:options": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
+	SetAttr(CreateMap("@update:options": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me

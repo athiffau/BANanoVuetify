@@ -10,9 +10,10 @@ Sub Class_Globals
 	Public ID As String
 	Private vue As BANanoVue
 	Private BANano As BANano  'ignore
-	Private DesignMode As Boolean
+	Private DesignMode As Boolean   'ignore
 	Private Module As Object
 	Public Container As VMContainer
+	Private bStatic As Boolean
 End Sub
 
 'initialize the ExpansionPanelContent
@@ -24,13 +25,45 @@ Public Sub Initialize(v As BANanoVue, sid As String, eventHandler As Object) As 
 	Module = eventHandler
 	vue = v
 	Container.Initialize(vue, $"${ID}content"$, Module) 
+	bStatic = False
 	Return Me
 End Sub
+
+
+
+'add an element to the page content
+Sub AddElement(elm As VMElement)
+	ExpansionPanelContent.SetText(elm.ToString)
+End Sub
+
+
+Sub AddElement1(elID As String, elTag As String, elText As String, mprops As Map, mstyles As Map, lclasses As List) As VMExpansionPanelContent
+	Dim d As VMElement
+	d.Initialize(vue,elID).SetDesignMode(DesignMode).SetTag(elTag)
+	d.SetText(elText)
+	d.BuildModel(mprops, mstyles, lclasses, Null)
+	SetText(d.ToString)
+	Return Me
+End Sub
+
+
+Sub SetStatic(b As Boolean) As VMExpansionPanelContent
+	bStatic = b
+	ExpansionPanelContent.SetStatic(b)
+	Container.SetStatic(b)
+	Return Me
+End Sub
+
+Sub SetData(xprop As String, xValue As Object) As VMExpansionPanelContent
+	vue.SetData(xprop, xValue)
+	Return Me
+End Sub
+
+
 
 'get component
 Sub ToString As String
 	Container.RemoveAttr("v-show")
-	Container.RemoveAttr("ref")
 	Container.RemoveAttr(":style")
 	If Container.HasContent Then AddComponent(Container.ToString)
 	Return ExpansionPanelContent.ToString
@@ -41,12 +74,12 @@ Sub SetVModel(k As String) As VMExpansionPanelContent
 	Return Me
 End Sub
 
-Sub SetVIf(vif As Object) As VMExpansionPanelContent
+Sub SetVIf(vif As String) As VMExpansionPanelContent
 	ExpansionPanelContent.SetVIf(vif)
 	Return Me
 End Sub
 
-Sub SetVShow(vif As Object) As VMExpansionPanelContent
+Sub SetVShow(vif As String) As VMExpansionPanelContent
 	ExpansionPanelContent.SetVShow(vif)
 	Return Me
 End Sub
@@ -100,15 +133,39 @@ Sub AddChildren(children As List)
 End Sub
 
 'set color
-Sub SetColor(varColor As Object) As VMExpansionPanelContent
+Sub SetColor(varColor As String) As VMExpansionPanelContent
+	If varColor = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("color", varColor)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Color"$
 	vue.SetStateSingle(pp, varColor)
 	ExpansionPanelContent.Bind(":color", pp)
 	Return Me
 End Sub
 
+'set color intensity
+Sub SetColorIntensity(varColor As String, varIntensity As String) As VMExpansionPanelContent
+	Dim pp As String = $"${ID}Color"$
+	Dim scolor As String = $"${varColor} ${varIntensity}"$
+	If varColor = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("color", scolor)
+		Return Me
+	End If
+	vue.SetStateSingle(pp, scolor)
+	ExpansionPanelContent.Bind(":color", pp)
+	Return Me
+End Sub
+
 'set eager
-Sub SetEager(varEager As Object) As VMExpansionPanelContent
+Sub SetEager(varEager As Boolean) As VMExpansionPanelContent
+	If varEager = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("eager", varEager)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Eager"$
 	vue.SetStateSingle(pp, varEager)
 	ExpansionPanelContent.Bind(":eager", pp)
@@ -162,16 +219,6 @@ Sub UseTheme(themeName As String) As VMExpansionPanelContent
 		Dim sclass As String = themes.Get(themeName)
 		AddClass(sclass)
 	End If
-	Return Me
-End Sub
-
-
-'set color intensity
-Sub SetColorIntensity(varColor As String, varIntensity As String) As VMExpansionPanelContent
-	Dim pp As String = $"${ID}Color"$
-	Dim scolor As String = $"${varColor} ${varIntensity}"$
-	vue.SetStateSingle(pp, scolor)
-	ExpansionPanelContent.Bind(":color", pp)
 	Return Me
 End Sub
 
@@ -313,23 +360,8 @@ Sub BuildModel(mprops As Map, mstyles As Map, lclasses As List, loose As List) A
 ExpansionPanelContent.BuildModel(mprops, mstyles, lclasses, loose)
 Return Me
 End Sub
+
 Sub SetVisible(b As Boolean) As VMExpansionPanelContent
 ExpansionPanelContent.SetVisible(b)
 Return Me
-End Sub
-
-'set color intensity
-Sub SetTextColor(varColor As String) As VMExpansionPanelContent
-	Dim sColor As String = $"${varColor}--text"$
-	AddClass(sColor)
-	Return Me
-End Sub
-
-'set color intensity
-Sub SetTextColorIntensity(varColor As String, varIntensity As String) As VMExpansionPanelContent
-	Dim sColor As String = $"${varColor}--text"$
-	Dim sIntensity As String = $"text--${varIntensity}"$
-	Dim mcolor As String = $"${sColor} ${sIntensity}"$
-	AddClass(mcolor)
-	Return Me
 End Sub

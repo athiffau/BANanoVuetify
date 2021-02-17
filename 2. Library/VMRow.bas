@@ -10,8 +10,8 @@ Sub Class_Globals
 	Public ID As String
 	Private vue As BANanoVue
 	Private BANano As BANano  'ignore
-	Private DesignMode As Boolean
-	Private Module As Object
+	Private DesignMode As Boolean    'ignore
+	Private Module As Object         'ignore
 End Sub
 
 'initialize the Row
@@ -25,6 +25,17 @@ Public Sub Initialize(v As BANanoVue, sid As String, eventHandler As Object) As 
 	Return Me
 End Sub
 
+Sub SetData(xprop As String, xValue As Object) As VMRow
+	vue.SetData(xprop, xValue)
+	Return Me
+End Sub
+
+
+
+'add an element to the page content
+Sub AddElement(elm As VMElement)
+	Row.SetText(elm.ToString)
+End Sub
 
 Sub SetAttrLoose(loose As String) As VMRow
 	Row.SetAttrLoose(loose)
@@ -50,12 +61,12 @@ Sub SetVModel(k As String) As VMRow
 	Return Me
 End Sub
 
-Sub SetVIf(vif As Object) As VMRow
+Sub SetVIf(vif As String) As VMRow
 	Row.SetVIf(vif)
 	Return Me
 End Sub
 
-Sub SetVShow(vif As Object) As VMRow
+Sub SetVShow(vif As String) As VMRow
 	Row.SetVShow(vif)
 	Return Me
 End Sub
@@ -72,11 +83,6 @@ Sub AddChild(child As VMElement) As VMRow
 	Return Me
 End Sub
 
-'set text
-Sub SetText(t As Object) As VMRow
-	Row.SetText(t)
-	Return Me
-End Sub
 
 'add to parent
 Sub Pop(p As VMElement)
@@ -268,10 +274,12 @@ Sub SetDesignMode(b As Boolean) As VMRow
 	Return Me
 End Sub
 
-Sub SetTabIndex(ti As String) As VMRow
-	Row.SetTabIndex(ti)
+
+Sub AddComponent(comp As String) As VMRow
+	Row.SetText(comp)
 	Return Me
 End Sub
+
 
 'The Select name. Similar To HTML5 name attribute.
 Sub SetName(varName As Object, bbind As Boolean) As VMRow

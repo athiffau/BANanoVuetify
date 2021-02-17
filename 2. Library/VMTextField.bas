@@ -4,7 +4,7 @@ ModulesStructureVersion=1
 Type=Class
 Version=8.1
 @EndOfDesignText@
-#IgnoreWarnings:12
+#IgnoreWarnings:12, 9
 Sub Class_Globals
 	Public TextField As VMElement
 	Public ID As String
@@ -13,14 +13,10 @@ Sub Class_Globals
 	Private DesignMode As Boolean
 	Private Module As Object
 	Private password As String
-	Public ErrorText As String
 	Private bStatic As Boolean
-	Private targetVModel As String
-	Private numFiles As Int
-	Private totFiles As Int
-	Private fd As List
 	Private bMultiple As Boolean
 	Private vmodel As String
+	Public ErrorText As String
 End Sub
 
 'initialize the TextField
@@ -35,48 +31,204 @@ Public Sub Initialize(v As BANanoVue, sid As String, eventHandler As Object) As 
 	bStatic = False
 	vmodel = ""
 	bMultiple = False
+	ErrorText = ""
+	TextField.fieldType = "string"
+	TextField.typeOf = "textfield"
 	Return Me
 End Sub
 
-Sub SetFileInput(bUpload As Boolean) As VMTextField
-	numFiles = 0
-	totFiles = 0
-	TextField.SetTag("v-file-input")
-	TextField.typeOf = "string"
-	If bUpload Then
-		SetOnFile(Me, "filechange")
+'should have calculator
+Sub SetCalculator() As VMTextField
+	TextField.SetTag("v-numeric")
+	Return Me
+End Sub
+
+
+
+'add an element to the page content
+Sub AddElement(elm As VMElement)
+	TextField.SetText(elm.ToString)
+End Sub
+
+'set maximum value
+Sub SetMax(varMax As String) As VMTextField
+	If varMax = "0" Then Return Me
+	If varMax = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("max", varMax)
 	Else
-		SetOnFile(Module, $"${ID}_change"$)
+		Dim pp As String = $"${ID}varMax"$
+		vue.SetStateSingle(pp, varMax)
+		TextField.Bind(":max", pp)
 	End If
 	Return Me
 End Sub
 
-'the list of files have changed
-Sub filechange(fileList As List)
-	numFiles = 0
-	fd.Initialize
-	Select Case bMultiple
-		Case True
-			totFiles = fileList.Size
-			'upload the files to the server
-			For Each fileObj As Object In fileList
-				vue.HTTPUpload(fileObj, Me, "filedone")
-			Next
-		Case Else
-			totFiles = 1
-			vue.HTTPUpload(fileList, Me, "filedone")
-	End Select
+'set min value
+Sub SetMin(varMin As String) As VMTextField
+	If varMin = "0" Then Return Me
+	If varMin = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("min", varMin)
+	Else
+		Dim pp As String = $"${ID}varMin"$
+		vue.SetStateSingle(pp, varMin)
+		TextField.Bind(":min", pp)
+	End If
+	Return Me
 End Sub
 
-Sub filedone(fileObj As Map, json As String)
-	numFiles = numFiles + 1
-	Dim fde As FileObject = vue.GetFileDetails(fileObj)
-	fd.Add(fde)
-	If numFiles = totFiles Then
-		vue.SetData(vmodel, fd)
-		If SubExists(Module, $"${ID}_change"$) = False Then Return
-		BANano.CallSub(Module, $"${ID}_change"$, Array(fd))
+'set precision
+Sub SetPrecision(varprecision As String) As VMTextField
+	If varprecision = "0" Then Return Me
+	If varprecision = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("precision", varprecision)
+	Else
+		Dim pp As String = $"${ID}varMin"$
+		vue.SetStateSingle(pp, varprecision)
+		TextField.Bind(":precision", pp)
 	End If
+	Return Me
+End Sub
+
+'set length
+Sub SetLength(varLength As String) As VMTextField
+	If varLength = "0" Or varLength = "10" Then Return Me
+	If varLength = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("length", varLength)
+	Else
+		Dim pp As String = $"${ID}varLength"$
+		vue.SetStateSingle(pp, varLength)
+		TextField.Bind(":length", pp)
+	End If
+	Return Me
+End Sub
+
+'set negativeTextColor
+Sub SetNegativeTextColor(varNegativeTextColor As String) As VMTextField
+	If varNegativeTextColor = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("negativeTextColor", varNegativeTextColor)
+	Else
+		Dim pp As String = $"${ID}varNegativeTextColor"$
+		vue.SetStateSingle(pp, varNegativeTextColor)
+		TextField.Bind(":negativeTextColor", pp)
+	End If
+	Return Me
+End Sub
+
+'set useGrouping
+Sub SetUseGrouping(varUseGrouping As Boolean) As VMTextField
+	If varUseGrouping = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("useGrouping", varUseGrouping)
+	Else
+		Dim pp As String = $"${ID}varUseGrouping"$
+		vue.SetStateSingle(pp, varUseGrouping)
+		TextField.Bind(":useGrouping", pp)
+	End If
+	Return Me
+End Sub
+
+'set fab
+Sub SetFab(varFAB As Boolean) As VMTextField
+	If varFAB = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("fab", varFAB)
+	Else
+		Dim pp As String = $"${ID}varFAB"$
+		vue.SetStateSingle(pp, varFAB)
+		TextField.Bind(":fab", pp)
+	End If
+	Return Me
+End Sub
+
+'set transparent
+Sub SetTransparent(varText As Boolean) As VMTextField
+	If varText = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("text", varText)
+	Else
+		Dim pp As String = $"${ID}varText"$
+		vue.SetStateSingle(pp, varText)
+		TextField.Bind(":text", pp)
+	End If
+	Return Me
+End Sub
+
+
+Sub SetData(xprop As String, xValue As Object) As VMTextField
+	vue.SetData(xprop, xValue)
+	Return Me
+End Sub
+
+'add a menu after the text box
+Sub AddMenuAfter(menu As VMMenu) As VMTextField
+	Dim appendOuter As VMTemplate
+	appendOuter.Initialize(vue, $"${ID}menuafter"$, Module)
+	appendOuter.SetAttrLoose("v-slot:append-outer")
+	appendOuter.AddComponent(menu.ToString)
+	AddComponent(appendOuter.ToString)
+	Return Me
+End Sub
+
+'add decrement icon
+Sub AddDecrementIcon(iconColor As String) As VMTextField
+	Dim appendOuter As VMTemplate
+	appendOuter.Initialize(vue, $"${ID}iconbefore"$, Module)
+	appendOuter.SetAttrLoose("v-slot:prepend")
+	Dim icn As VMIcon
+	icn.Initialize(vue, $"${ID}decrement"$, Module)
+	icn.SetText("mdi-minus")
+	icn.SetColor(iconColor)
+	icn.SetDark(True)
+	appendOuter.AddComponent(icn.ToString)
+	AddComponent(appendOuter.ToString)
+	Return Me
+End Sub
+
+'add increment icon
+Sub AddIncrementIcon(iconColor As String) As VMTextField
+	Dim appendOuter As VMTemplate
+	appendOuter.Initialize(vue, $"${ID}iconafter"$, Module)
+	appendOuter.SetAttrLoose("v-slot:append-outer")
+	Dim icn As VMIcon
+	icn.Initialize(vue, $"${ID}increment"$, Module)
+	icn.SetText("mdi-plus")
+	icn.SetColor(iconColor)
+	icn.SetDark(True)
+	appendOuter.AddComponent(icn.ToString)
+	AddComponent(appendOuter.ToString)
+	Return Me
+End Sub
+
+'add a menu after the text box
+Sub AddButtonAfter(btn As VMButton) As VMTextField
+	Dim appendOuter As VMTemplate
+	appendOuter.Initialize(vue, $"${ID}menuafter"$, Module)
+	appendOuter.SetAttrLoose("v-slot:append-outer")
+	appendOuter.AddComponent(btn.ToString)
+	AddComponent(appendOuter.ToString)
+	Return Me
+End Sub
+
+
+Sub AddComponent(comp As String) As VMTextField
+	SetText(comp)
+	Return Me
+End Sub
+
+Sub SetErrorText(sError As String) As VMTextField    'ignore
+	ErrorText = sError
+	TextField.ErrorMessage = sError
+	Return Me
+End Sub
+
+Sub SetSlotActivator(b As Boolean) As VMTextField    'ignore
+	SetAttrSingle("slot", "activator")
+	Return Me
 End Sub
 
 'set accept
@@ -112,6 +264,17 @@ Sub SetPassword(b As Boolean, toggle As Boolean) As VMTextField
 	TextField.Bind(":type", $"${password} ? 'text' : 'password'"$)
 	If toggle Then TextField.SetAttrSingle("@click:append", $"${password} = !${password}"$)
 	TextField.typeOf = "password"
+	TextField.SetAutoComplete("off")
+	Return Me
+End Sub
+
+Sub SetAutoCompleteOff As VMTextField
+	TextField.SetAutoComplete("off")
+	Return Me
+End Sub
+
+Sub SetAutoCompleteOn As VMTextField
+	TextField.SetAutoComplete("on")
 	Return Me
 End Sub
 
@@ -137,17 +300,6 @@ End Sub
 
 Sub SetTypeDate(b As Boolean) As VMTextField
 	SetType("date")
-	Return Me
-End Sub
-
-'backward compatibility
-Sub SetInvalidMessage(ErrText As String) As VMTextField
-	ErrorText = ErrText
-	Return Me
-End Sub
-
-Sub SetErrorText(errText As String) As VMTextField
-	ErrorText = errText
 	Return Me
 End Sub
 
@@ -249,6 +401,69 @@ Sub SetRequired(varRequired As Boolean) As VMTextField
 	Return Me
 End Sub
 
+'add color picker
+Sub AddColorPicker As VMTextField
+	'set color of color picker
+	vue.SetData(vmodel, "#ffffff")
+	Dim bc As Map = CreateMap()
+	bc.Put("backgroundColor", "#ffffff")
+	vue.SetData($"${ID}color"$, bc)
+	'hide the menu
+	vue.SetData($"${ID}cpmenu"$, False)
+	Dim dMenu As VMElement
+	dMenu.Initialize(vue, "").SetStatic(True).SetTag("v-menu").SetSlot("append-outer").SetAttrSingle(":close-on-content-click", False)
+	dMenu.SetVModel($"${ID}cpmenu"$)
+	dMenu.SetAttrSingle("transition", "scale-transition")
+	SetReadonly(True)
+	
+	'
+	Dim tmpl As VMTemplate
+	tmpl.Initialize(vue, "", Module).SetStatic(True).SetSlotActivatorOn
+	'
+	Dim btn As VMElement
+	btn.Initialize(vue, "").SetStatic(True).SetTag("v-btn").SetAttrSingle("icon",True).SetAttrSingle("v-on", "on")
+	'
+	Dim avatr As VMElement
+	avatr.Initialize(vue,"").SetStatic(True).SetTag("v-avatar").SetAttrSingle("size", "30px")
+	avatr.SetStyleSingle("border", "solid 1px")
+	avatr.SetAttrSingle(":style", $"${ID}color"$)
+	btn.SetText(avatr.ToString)
+	'add btn to template
+	tmpl.SetText(btn.ToString)
+	'add template to menu
+	dMenu.SetText(tmpl.ToString)
+	'
+	Dim vcard As VMCard
+	vcard.Initialize(vue, "", Module).SetStatic(True).SetStyleSingle("padding", "10px")
+	'
+	Dim vcolor As VMColorPicker 
+	vcolor.Initialize(vue, "", Module).SetStatic(True).SetFlat(True).SetSwatchesMaxHeight("200px").SetVModel(vmodel)
+	vcolor.SetMode("hexa").SetHideInputs(True).SetHideModeSwitch(True)
+	vcard.SetText(vcolor.ToString)
+	'
+	Dim div As VMElement
+	div.Initialize(vue, "").SetStatic(True).SetTag("div").AddClass("text-center my-2")
+	div.AddElement1("v-btn", "", "Cancel", CreateMap("outlined":True, "@click": $"${ID}cpmenu = !${ID}cpmenu"$), Null, Array("ma-2"), Null)
+	div.AddElement1("v-btn", "", "Apply", CreateMap("outlined":True, "color":"primary", "@click": $"${ID}cpmenu = !${ID}cpmenu"$), Null, Array("ma-2"), Null)
+	vcard.SetText(div.ToString)
+	dMenu.SetText(vcard.ToString)
+	'add menu to textfield
+	SetText(dMenu.ToString)
+	'
+	vue.SetWatch(vmodel, True, True, Me, "watchcolor")
+	Return Me
+End Sub
+
+Sub watchcolor(val As Object)  'ignoredeadcode
+	If BANano.IsNull(val) = False And BANano.IsUndefined(val) = False Then
+		Dim inputvalue As Object = vue.GetData(vmodel)
+		If BANano.IsNull(inputvalue) = False And BANano.IsUndefined(inputvalue) = False Then
+			Dim mycolor As Map = CreateMap()
+			mycolor.Put("backgroundColor", inputvalue)
+			vue.SetData($"${ID}color"$, mycolor)
+		End If
+	End If
+End Sub
 
 'get component
 Sub ToString As String
@@ -261,12 +476,12 @@ Sub SetVModel(k As String) As VMTextField
 	Return Me
 End Sub
 
-Sub SetVIf(vif As Object) As VMTextField
+Sub SetVIf(vif As String) As VMTextField
 	TextField.SetVIf(vif)
 	Return Me
 End Sub
 
-Sub SetVShow(vif As Object) As VMTextField
+Sub SetVShow(vif As String) As VMTextField
 	TextField.SetVShow(vif)
 	Return Me
 End Sub
@@ -464,44 +679,41 @@ End Sub
 
 'set disabled
 Sub SetDisabled(varDisabled As Boolean) As VMTextField
-	If varDisabled = False Then Return Me
 	TextField.SetDisabled(varDisabled)
 	Return Me
 End Sub
 
 'set error
-Sub SetError(varError As Object) As VMTextField
+Sub SetError(varError As Boolean) As VMTextField
 	If bStatic Then
 		SetAttrSingle("error", varError)
-	Else
-	Dim pp As String = $"${ID}Error"$
-	vue.SetStateSingle(pp, varError)
-	TextField.Bind(":error", pp)
+		Return Me
 	End If
+	Dim pp As String = $"${vmodel}Error"$
+	vue.SetBoolean(pp, varError)
+	TextField.Bind(":error", pp)
 	Return Me
 End Sub
 
 'set error-count
-Sub SetErrorCount(varErrorCount As Object) As VMTextField
+Sub SetErrorCount(varErrorCount As String) As VMTextField
 	If bStatic Then
 		SetAttrSingle("error-count", varErrorCount)
-	Else
-	Dim pp As String = $"${ID}ErrorCount"$
+		Return Me
+	End If
+	Dim pp As String = $"${vmodel}ErrorCount"$
 	vue.SetStateSingle(pp, varErrorCount)
 	TextField.Bind(":error-count", pp)
-	End If
 	Return Me
 End Sub
 
 'set error-messages
-Sub SetErrorMessages(varErrorMessages As Object) As VMTextField
-	If bStatic Then
-		SetAttrSingle("error-messages", varErrorMessages)
-	Else
-	Dim pp As String = $"${ID}ErrorMessages"$
-	vue.SetStateSingle(pp, varErrorMessages)
+Sub SetErrorMessages(b As Boolean) As VMTextField
+	If b = False Then Return Me
+	Dim nl As List = vue.NewList
+	Dim pp As String = $"${vmodel}ErrorMessages"$
+	vue.SetData(pp, nl)
 	TextField.Bind(":error-messages", pp)
-	End If
 	Return Me
 End Sub
 
@@ -579,18 +791,6 @@ Sub SetHint(varHint As String) As VMTextField
 	Dim pp As String = $"${ID}Hint"$
 	vue.SetStateSingle(pp, varHint)
 	TextField.Bind(":hint", pp)
-	End If
-	Return Me
-End Sub
-
-'set id
-Sub SetId(varId As Object) As VMTextField
-	If bStatic Then
-		SetAttrSingle("id", varId)
-	Else
-	Dim pp As String = $"${ID}Id"$
-	vue.SetStateSingle(pp, varId)
-	TextField.Bind(":id", pp)
 	End If
 	Return Me
 End Sub
@@ -741,13 +941,12 @@ End Sub
 
 'set readonly
 Sub SetReadonly(varReadonly As Boolean) As VMTextField
-	If varReadonly = False Then Return Me
 	If bStatic Then
 		SetAttrSingle("readonly", varReadonly)
 	Else
-	Dim pp As String = $"${ID}Readonly"$
-	vue.SetStateSingle(pp, varReadonly)
-	TextField.Bind(":readonly", pp)
+		Dim pp As String = $"${ID}Readonly"$
+		vue.SetStateSingle(pp, varReadonly)
+		TextField.Bind(":readonly", pp)
 	End If
 	Return Me
 End Sub
@@ -779,8 +978,13 @@ Sub SetRounded(varRounded As Boolean) As VMTextField
 End Sub
 
 'set rules
-Sub SetRules(varRules As Object) As VMTextField
-	SetAttrSingle("rules", varRules)
+Sub SetRules(b As Boolean) As VMTextField
+	If b = False Then Return Me
+	If bStatic Then Return Me
+	If DesignMode Then Return Me
+	Dim pp As String = $"${vmodel}rules"$
+	TextField.Bind(":rules", pp)
+	vue.SetData(pp, vue.NewList)
 	Return Me
 End Sub
 
@@ -892,17 +1096,11 @@ Sub SetValidateOnBlur(varValidateOnBlur As Boolean) As VMTextField
 	If varValidateOnBlur = False Then Return Me
 	If bStatic Then
 		SetAttrSingle("validate-on-blur", varValidateOnBlur)
-	Else
-	Dim pp As String = $"${ID}ValidateOnBlur"$
-	vue.SetStateSingle(pp, varValidateOnBlur)
-	TextField.Bind(":validate-on-blur", pp)
+		Return Me
 	End If
-	Return Me
-End Sub
-
-'set value
-Sub SetValue(varValue As String) As VMTextField
-	TextField.SetAttrSingle("value", varValue)
+	Dim pp As String = $"${ID}ValidateOnBlur"$
+	vue.SetBoolean(pp, varValidateOnBlur)
+	TextField.Bind(":validate-on-blur", pp)
 	Return Me
 End Sub
 
@@ -953,8 +1151,8 @@ Sub SetOnBlur(eventHandler As Object, methodName As String) As VMTextField
 	methodName = methodName.tolowercase
 	If SubExists(eventHandler, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, e)
-	SetAttr(CreateMap("v-on:blur": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, Array(e))
+	SetAttr(CreateMap("@blur": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -965,8 +1163,8 @@ Sub SetOnChange(eventHandler As Object, methodName As String) As VMTextField
 	methodName = methodName.tolowercase
 	If SubExists(eventHandler, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, e)
-	SetAttr(CreateMap("v-on:change": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, Array(e))
+	SetAttr(CreateMap("@change": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -975,9 +1173,9 @@ End Sub
 Sub SetOnFile(eventHandler As Object, methodName As String) As VMTextField
 	methodName = methodName.tolowercase
 	If SubExists(eventHandler, methodName) = False Then Return Me
-	Dim fileList As BANanoEvent
+	Dim fileList As Object
 	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, Array(fileList))
-	SetAttr(CreateMap("v-on:change": methodName))
+	SetAttr(CreateMap("@change": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -988,8 +1186,8 @@ Sub SetOnClick(eventHandler As Object, methodName As String) As VMTextField
 	methodName = methodName.tolowercase
 	If SubExists(eventHandler, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, e)
-	SetAttr(CreateMap("v-on:click": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, Array(e))
+	SetAttr(CreateMap("@click": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -1000,8 +1198,8 @@ Sub SetOnClickAppend(eventHandler As Object, methodName As String) As VMTextFiel
 	methodName = methodName.tolowercase
 	If SubExists(eventHandler, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, e)
-	SetAttr(CreateMap("v-on:click:append": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, Array(e))
+	SetAttr(CreateMap("@click:append": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -1012,8 +1210,8 @@ Sub SetOnClickAppendOuter(eventHandler As Object, methodName As String) As VMTex
 	methodName = methodName.tolowercase
 	If SubExists(eventHandler, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, e)
-	SetAttr(CreateMap("v-on:click:append-outer": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, Array(e))
+	SetAttr(CreateMap("@click:append-outer": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -1024,8 +1222,8 @@ Sub SetOnClickClear(eventHandler As Object, methodName As String) As VMTextField
 	methodName = methodName.tolowercase
 	If SubExists(eventHandler, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, e)
-	SetAttr(CreateMap("v-on:click:clear": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, Array(e))
+	SetAttr(CreateMap("@click:clear": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -1036,8 +1234,8 @@ Sub SetOnClickPrepend(eventHandler As Object, methodName As String) As VMTextFie
 	methodName = methodName.tolowercase
 	If SubExists(eventHandler, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, e)
-	SetAttr(CreateMap("v-on:click:prepend": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, Array(e))
+	SetAttr(CreateMap("@click:prepend": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -1048,8 +1246,8 @@ Sub SetOnClickPrependInner(eventHandler As Object, methodName As String) As VMTe
 	methodName = methodName.tolowercase
 	If SubExists(eventHandler, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, e)
-	SetAttr(CreateMap("v-on:click:prepend-inner": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, Array(e))
+	SetAttr(CreateMap("@click:prepend-inner": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -1060,8 +1258,8 @@ Sub SetOnFocus(eventHandler As Object, methodName As String) As VMTextField
 	methodName = methodName.tolowercase
 	If SubExists(eventHandler, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, e)
-	SetAttr(CreateMap("v-on:focus": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, Array(e))
+	SetAttr(CreateMap("@focus": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -1072,8 +1270,8 @@ Sub SetOnInput(eventHandler As Object, methodName As String) As VMTextField
 	methodName = methodName.tolowercase
 	If SubExists(eventHandler, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, e)
-	SetAttr(CreateMap("v-on:input": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, Array(e))
+	SetAttr(CreateMap("@input": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -1084,20 +1282,32 @@ Sub SetOnKeydown(eventHandler As Object, methodName As String) As VMTextField
 	methodName = methodName.tolowercase
 	If SubExists(eventHandler, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, e)
-	SetAttr(CreateMap("v-on:keydown": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, Array(e))
+	SetAttr(CreateMap("@keydown": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
 End Sub
+
+Sub SetOnKeydownEnter(eventHandler As Object, methodName As String) As VMTextField
+	methodName = methodName.tolowercase
+	If SubExists(eventHandler, methodName) = False Then Return Me
+	Dim e As BANanoEvent
+	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, Array(e))
+	SetAttr(CreateMap("@keydown.enter": methodName))
+	'add to methods
+	vue.SetCallBack(methodName, cb)
+	Return Me
+End Sub
+
 
 '
 Sub SetOnMousedown(methodName As String) As VMTextField
 	methodName = methodName.tolowercase
 	If SubExists(Module, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, e)
-	SetAttr(CreateMap("v-on:mousedown": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
+	SetAttr(CreateMap("@mousedown": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -1108,8 +1318,8 @@ Sub SetOnMouseup(methodName As String) As VMTextField
 	methodName = methodName.tolowercase
 	If SubExists(Module, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, e)
-	SetAttr(CreateMap("v-on:mouseup": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
+	SetAttr(CreateMap("@mouseup": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -1120,8 +1330,8 @@ Sub SetOnUpdateError(methodName As String) As VMTextField
 	methodName = methodName.tolowercase
 	If SubExists(Module, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, e)
-	SetAttr(CreateMap("v-on:update:error": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
+	SetAttr(CreateMap("@update:error": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -1429,3 +1639,24 @@ Sub SetWidth(w As String) As VMTextField
 	TextField.SetStyleSingle("width", w)
 	Return Me
 End Sub
+
+'get the value
+Sub GetValue As String
+	Dim svalue As String = vue.GetData(vmodel)
+	Return svalue
+End Sub
+
+'set value
+Sub SetValue(svalue As String) As VMTextField
+	If bStatic Then
+		SetAttrSingle("value", svalue)
+		Return Me
+	End If
+	If vmodel = "" Then 
+		vmodel = $"${ID}value"$
+		SetVModel(vmodel)
+	End If
+	vue.setdata(vmodel, svalue)
+	Return Me
+End Sub
+

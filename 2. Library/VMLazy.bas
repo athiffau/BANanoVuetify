@@ -10,8 +10,8 @@ Sub Class_Globals
 	Public ID As String
 	Private vue As BANanoVue
 	Private BANano As BANano  'ignore
-	Private DesignMode As Boolean
-	Private Module As Object
+	Private DesignMode As Boolean   'ignore
+	Private Module As Object     'ignore
 End Sub
 
 'initialize the Lazy
@@ -25,6 +25,20 @@ Public Sub Initialize(v As BANanoVue, sid As String, eventHandler As Object) As 
 	Return Me
 End Sub
 
+
+
+'add an element to the page content
+Sub AddElement(elm As VMElement)
+	Lazy.SetText(elm.ToString)
+End Sub
+
+Sub SetData(xprop As String, xValue As Object) As VMLazy
+	vue.SetData(xprop, xValue)
+	Return Me
+End Sub
+
+
+
 'get component
 Sub ToString As String
 	Return Lazy.ToString
@@ -35,12 +49,12 @@ Sub SetVModel(k As String) As VMLazy
 	Return Me
 End Sub
 
-Sub SetVIf(vif As Object) As VMLazy
+Sub SetVIf(vif As String) As VMLazy
 	Lazy.SetVIf(vif)
 	Return Me
 End Sub
 
-Sub SetVShow(vif As Object) As VMLazy
+Sub SetVShow(vif As String) As VMLazy
 	Lazy.SetVShow(vif)
 	Return Me
 End Sub
@@ -127,7 +141,7 @@ End Sub
 
 'set value
 Sub SetValue(varValue As Object) As VMLazy
-	SetAttrSingle("value", varValue)
+	Lazy.SetValue(varValue)
 	Return Me
 End Sub
 

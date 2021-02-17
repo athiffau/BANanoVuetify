@@ -12,6 +12,8 @@ Sub Class_Globals
 	Private BANano As BANano  'ignore
 	Private DesignMode As Boolean
 	Private Module As Object
+	Private bStatic As Boolean
+	Public HasContent As Boolean
 End Sub
 
 'initialize the CardTitle
@@ -22,18 +24,37 @@ Public Sub Initialize(v As BANanoVue, sid As String, eventHandler As Object) As 
 	DesignMode = False
 	Module = eventHandler
 	vue = v
+	bStatic = False
+	HasContent = False
 	Return Me
 End Sub
+
+
+Sub SetStatic(b As Boolean) As VMCardTitle
+	bStatic = b
+	CardTitle.SetStatic(b)
+	Return Me
+End Sub
+
+
+
+'add an element to the page content
+Sub AddElement(elm As VMElement)
+	CardTitle.SetText(elm.ToString)
+End Sub
+
 
 'add a search box
 Sub AddSearch(key As String) As VMCardTitle
 	Dim txt As VMTextField
-	txt.Initialize(vue, key, Module).SetAttributes(Array("single-line", "hide-details"))
+	txt.Initialize(vue, key, Module).SetStatic(bStatic).SetDesignMode(DesignMode).SetAttributes(Array("single-line", "hide-details"))
 	txt.SetLabel("Search").SetAppendIcon("mdi-magnify").SetClearable(True).Setvmodel(key)
+	txt.SetSolo(True)
+	txt.SetOnChange(Module, $"${key}_change"$)
 	CardTitle.SetText(txt.ToString)
+	HasContent = True
 	Return Me
 End Sub
-
 
 Sub SetAttrLoose(loose As String) As VMCardTitle
 	CardTitle.SetAttrLoose(loose)
@@ -64,55 +85,208 @@ Sub UseTheme(themeName As String) As VMCardTitle
 	Return Me
 End Sub
 
+Sub AddIcon1(elID As String, iconName As String, mprops As Map, mstyles As Map, lclasses As List) As VMCardTitle
+	Dim d As VMIcon
+	d.Initialize(vue,elID,Module).SetDesignMode(DesignMode)
+	d.SetText(iconName)
+	d.BuildModel(mprops, mstyles, lclasses, Null)
+	CardTitle.SetText(d.ToString)
+	HasContent = True
+	Return Me
+End Sub
+
+Sub AddElement1(elID As String, elTag As String, elText As String, mprops As Map, mstyles As Map, lclasses As List) As VMCardTitle
+	Dim d As VMElement
+	d.Initialize(vue,elID).SetDesignMode(DesignMode).SetTag(elTag)
+	d.SetText(elText)
+	d.BuildModel(mprops, mstyles, lclasses, Null)
+	CardTitle.SetText(d.ToString)
+	HasContent = True
+	Return Me
+End Sub
+
+Sub AddDivider(bVertical As Boolean, mprops As Map, mstyles As Map, lclasses As List, loose As List) As VMCardTitle
+	Dim d As VMDivider
+	d.Initialize(vue).SetDesignMode(DesignMode)
+	If bVertical Then d.SetVertical
+	d.BuildModel(mprops, mstyles, lclasses, loose)
+	CardTitle.SetText(d.ToString)
+	HasContent = True
+	Return Me
+End Sub
 
 'add a component to the toolbar
 Sub AddComponent(comp As String) As VMCardTitle
 	CardTitle.SetText(comp)
+	HasContent = True
 	Return Me
 End Sub
 
 
 Sub AddButton(btn As VMButton) As VMCardTitle
 	CardTitle.SetText(btn.tostring)
+	HasContent = True
 	Return Me
 End Sub
 
-
-Sub AddButton1(key As String, iconName As String, text As String, toolTip As String, badge As String) As VMCardTitle
+Sub AddButton1(key As String, iconName As String, iconColor As String, text As String, toolTip As String, badge As String) As VMCardTitle
 	Dim btn As VMButton
-	btn.Initialize(vue, key, Module)
+	btn.Initialize(vue, key, Module).SetStatic(bStatic).SetDesignMode(DesignMode)
 	btn.SetToolTip(toolTip)
-	btn.AddIcon(iconName,"left","")
+	If iconName <> "" Then btn.AddIcon(iconName,"left","")
 	btn.SetLabel(text)
+	btn.SetColor(iconColor)
+	btn.SetTransparent(True)
 	If badge <> "" Then
-		btn.Badge.SetContent(badge)
+		btn.SetHasBadge(True)
+		btn.SetBadge(badge)
 	End If
 	CardTitle.SetText(btn.tostring)
+	HasContent = True
 	Return Me
 End Sub
+
+Sub AddButton3(key As String, iconName As String, iconColor As String, iconPos As String, text As String, bOutlined As Boolean, toolTip As String, badge As String) As VMCardTitle
+	Dim btn As VMButton
+	btn.Initialize(vue, key, Module).SetStatic(bStatic).SetDesignMode(DesignMode)
+	btn.SetToolTip(toolTip)
+	If iconName <> "" Then btn.AddIcon(iconName,iconPos,"")
+	btn.SetLabel(text)
+	btn.SetColor(iconColor)
+	btn.SetTransparent(True)
+	btn.SetOutlined(bOutlined)
+	If badge <> "" Then
+		btn.SetHasBadge(True)
+		btn.SetBadge(badge)
+	End If
+	CardTitle.SetText(btn.tostring)
+	HasContent = True
+	Return Me
+End Sub
+
+
+'add divider on the toolbar
+Sub AddDivider1 As VMCardTitle
+	AddDivider(True, Null, Null, Array("mx-2"), Null)
+	Return Me
+End Sub
+
+
+Sub AddButton2(btnID As String, btnText As String, btnIcon As String, btnColor As String, btnValue As String, btnToolTip As String, btnBadge As String, btnRaised As Boolean, btnFab As Boolean)
+	Dim btn As VMButton
+	btn.Initialize(vue, btnID, Module)
+	btn.SetStatic(bStatic)
+	btn.SetDesignMode(DesignMode)
+	btn.SetColor(btnColor)
+	btn.SetSpan(btnText)
+	btn.AddIcon(btnIcon, "", "")
+	btn.SetTooltip(btnToolTip)
+	btn.SetRaised(btnRaised)
+	btn.SetAttrSingle("value", btnValue)
+	btn.SetFab(btnFab)
+	If btnBadge <> "" Then
+		btn.SetHasBadge(True)
+		btn.SetBadge(btnBadge)
+	End If
+	HasContent = True
+	CardTitle.SetText(btn.ToString)
+End Sub
+
+Sub AddIcon(key As String, iconName As String, iconColor As String, iconSize As String, toolTip As String, badge As String) As VMCardTitle
+	key = key.tolowercase
+	Dim btn As VMButton
+	btn.Initialize(vue, key, Module)
+	btn.SetStatic(bStatic)
+	btn.SetDesignMode(DesignMode)
+	btn.SetIconButton(iconName).SetTooltip(toolTip)
+	btn.SetColor(iconColor)
+	btn.SetSize(iconSize)
+	If badge <> "" Then
+		btn.SetHasBadge(True)
+		btn.SetBadge(badge)
+	End If
+	CardTitle.SetText(btn.tostring)
+	HasContent = True
+	Return Me
+End Sub
+
+'add a new button
+Sub AddIcon3(key As String, iconName As String, iconColor As String, toolTip As String) As VMCardTitle
+	key = key.tolowercase
+	Dim btn As VMButton
+	btn.Initialize(vue, key, Module)
+	btn.SetStatic(bStatic)
+	btn.SetDesignMode(DesignMode)
+	btn.SetFabButton(iconName)
+	btn.SetTooltip(toolTip)
+	btn.SetColor(iconColor)
+	btn.SetSmall(True)
+	CardTitle.SetText(btn.ToString)
+	HasContent = True
+	Return Me
+End Sub
+
+Sub AddIcon2(key As String, iconName As String, iconColor As String, iconSize As String, toolTip As String, badge As String, classes As String) As VMCardTitle
+	key = key.tolowercase
+	Dim btn As VMButton
+	btn.Initialize(vue, key, Module)
+	btn.SetStatic(bStatic)
+	btn.SetDesignMode(DesignMode)
+	btn.SetIconButton(iconName).SetTooltip(toolTip)
+	btn.SetColor(iconColor)
+	btn.SetSize(iconSize)
+	btn.AddClass(classes)
+	If badge <> "" Then
+		btn.SetHasBadge(True)
+		btn.SetBadge(badge)
+	End If
+	CardTitle.SetText(btn.tostring)
+	HasContent = True
+	Return Me
+End Sub
+'
+Sub AddFab(key As String, iconName As String, iconColor As String, iconSize As String, toolTip As String, badge As String) As VMCardTitle
+	key = key.tolowercase
+	Dim btn As VMButton
+	btn.Initialize(vue, key, Module)
+	btn.SetStatic(bStatic)
+	btn.SetFab(True)
+	btn.SetDesignMode(DesignMode)
+	btn.AddIcon(iconName,"","")
+	btn.SetColor(iconColor)
+	btn.SetSize(iconSize)
+	btn.SetTooltip(toolTip)
+	If badge <> "" Then
+		btn.SetHasBadge(True)
+		btn.SetBadge(badge)
+	End If
+	CardTitle.SetText(btn.tostring)
+	HasContent = True
+	Return Me
+End Sub
+
+
 
 Sub AddMenu(menu As VMMenu) As VMCardTitle
 	AddComponent(menu.ToString)
+	HasContent = True
 	Return Me
 End Sub
 
 Sub AddSpacer As VMCardTitle
 	CardTitle.AddSpacer
+	HasContent = True
 	Return Me
 End Sub
 
-'set color intensity
-Sub SetColorIntensity(varColor As String, varIntensity As String) As VMCardTitle
-	Dim pp As String = $"${ID}Color"$
-	Dim scolor As String = $"${varColor} ${varIntensity}"$
-	vue.SetStateSingle(pp, scolor)
-	CardTitle.Bind(":color", pp)
+Sub SetData(prop As String, value As Object) As VMCardTitle
+	vue.SetData(prop, value)
 	Return Me
 End Sub
+
 
 'get component
 Sub ToString As String
-	
 	Return CardTitle.ToString
 End Sub
 
@@ -121,12 +295,12 @@ Sub SetVModel(k As String) As VMCardTitle
 	Return Me
 End Sub
 
-Sub SetVIf(vif As Object) As VMCardTitle
+Sub SetVIf(vif As String) As VMCardTitle
 	CardTitle.SetVIf(vif)
 	Return Me
 End Sub
 
-Sub SetVShow(vif As Object) As VMCardTitle
+Sub SetVShow(vif As String) As VMCardTitle
 	CardTitle.SetVShow(vif)
 	Return Me
 End Sub
@@ -140,13 +314,20 @@ End Sub
 Sub AddChild(child As VMElement) As VMCardTitle
 	Dim childHTML As String = child.ToString
 	CardTitle.SetText(childHTML)
+	HasContent = True
 	Return Me
 End Sub
 
 'set text
-Sub SetText(t As Object) As VMCardTitle
+Sub SetText(t As String) As VMCardTitle
+	If t = "" Then Return Me
 	CardTitle.SetText(t)
+	HasContent = True
 	Return Me
+End Sub
+
+Sub Clear
+	CardTitle.Clear
 End Sub
 
 'add to parent
@@ -257,6 +438,7 @@ Sub BuildModel(mprops As Map, mstyles As Map, lclasses As List, loose As List) A
 CardTitle.BuildModel(mprops, mstyles, lclasses, loose)
 Return Me
 End Sub
+
 Sub SetVisible(b As Boolean) As VMCardTitle
 CardTitle.SetVisible(b)
 Return Me
@@ -264,6 +446,7 @@ End Sub
 
 'set color intensity
 Sub SetTextColor(varColor As String) As VMCardTitle
+	If varColor = "" Then Return Me
 	Dim sColor As String = $"${varColor}--text"$
 	AddClass(sColor)
 	Return Me
@@ -271,9 +454,26 @@ End Sub
 
 'set color intensity
 Sub SetTextColorIntensity(varColor As String, varIntensity As String) As VMCardTitle
+	If varColor = "" Then Return Me
 	Dim sColor As String = $"${varColor}--text"$
 	Dim sIntensity As String = $"text--${varIntensity}"$
 	Dim mcolor As String = $"${sColor} ${sIntensity}"$
 	AddClass(mcolor)
+	Return Me
+End Sub
+
+
+'set color intensity
+Sub SetColor(varColor As String) As VMCardTitle
+	If varColor = "" Then Return Me
+	AddClass(varColor)
+	Return Me
+End Sub
+
+'set color intensity
+Sub SetColorIntensity(varColor As String, varIntensity As String) As VMCardTitle
+	If varColor = "" Then Return Me
+	Dim scolor As String = $"${varColor} ${varIntensity}"$
+	AddClass(scolor)
 	Return Me
 End Sub

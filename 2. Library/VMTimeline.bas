@@ -10,8 +10,9 @@ Sub Class_Globals
 	Public ID As String
 	Private vue As BANanoVue
 	Private BANano As BANano  'ignore
-	Private DesignMode As Boolean
-	Private Module As Object
+	Private DesignMode As Boolean  'ignore
+	Private Module As Object   'ignore
+	Private bStatic As Boolean
 End Sub
 
 'initialize the TimeLine
@@ -19,36 +20,30 @@ Public Sub Initialize(v As BANanoVue, sid As String, eventHandler As Object) As 
 	ID = sid.tolowercase
 	TimeLine.Initialize(v, ID)
 	TimeLine.SetTag("v-timeline")
+	vue = v
 	DesignMode = False
 	Module = eventHandler
-	vue = v
+	bStatic = False
 	Return Me
 End Sub
 
-'set the row and column position
-Sub SetRC(sRow As String, sCol As String) As VMTimeline
-	TimeLine.SetRC(sRow, sCol)
+
+
+'add an element to the page content
+Sub AddElement(elm As VMElement)
+	TimeLine.SetText(elm.ToString)
+End Sub
+
+Sub AddTimeLineItem(tlItem As VMTimelineItem)
+	AddComponent(tlItem.tostring)
+End Sub
+
+Sub SetData(xprop As String, xValue As Object) As VMTimeline
+	vue.SetData(xprop, xValue)
 	Return Me
 End Sub
 
-'set the offsets for this item
-Sub SetDeviceOffsets(OS As String, OM As String,OL As String,OX As String) As VMTimeline
-	TimeLine.SetDeviceOffsets(OS, OM, OL, OX)
-	Return Me
-End Sub
 
-'set the sizes for this item
-Sub SetDeviceSizes(SS As String, SM As String, SL As String, SX As String) As VMTimeline
-	TimeLine.SetDeviceSizes(SS, SM, SL, SX)
-	Return Me
-End Sub
-
-'set the position: row and column and sizes
-Sub SetDevicePositions(srow As String, scell As String, small As String, medium As String, large As String, xlarge As String) As VMTimeline
-	SetRC(srow, scell)
-	SetDeviceSizes(small,medium, large, xlarge)
-	Return Me
-End Sub
 
 'get component
 Sub ToString As String
@@ -60,12 +55,12 @@ Sub SetVModel(k As String) As VMTimeline
 	Return Me
 End Sub
 
-Sub SetVIf(vif As Object) As VMTimeline
+Sub SetVIf(vif As String) As VMTimeline
 	TimeLine.SetVIf(vif)
 	Return Me
 End Sub
 
-Sub SetVShow(vif As Object) As VMTimeline
+Sub SetVShow(vif As String) As VMTimeline
 	TimeLine.SetVShow(vif)
 	Return Me
 End Sub
@@ -82,8 +77,8 @@ Sub AddChild(child As VMElement) As VMTimeline
 	Return Me
 End Sub
 
-'set text
-Sub SetText(t As Object) As VMTimeline
+'set text - built-in
+Sub SetText(t As String) As VMTimeline
 	TimeLine.SetText(t)
 	Return Me
 End Sub
@@ -119,7 +114,12 @@ Sub AddChildren(children As List)
 End Sub
 
 'set align-top
-Sub SetAlignTop(varAlignTop As Object) As VMTimeline
+Sub SetAlignTop(varAlignTop As Boolean) As VMTimeline
+	If varAlignTop = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("align-top", varAlignTop)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}AlignTop"$
 	vue.SetStateSingle(pp, varAlignTop)
 	TimeLine.Bind(":align-top", pp)
@@ -127,7 +127,12 @@ Sub SetAlignTop(varAlignTop As Object) As VMTimeline
 End Sub
 
 'set dark
-Sub SetDark(varDark As Object) As VMTimeline
+Sub SetDark(varDark As Boolean) As VMTimeline
+	If varDark = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("dark", varDark)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Dark"$
 	vue.SetStateSingle(pp, varDark)
 	TimeLine.Bind(":dark", pp)
@@ -135,7 +140,12 @@ Sub SetDark(varDark As Object) As VMTimeline
 End Sub
 
 'set dense
-Sub SetDense(varDense As Object) As VMTimeline
+Sub SetDense(varDense As Boolean) As VMTimeline
+	If varDense = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("dense", varDense)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Dense"$
 	vue.SetStateSingle(pp, varDense)
 	TimeLine.Bind(":dense", pp)
@@ -143,7 +153,12 @@ Sub SetDense(varDense As Object) As VMTimeline
 End Sub
 
 'set light
-Sub SetLight(varLight As Object) As VMTimeline
+Sub SetLight(varLight As Boolean) As VMTimeline
+	If varLight = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("light", varLight)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Light"$
 	vue.SetStateSingle(pp, varLight)
 	TimeLine.Bind(":light", pp)
@@ -151,7 +166,12 @@ Sub SetLight(varLight As Object) As VMTimeline
 End Sub
 
 'set reverse
-Sub SetReverse(varReverse As Object) As VMTimeline
+Sub SetReverse(varReverse As Boolean) As VMTimeline
+	If varReverse = False Then Return Me
+	If bStatic Then
+		SetAttrSingle(":reverse", varReverse)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Reverse"$
 	vue.SetStateSingle(pp, varReverse)
 	TimeLine.Bind(":reverse", pp)
@@ -161,25 +181,25 @@ End Sub
 
 'hide the component
 Sub Hide As VMTimeline
-	Timeline.SetVisible(False)
+	TimeLine.SetVisible(False)
 	Return Me
 End Sub
 
 'show the component
 Sub Show As VMTimeline
-	Timeline.SetVisible(True)
+	TimeLine.SetVisible(True)
 	Return Me
 End Sub
 
 'enable the component
 Sub Enable As VMTimeline
-	Timeline.Enable(True)
+	TimeLine.Enable(True)
 	Return Me
 End Sub
 
 'disable the component
 Sub Disable As VMTimeline
-	Timeline.Disable(True)
+	TimeLine.Disable(True)
 	Return Me
 End Sub
 
@@ -209,15 +229,6 @@ Sub UseTheme(themeName As String) As VMTimeline
 End Sub
 
 
-'set color intensity
-Sub SetColorIntensity(varColor As String, varIntensity As String) As VMTimeline
-	Dim pp As String = $"${ID}Color"$
-	Dim scolor As String = $"${varColor} ${varIntensity}"$
-	vue.SetStateSingle(pp, scolor)
-	TimeLine.Bind(":color", pp)
-	Return Me
-End Sub
-
 'remove an attribute
 public Sub RemoveAttr(sName As String) As VMTimeline
 	TimeLine.RemoveAttr(sName)
@@ -243,6 +254,13 @@ Sub SetDesignMode(b As Boolean) As VMTimeline
 	Return Me
 End Sub
 
+'set design mode
+Sub SetStatic(b As Boolean) As VMTimeline
+	TimeLine.SetStatic(b)
+	DesignMode = b
+	Return Me
+End Sub
+
 'set tab index
 Sub SetTabIndex(ti As String) As VMTimeline
 	TimeLine.SetTabIndex(ti)
@@ -250,7 +268,7 @@ Sub SetTabIndex(ti As String) As VMTimeline
 End Sub
 
 'The Select name. Similar To HTML5 name attribute.
-Sub SetName(varName As Object, bbind As Boolean) As VMTimeline
+Sub SetName(varName As String, bbind As Boolean) As VMTimeline
 	TimeLine.SetName(varName, bbind)
 	Return Me
 End Sub
@@ -273,6 +291,10 @@ Sub BindStyleSingle(prop As String, value As String) As VMTimeline
 	Return Me
 End Sub
 
+Sub SetVElse(vif As String) As VMTimeline
+	TimeLine.SetVElse(vif)
+	Return Me
+End Sub
 
 Sub SetVText(vhtml As String) As VMTimeline
 	TimeLine.SetVText(vhtml)
@@ -306,27 +328,57 @@ Sub SetKey(k As String) As VMTimeline
 	Return Me
 End Sub
 
+'set the row and column position
+Sub SetRC(sRow As String, sCol As String) As VMTimeline
+	TimeLine.SetRC(sRow, sCol)
+	Return Me
+End Sub
+
+'set the offsets for this item
+Sub SetDeviceOffsets(OS As String, OM As String,OL As String,OX As String) As VMTimeline
+	TimeLine.SetDeviceOffsets(OS, OM, OL, OX)
+	Return Me
+End Sub
+
+
+'set the position: row and column and sizes
+Sub SetDevicePositions(srow As String, scell As String, small As String, medium As String, large As String, xlarge As String) As VMTimeline
+	SetRC(srow, scell)
+	SetDeviceSizes(small,medium, large, xlarge)
+	Return Me
+End Sub
+
+'set the sizes for this item
+Sub SetDeviceSizes(SS As String, SM As String, SL As String, SX As String) As VMTimeline
+	TimeLine.SetDeviceSizes(SS, SM, SL, SX)
+	Return Me
+End Sub
+
+
+Sub AddComponent(comp As String) As VMTimeline
+	TimeLine.SetText(comp)
+	Return Me
+End Sub
+
+
+Sub SetTextCenter As VMTimeline
+	TimeLine.AddClass("text-center")
+	Return Me
+End Sub
+
+Sub AddToContainer(pCont As VMContainer, rowPos As Int, colPos As Int)
+	pCont.AddComponent(rowPos, colPos, ToString)
+End Sub
+
+
 Sub BuildModel(mprops As Map, mstyles As Map, lclasses As List, loose As List) As VMTimeline
-Timeline.BuildModel(mprops, mstyles, lclasses, loose)
-Return Me
+	TimeLine.BuildModel(mprops, mstyles, lclasses, loose)
+	Return Me
 End Sub
+
+
 Sub SetVisible(b As Boolean) As VMTimeline
-Timeline.SetVisible(b)
-Return Me
-End Sub
-
-'set color intensity
-Sub SetTextColor(varColor As String) As VMTimeline
-	Dim sColor As String = $"${varColor}--text"$
-	AddClass(sColor)
+	TimeLine.SetVisible(b)
 	Return Me
 End Sub
 
-'set color intensity
-Sub SetTextColorIntensity(varColor As String, varIntensity As String) As VMTimeline
-	Dim sColor As String = $"${varColor}--text"$
-	Dim sIntensity As String = $"text--${varIntensity}"$
-	Dim mcolor As String = $"${sColor} ${sIntensity}"$
-	AddClass(mcolor)
-	Return Me
-End Sub

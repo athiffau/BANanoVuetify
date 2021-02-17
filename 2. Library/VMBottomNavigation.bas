@@ -4,7 +4,7 @@ ModulesStructureVersion=1
 Type=Class
 Version=8.1
 @EndOfDesignText@
-#IgnoreWarnings:12
+#IgnoreWarnings:12, 9
 Sub Class_Globals
 	Public BottomNavigation As VMElement
 	Public ID As String
@@ -12,6 +12,8 @@ Sub Class_Globals
 	Private BANano As BANano  'ignore
 	Private DesignMode As Boolean
 	Private Module As Object
+	Public HasContent As Boolean
+	Private bStatic As Boolean
 End Sub
 
 'initialize the BottomNavigation
@@ -22,11 +24,58 @@ Public Sub Initialize(v As BANanoVue, sid As String, eventHandler As Object) As 
 	DesignMode = False
 	Module = eventHandler
 	vue = v
+	BottomNavigation.typeOf = "nav"
+	HasContent = False
+	bStatic = False
+	SetOnChange(Module, $"${ID}_change"$)
+	SetOnUpdateInputValue($"${ID}_updateinputvalue"$)
+	SetVModel($"${ID}bn"$)
+	Return Me
+End Sub
+
+Sub SetData(prop As String, value As Object) As VMBottomNavigation
+	vue.SetData(prop, value)
+	Return Me
+End Sub
+
+
+'add an element to the page content
+Sub AddElement(elm As VMElement)
+	BottomNavigation.SetText(elm.ToString)
+End Sub
+
+Sub SetActive(btnID As String) As VMBottomNavigation
+	vue.SetData($"${ID}bn"$, btnID)
+	Return Me
+End Sub
+
+Sub AddButton(btnID As String, btnText As String, btnIcon As String, btnColor As String, btnValue As String, btnToolTip As String, btnBadge As String)
+	Dim btn As VMButton
+	btn.Initialize(vue, btnID, Module)
+	btn.SetStatic(bStatic)
+	btn.SetDesignMode(DesignMode)
+	btn.SetColor(btnColor)
+	btn.SetSpan(btnText)
+	btn.AddIcon(btnIcon, "", "")
+	btn.SetTooltip(btnToolTip)
+	btn.SetAttrSingle("value", btnValue)
+	If btnBadge <> "" Then
+		btn.SetHasBadge(True)
+		btn.SetBadge(btnBadge)
+	End If
+	HasContent = True
+	AddComponent(btn.ToString)
+End Sub
+
+Sub SetStatic(b As Boolean) As VMBottomNavigation
+	bStatic = b
+	BottomNavigation.SetStatic(b)
 	Return Me
 End Sub
 
 Sub AddComponent(comp As String) As VMBottomNavigation
 	BottomNavigation.SetText(comp)
+	HasContent = True
 	Return Me
 End Sub
 
@@ -44,7 +93,16 @@ End Sub
 
 'get component
 Sub ToString As String
-	
+	If vue.ShowWarnings Then
+		Dim eName As String = $"${ID}_change"$
+		If SubExists(Module, eName) = False Then
+			Log($"VMBottomNavigation.${eName} event has not been defined!"$)
+		End If
+		eName  = $"${ID}_updateinputvalue"$
+		If SubExists(Module, eName) = False Then
+			Log($"VMBottomNavigation.${eName} event has not been defined!"$)
+		End If
+	End If
 	Return BottomNavigation.ToString
 End Sub
 
@@ -53,12 +111,12 @@ Sub SetVModel(k As String) As VMBottomNavigation
 	Return Me
 End Sub
 
-Sub SetVIf(vif As Object) As VMBottomNavigation
+Sub SetVIf(vif As String) As VMBottomNavigation
 	BottomNavigation.SetVIf(vif)
 	Return Me
 End Sub
 
-Sub SetVShow(vif As Object) As VMBottomNavigation
+Sub SetVShow(vif As String) As VMBottomNavigation
 	BottomNavigation.SetVShow(vif)
 	Return Me
 End Sub
@@ -72,12 +130,7 @@ End Sub
 Sub AddChild(child As VMElement) As VMBottomNavigation
 	Dim childHTML As String = child.ToString
 	BottomNavigation.SetText(childHTML)
-	Return Me
-End Sub
-
-'set text
-Sub SetText(t As Object) As VMBottomNavigation
-	BottomNavigation.SetText(t)
+	HasContent = True
 	Return Me
 End Sub
 
@@ -112,7 +165,12 @@ Sub AddChildren(children As List)
 End Sub
 
 'set absolute
-Sub SetAbsolute(varAbsolute As Object) As VMBottomNavigation
+Sub SetAbsolute(varAbsolute As Boolean) As VMBottomNavigation
+	If varAbsolute = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("absolute", varAbsolute)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Absolute"$
 	vue.SetStateSingle(pp, varAbsolute)
 	BottomNavigation.Bind(":absolute", pp)
@@ -120,7 +178,12 @@ Sub SetAbsolute(varAbsolute As Object) As VMBottomNavigation
 End Sub
 
 'set active-class
-Sub SetActiveClass(varActiveClass As Object) As VMBottomNavigation
+Sub SetActiveClass(varActiveClass As String) As VMBottomNavigation
+	If varActiveClass = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("active-class", varActiveClass)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}ActiveClass"$
 	vue.SetStateSingle(pp, varActiveClass)
 	BottomNavigation.Bind(":active-class", pp)
@@ -128,15 +191,19 @@ Sub SetActiveClass(varActiveClass As Object) As VMBottomNavigation
 End Sub
 
 'set app
-Sub SetApp(varApp As Object) As VMBottomNavigation
-	Dim pp As String = $"${ID}App"$
-	vue.SetStateSingle(pp, varApp)
-	BottomNavigation.Bind(":app", pp)
+Sub SetApp(varApp As Boolean) As VMBottomNavigation
+	If varApp = False Then Return Me
+	BottomNavigation.SetAttrLoose("app")
 	Return Me
 End Sub
 
 'set background-color
-Sub SetBackgroundColor(varBackgroundColor As Object) As VMBottomNavigation
+Sub SetBackgroundColor(varBackgroundColor As String) As VMBottomNavigation
+	If varBackgroundColor = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("background-color", varBackgroundColor)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}BackgroundColor"$
 	vue.SetStateSingle(pp, varBackgroundColor)
 	BottomNavigation.Bind(":background-color", pp)
@@ -144,15 +211,53 @@ Sub SetBackgroundColor(varBackgroundColor As Object) As VMBottomNavigation
 End Sub
 
 'set color
-Sub SetColor(varColor As Object) As VMBottomNavigation
+Sub SetColor(varColor As String) As VMBottomNavigation
+	If varColor = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("color", varColor)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Color"$
 	vue.SetStateSingle(pp, varColor)
 	BottomNavigation.Bind(":color", pp)
 	Return Me
 End Sub
 
+'set color intensity
+Sub SetBackgroundColorIntensity(color As String, intensity As String) As VMBottomNavigation
+	If color = "" Then Return Me
+	Dim scolor As String = $"${color} ${intensity}"$
+	If bStatic Then
+		SetAttrSingle("background-color", scolor)
+		Return Me
+	End If
+	Dim pp As String = $"${ID}backgroundcolor"$
+	vue.SetStateSingle(pp, scolor)
+	Bind(":background-color", pp)
+	Return Me
+End Sub
+
+'set color intensity
+Sub SetColorIntensity(varColor As String, varIntensity As String) As VMBottomNavigation
+	If varColor = "" Then Return Me
+	Dim scolor As String = $"${varColor} ${varIntensity}"$
+	If bStatic Then
+		SetAttrSingle("color", scolor)
+		Return Me
+	End If
+	Dim pp As String = $"${ID}Color"$
+	vue.SetStateSingle(pp, scolor)
+	Bind(":color", pp)
+	Return Me
+End Sub
+
 'set dark
-Sub SetDark(varDark As Object) As VMBottomNavigation
+Sub SetDark(varDark As Boolean) As VMBottomNavigation
+	If varDark = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("dark", varDark)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Dark"$
 	vue.SetStateSingle(pp, varDark)
 	BottomNavigation.Bind(":dark", pp)
@@ -160,7 +265,12 @@ Sub SetDark(varDark As Object) As VMBottomNavigation
 End Sub
 
 'set fixed
-Sub SetFixed(varFixed As Object) As VMBottomNavigation
+Sub SetFixed(varFixed As Boolean) As VMBottomNavigation
+	If varFixed = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("fixed", varFixed)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Fixed"$
 	vue.SetStateSingle(pp, varFixed)
 	BottomNavigation.Bind(":fixed", pp)
@@ -168,7 +278,12 @@ Sub SetFixed(varFixed As Object) As VMBottomNavigation
 End Sub
 
 'set grow
-Sub SetGrow(varGrow As Object) As VMBottomNavigation
+Sub SetGrow(varGrow As Boolean) As VMBottomNavigation
+	If varGrow = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("grow", varGrow)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Grow"$
 	vue.SetStateSingle(pp, varGrow)
 	BottomNavigation.Bind(":grow", pp)
@@ -176,7 +291,12 @@ Sub SetGrow(varGrow As Object) As VMBottomNavigation
 End Sub
 
 'set height
-Sub SetHeight(varHeight As Object) As VMBottomNavigation
+Sub SetHeight(varHeight As String) As VMBottomNavigation
+	If varHeight = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("height", varHeight)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Height"$
 	vue.SetStateSingle(pp, varHeight)
 	BottomNavigation.Bind(":height", pp)
@@ -184,7 +304,12 @@ Sub SetHeight(varHeight As Object) As VMBottomNavigation
 End Sub
 
 'set hide-on-scroll
-Sub SetHideOnScroll(varHideOnScroll As Object) As VMBottomNavigation
+Sub SetHideOnScroll(varHideOnScroll As Boolean) As VMBottomNavigation
+	If varHideOnScroll = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("hide-on-scroll", varHideOnScroll)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}HideOnScroll"$
 	vue.SetStateSingle(pp, varHideOnScroll)
 	BottomNavigation.Bind(":hide-on-scroll", pp)
@@ -192,7 +317,12 @@ Sub SetHideOnScroll(varHideOnScroll As Object) As VMBottomNavigation
 End Sub
 
 'set horizontal
-Sub SetHorizontal(varHorizontal As Object) As VMBottomNavigation
+Sub SetHorizontal(varHorizontal As Boolean) As VMBottomNavigation
+	If varHorizontal = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("horizontal", varHorizontal)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Horizontal"$
 	vue.SetStateSingle(pp, varHorizontal)
 	BottomNavigation.Bind(":horizontal", pp)
@@ -200,15 +330,25 @@ Sub SetHorizontal(varHorizontal As Object) As VMBottomNavigation
 End Sub
 
 'set input-value
-Sub SetInputValue(varInputValue As Object) As VMBottomNavigation
+Sub SetInputValue(varInputValue As Boolean) As VMBottomNavigation
+	If varInputValue = True Then Return Me
+	If bStatic Then
+		SetAttrSingle("input-value.sync", varInputValue)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}InputValue"$
 	vue.SetStateSingle(pp, varInputValue)
-	BottomNavigation.Bind(":input-value", pp)
+	BottomNavigation.Bind(":input-value.sync", pp)
 	Return Me
 End Sub
 
 'set light
-Sub SetLight(varLight As Object) As VMBottomNavigation
+Sub SetLight(varLight As Boolean) As VMBottomNavigation
+	If varLight = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("light", varLight)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Light"$
 	vue.SetStateSingle(pp, varLight)
 	BottomNavigation.Bind(":light", pp)
@@ -216,7 +356,12 @@ Sub SetLight(varLight As Object) As VMBottomNavigation
 End Sub
 
 'set mandatory
-Sub SetMandatory(varMandatory As Object) As VMBottomNavigation
+Sub SetMandatory(varMandatory As Boolean) As VMBottomNavigation
+	If varMandatory = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("mandatory", varMandatory)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Mandatory"$
 	vue.SetStateSingle(pp, varMandatory)
 	BottomNavigation.Bind(":mandatory", pp)
@@ -224,7 +369,12 @@ Sub SetMandatory(varMandatory As Object) As VMBottomNavigation
 End Sub
 
 'set max-height
-Sub SetMaxHeight(varMaxHeight As Object) As VMBottomNavigation
+Sub SetMaxHeight(varMaxHeight As String) As VMBottomNavigation
+	If varMaxHeight = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("max-height", varMaxHeight)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}MaxHeight"$
 	vue.SetStateSingle(pp, varMaxHeight)
 	BottomNavigation.Bind(":max-height", pp)
@@ -232,7 +382,12 @@ Sub SetMaxHeight(varMaxHeight As Object) As VMBottomNavigation
 End Sub
 
 'set max-width
-Sub SetMaxWidth(varMaxWidth As Object) As VMBottomNavigation
+Sub SetMaxWidth(varMaxWidth As String) As VMBottomNavigation
+	If varMaxWidth = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("max-width", varMaxWidth)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}MaxWidth"$
 	vue.SetStateSingle(pp, varMaxWidth)
 	BottomNavigation.Bind(":max-width", pp)
@@ -240,7 +395,12 @@ Sub SetMaxWidth(varMaxWidth As Object) As VMBottomNavigation
 End Sub
 
 'set min-height
-Sub SetMinHeight(varMinHeight As Object) As VMBottomNavigation
+Sub SetMinHeight(varMinHeight As String) As VMBottomNavigation
+	If varMinHeight = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("min-height", varMinHeight)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}MinHeight"$
 	vue.SetStateSingle(pp, varMinHeight)
 	BottomNavigation.Bind(":min-height", pp)
@@ -248,7 +408,12 @@ Sub SetMinHeight(varMinHeight As Object) As VMBottomNavigation
 End Sub
 
 'set min-width
-Sub SetMinWidth(varMinWidth As Object) As VMBottomNavigation
+Sub SetMinWidth(varMinWidth As String) As VMBottomNavigation
+	If varMinWidth = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("min-width", varMinWidth)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}MinWidth"$
 	vue.SetStateSingle(pp, varMinWidth)
 	BottomNavigation.Bind(":min-width", pp)
@@ -256,7 +421,12 @@ Sub SetMinWidth(varMinWidth As Object) As VMBottomNavigation
 End Sub
 
 'set scroll-target
-Sub SetScrollTarget(varScrollTarget As Object) As VMBottomNavigation
+Sub SetScrollTarget(varScrollTarget As String) As VMBottomNavigation
+	If varScrollTarget = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("scroll-target", varScrollTarget)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}ScrollTarget"$
 	vue.SetStateSingle(pp, varScrollTarget)
 	BottomNavigation.Bind(":scroll-target", pp)
@@ -264,7 +434,12 @@ Sub SetScrollTarget(varScrollTarget As Object) As VMBottomNavigation
 End Sub
 
 'set scroll-threshold
-Sub SetScrollThreshold(varScrollThreshold As Object) As VMBottomNavigation
+Sub SetScrollThreshold(varScrollThreshold As String) As VMBottomNavigation
+	If varScrollThreshold = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("scroll-threshold", varScrollThreshold)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}ScrollThreshold"$
 	vue.SetStateSingle(pp, varScrollThreshold)
 	BottomNavigation.Bind(":scroll-threshold", pp)
@@ -272,7 +447,12 @@ Sub SetScrollThreshold(varScrollThreshold As Object) As VMBottomNavigation
 End Sub
 
 'set shift
-Sub SetShift(varShift As Object) As VMBottomNavigation
+Sub SetShift(varShift As Boolean) As VMBottomNavigation
+	If varShift = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("shift", varShift)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Shift"$
 	vue.SetStateSingle(pp, varShift)
 	BottomNavigation.Bind(":shift", pp)
@@ -280,13 +460,18 @@ Sub SetShift(varShift As Object) As VMBottomNavigation
 End Sub
 
 'set value
-Sub SetValue(varValue As Object) As VMBottomNavigation
+Sub SetValue(varValue As String) As VMBottomNavigation
 	SetAttrSingle("value", varValue)
 	Return Me
 End Sub
 
 'set width
-Sub SetWidth(varWidth As Object) As VMBottomNavigation
+Sub SetWidth(varWidth As String) As VMBottomNavigation
+	If varWidth = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("width", varWidth)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Width"$
 	vue.SetStateSingle(pp, varWidth)
 	BottomNavigation.Bind(":width", pp)
@@ -298,8 +483,8 @@ Sub SetOnChange(eventHandler As Object,methodName As String) As VMBottomNavigati
 	methodName = methodName.tolowercase
 	If SubExists(eventHandler, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, e)
-	SetAttr(CreateMap("v-on:change": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, Array(e))
+	SetAttr(CreateMap("@change": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -310,8 +495,8 @@ Sub SetOnUpdateInputValue(methodName As String) As VMBottomNavigation
 	methodName = methodName.tolowercase
 	If SubExists(Module, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, e)
-	SetAttr(CreateMap("v-on:update:input-value": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
+	SetAttr(CreateMap("@update:input-value": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
@@ -334,7 +519,7 @@ Sub Enable As VMBottomNavigation
 End Sub
 
 Sub Disable As VMBottomNavigation
-	BottomNavigation.Disable(True)
+	BottomNavigation.Enable(False)
 	Return Me
 End Sub
 
@@ -405,23 +590,8 @@ Sub BuildModel(mprops As Map, mstyles As Map, lclasses As List, loose As List) A
 BottomNavigation.BuildModel(mprops, mstyles, lclasses, loose)
 Return Me
 End Sub
+
 Sub SetVisible(b As Boolean) As VMBottomNavigation
 BottomNavigation.SetVisible(b)
 Return Me
-End Sub
-
-'set color intensity
-Sub SetTextColor(varColor As String) As VMBottomNavigation
-	Dim sColor As String = $"${varColor}--text"$
-	AddClass(sColor)
-	Return Me
-End Sub
-
-'set color intensity
-Sub SetTextColorIntensity(varColor As String, varIntensity As String) As VMBottomNavigation
-	Dim sColor As String = $"${varColor}--text"$
-	Dim sIntensity As String = $"text--${varIntensity}"$
-	Dim mcolor As String = $"${sColor} ${sIntensity}"$
-	AddClass(mcolor)
-	Return Me
 End Sub

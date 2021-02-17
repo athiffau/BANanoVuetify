@@ -28,22 +28,48 @@ Public Sub Initialize(v As BANanoVue, sid As String, eventHandler As Object) As 
 End Sub
 
 
+
+'add an element to the page content
+Sub AddElement(elm As VMElement)
+	ListItemAction.SetText(elm.ToString)
+End Sub
+
 Sub SetStatic(b As Boolean) As VMListItemAction
 	bStatic = b
 	ListItemAction.SetStatic(b)
 	Return Me
 End Sub
 
+Sub SetData(xprop As String, xValue As Object) As VMListItemAction
+	vue.SetData(xprop, xValue)
+	Return Me
+End Sub
+
+
+
 Sub AddIcon(key As String, iconName As String) As VMListItemAction
 	key = key.tolowercase
 	Dim btn As VMButton
-	btn.Initialize(vue, key, Module).SetAttributes(Array("icon")).SetStatic(bStatic)
+	btn.Initialize(vue, key, Module)
+	btn.SetStatic(bStatic)
+	btn.SetDesignMode(DesignMode)
+	btn.SetIcon(True)
+	'
 	Dim icon As VMIcon
-	icon.Initialize(vue, $"${key}icon"$, Module).SetVText(iconName).SetStatic(bStatic)
+	icon.Initialize(vue, $"${key}icon"$, Module)
+	icon.SetStatic(bStatic)
+	icon.SetDesignMode(DesignMode)
+	icon.SetVText(iconName)
 	btn.AddComponent(icon.ToString)
 	btn.Pop(ListItemAction)
 	Return Me
 End Sub
+
+Sub AddComponent(comp As String) As VMListItemAction
+	ListItemAction.SetText(comp)
+	Return Me
+End Sub
+
 
 Sub SetAttrLoose(loose As String) As VMListItemAction
 	ListItemAction.SetAttrLoose(loose)
@@ -67,12 +93,12 @@ Sub SetVModel(k As String) As VMListItemAction
 	Return Me
 End Sub
 
-Sub SetVIf(vif As Object) As VMListItemAction
+Sub SetVIf(vif As String) As VMListItemAction
 	ListItemAction.SetVIf(vif)
 	Return Me
 End Sub
 
-Sub SetVShow(vif As Object) As VMListItemAction
+Sub SetVShow(vif As String) As VMListItemAction
 	ListItemAction.SetVShow(vif)
 	Return Me
 End Sub
@@ -200,12 +226,13 @@ Sub SetAttrSingle(prop As String, value As String) As VMListItemAction
 End Sub
 
 Sub BuildModel(mprops As Map, mstyles As Map, lclasses As List, loose As List) As VMListItemAction
-ListItemAction.BuildModel(mprops, mstyles, lclasses, loose)
-Return Me
+	ListItemAction.BuildModel(mprops, mstyles, lclasses, loose)
+	Return Me
 End Sub
+
 Sub SetVisible(b As Boolean) As VMListItemAction
-ListItemAction.SetVisible(b)
-Return Me
+	ListItemAction.SetVisible(b)
+	Return Me
 End Sub
 
 'set color intensity

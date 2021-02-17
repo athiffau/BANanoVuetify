@@ -10,35 +10,97 @@ Sub Class_Globals
 	Public ID As String
 	Private vue As BANanoVue
 	Private BANano As BANano  'ignore
-	Private DesignMode As Boolean
+	Private DesignMode As Boolean  'ignore
 	Private Module As Object
 	Public Button As VMButton
 	Private mKey As String
 	Private mName As String
+	Private smodel As String
 End Sub
 
 'initialize the SnackBar
 Public Sub Initialize(v As BANanoVue, sid As String, eventHandler As Object) As VMSnackBar
 	ID = sid.tolowercase
 	SnackBar.Initialize(v, ID)
-	SnackBar.SetTag("v-snackbar").SetVModel(ID)
+	SnackBar.SetTag("v-snackbar")
 	DesignMode = False
 	Module = eventHandler
 	vue = v
 	mKey = $"${ID}message"$
 	vue.SetStateSingle(mKey, Null)
 	SetText($"{{ ${mKey} }}"$)
-	Button.Initialize(vue, "snackbutton", Me).SetColor("")
+	Button.Initialize(vue, "appsnackbutton", Me).SetColor("")
 	Button.hide
 	Button.SetLabel("Ok")
+	SetVModel(SnackBar.showkey)
 	Hide
 	mName = ""
 	SetTop(False)
 	SetBottom(False)
 	SetRight(False)
 	SetLeft(False)
+	SetCentered(False)
 	Return Me
 End Sub
+
+
+'add an element to the page content
+Sub AddElement(elm As VMElement)
+	SnackBar.SetText(elm.ToString)
+End Sub
+
+Sub SetData(xprop As String, xValue As Object) As VMSnackBar
+	vue.SetData(xprop, xValue)
+	Return Me
+End Sub
+
+Sub RemoveVModel As VMSnackBar
+	RemoveAttr("v-model")
+	Return Me
+End Sub
+
+'update title
+Sub SetLabel(mLabel As String) As VMSnackBar
+	vue.SetData(mKey, mLabel)
+	Return Me
+End Sub
+
+'set shaped
+Sub SetShaped(varShaped As Boolean) As VMSnackBar
+	If varShaped = False Then Return Me
+	Dim pp As String = $"${ID}Shaped"$
+	vue.SetStateSingle(pp, varShaped)
+	SnackBar.Bind(":shaped", pp)
+	Return Me
+End Sub
+
+'apply defined color
+Sub SetText1(varShaped As Boolean) As VMSnackBar
+	If varShaped = False Then Return Me
+	Dim pp As String = $"${ID}Text"$
+	vue.SetStateSingle(pp, varShaped)
+	SnackBar.Bind(":text", pp)
+	Return Me
+End Sub
+
+'tile
+Sub SetTile(varShaped As Boolean) As VMSnackBar
+	If varShaped = False Then Return Me
+	Dim pp As String = $"${ID}Tile"$
+	vue.SetStateSingle(pp, varShaped)
+	SnackBar.Bind(":tile", pp)
+	Return Me
+End Sub
+
+'set rounded
+Sub SetRounded(varRounded As Object) As VMSnackBar
+	If varRounded = False Then Return Me
+	Dim pp As String = $"${ID}Rounded"$
+	vue.SetStateSingle(pp, varRounded)
+	SnackBar.Bind(":rounded", pp)
+	Return Me
+End Sub
+
 
 'set the row and column position
 Sub SetRC(sRow As String, sCol As String) As VMSnackBar
@@ -70,6 +132,7 @@ Sub Reset
 	SetLeft(False)
 	SetTop(False)
 	SetRight(False)
+	SetCentered(False)
 End Sub
 
 Sub SetBottomLeft(b As Boolean) As VMSnackBar
@@ -78,6 +141,7 @@ Sub SetBottomLeft(b As Boolean) As VMSnackBar
 	SetLeft(True)
 	SetTop(False)
 	SetRight(False)
+	SetCentered(False)
 	Return Me
 End Sub
 
@@ -87,6 +151,7 @@ Sub SetBottomRight(b As Boolean) As VMSnackBar
 	SetLeft(False)
 	SetTop(False)
 	SetRight(True)
+	SetCentered(False)
 	Return Me
 End Sub
 
@@ -96,6 +161,7 @@ Sub SetTopLeft(b As Boolean) As VMSnackBar
 	SetLeft(True)
 	SetTop(True)
 	SetRight(False)
+	SetCentered(False)
 	Return Me
 End Sub
 
@@ -105,6 +171,7 @@ Sub SetTopRight(b As Boolean) As VMSnackBar
 	SetLeft(False)
 	SetTop(True)
 	SetRight(True)
+	SetCentered(False)
 	Return Me
 End Sub
 
@@ -127,9 +194,9 @@ Sub SetOnClick(methodName As String) As VMSnackBar
 	Return Me
 End Sub
 
-Sub snackbutton_click(e As BANanoEvent)
+Sub appsnackbutton_click(e As BANanoEvent)    'ignoredeadcode
 	If mName = "" Then
-		Log($"VMSnackbar.snackbutton_click: 'SetOnClick' has not been set!"$)
+		Log($"VMSnackbar.appsnackbutton_click: 'SetOnClick' has not been set!"$)
 	End If
 	Hide
 	BANano.CallSub(Module, mName, Null)
@@ -159,23 +226,22 @@ End Sub
 
 'get component
 Sub ToString As String
-	
-	
 	Button.Pop(SnackBar)
 	Return SnackBar.ToString
 End Sub
 
 Sub SetVModel(k As String) As VMSnackBar
+	smodel = k
 	SnackBar.SetVModel(k)
 	Return Me
 End Sub
 
-Sub SetVIf(vif As Object) As VMSnackBar
+Sub SetVIf(vif As String) As VMSnackBar
 	SnackBar.SetVIf(vif)
 	Return Me
 End Sub
 
-Sub SetVShow(vif As Object) As VMSnackBar
+Sub SetVShow(vif As String) As VMSnackBar
 	SnackBar.SetVShow(vif)
 	Return Me
 End Sub
@@ -229,7 +295,7 @@ Sub AddChildren(children As List)
 End Sub
 
 'set absolute
-Sub SetAbsolute(varAbsolute As Object) As VMSnackBar
+Sub SetAbsolute(varAbsolute As Boolean) As VMSnackBar
 	Dim pp As String = $"${ID}Absolute"$
 	vue.SetStateSingle(pp, varAbsolute)
 	SnackBar.Bind(":absolute", pp)
@@ -261,7 +327,7 @@ Sub SetLeft(varLeft As Boolean) As VMSnackBar
 End Sub
 
 'set multi-line
-Sub SetMultiLine(varMultiLine As Object) As VMSnackBar
+Sub SetMultiLine(varMultiLine As Boolean) As VMSnackBar
 	Dim pp As String = $"${ID}MultiLine"$
 	vue.SetStateSingle(pp, varMultiLine)
 	SnackBar.Bind(":multi-line", pp)
@@ -277,7 +343,7 @@ Sub SetRight(varRight As Boolean) As VMSnackBar
 End Sub
 
 'set timeout
-Sub SetTimeout(varTimeout As Object) As VMSnackBar
+Sub SetTimeout(varTimeout As String) As VMSnackBar
 	Dim pp As String = $"${ID}Timeout"$
 	vue.SetStateSingle(pp, varTimeout)
 	SnackBar.Bind(":timeout", pp)
@@ -292,14 +358,42 @@ Sub SetTop(varTop As Boolean) As VMSnackBar
 	Return Me
 End Sub
 
-'set value
-Sub SetValue(varValue As Object) As VMSnackBar
-	SetAttrSingle("value", varValue)
+
+'set centered
+Sub SetCentered(varTop As Boolean) As VMSnackBar
+	Dim pp As String = $"${ID}Centered"$
+	vue.SetStateSingle(pp, varTop)
+	SnackBar.Bind(":centered", pp)
+	Return Me
+End Sub
+
+
+'set outline
+Sub SetOutlined(varOutlined As Boolean) As VMSnackBar
+	Dim pp As String = $"${ID}Outlined"$
+	vue.SetStateSingle(pp, varOutlined)
+	SnackBar.Bind(":outlined", pp)
+	Return Me
+End Sub
+
+
+'set elevation
+Sub SetElevation(varElevation As String) As VMSnackBar
+	If varElevation = "" Then Return Me
+	Dim pp As String = $"${ID}Elevation"$
+	vue.SetStateSingle(pp, varElevation)
+	SnackBar.Bind(":elevation", pp)
+	Return Me
+End Sub
+
+'set value for visibility
+Sub SetValue(varValue As Boolean) As VMSnackBar
+	SnackBar.SetValue(varValue)
 	Return Me
 End Sub
 
 'set vertical
-Sub SetVertical(varVertical As Object) As VMSnackBar
+Sub SetVertical(varVertical As Boolean) As VMSnackBar
 	Dim pp As String = $"${ID}Vertical"$
 	vue.SetStateSingle(pp, varVertical)
 	SnackBar.Bind(":vertical", pp)
@@ -311,21 +405,27 @@ Sub SetOnInput(methodName As String) As VMSnackBar
 	methodName = methodName.tolowercase
 	If SubExists(Module, methodName) = False Then Return Me
 	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, e)
-	SetAttr(CreateMap("v-on:input": methodName))
+	Dim cb As BANanoObject = BANano.CallBack(Module, methodName, Array(e))
+	SetAttr(CreateMap("@input": methodName))
 	'add to methods
 	vue.SetCallBack(methodName, cb)
 	Return Me
 End Sub
 
 
+
+Sub SetVisible(b As Boolean) As VMSnackBar
+	vue.SetData(smodel, b)
+	Return Me
+End Sub
+
 Sub Hide As VMSnackBar
-	vue.SetStateSingle(ID, False)
+	vue.SetStateSingle(smodel, False)
 	Return Me
 End Sub
 
 Sub Show As VMSnackBar
-	vue.SetStateSingle(ID, True)
+	vue.SetStateSingle(smodel, True)
 	Return Me
 End Sub
 
@@ -399,10 +499,6 @@ End Sub
 
 Sub BuildModel(mprops As Map, mstyles As Map, lclasses As List, loose As List) As VMSnackBar
 SnackBar.BuildModel(mprops, mstyles, lclasses, loose)
-Return Me
-End Sub
-Sub SetVisible(b As Boolean) As VMSnackBar
-SnackBar.SetVisible(b)
 Return Me
 End Sub
 

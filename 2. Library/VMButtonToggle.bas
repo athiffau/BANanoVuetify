@@ -10,8 +10,9 @@ Sub Class_Globals
 	Public ID As String
 	Private vue As BANanoVue
 	Private BANano As BANano  'ignore
-	Private DesignMode As Boolean
-	Private Module As Object
+	Private DesignMode As Boolean   'ignore
+	Private Module As Object   'ignore
+	Private bStatic As Boolean   'ignore
 End Sub
 
 'initialize the ButtonToggle
@@ -19,14 +20,83 @@ Public Sub Initialize(v As BANanoVue, sid As String, eventHandler As Object) As 
 	ID = sid.tolowercase
 	ButtonToggle.Initialize(v, ID)
 	ButtonToggle.SetTag("v-btn-toggle")
+	vue = v
 	DesignMode = False
 	Module = eventHandler
-	vue = v
+	bStatic = False
+	SetOnChange(Module, $"${ID}_change"$)
+	Return Me
+End Sub
+
+Sub AddIcon(btnID As String, btnIcon As String, btnColor As String, btnValue As String, btnToolTip As String)
+	Dim btn As VMButton
+	btn.Initialize(vue, btnID, Module)
+	btn.SetStatic(bStatic)
+	btn.SetDesignMode(DesignMode)
+	btn.SetColor(btnColor)
+	btn.AddIcon(btnIcon,  "", "")
+	btn.SetTooltip(btnToolTip)
+	If btnValue <> "" Then
+		btn.SetAttrSingle("value", btnValue)
+	End If
+	AddComponent(btn.ToString)
+End Sub
+
+
+
+'add an element to the page content
+Sub AddElement(elm As VMElement)
+	ButtonToggle.SetText(elm.ToString)
+End Sub
+
+
+Sub SetData(prop As String, value As Object) As VMButtonToggle
+	vue.SetData(prop, value)
+	Return Me
+End Sub
+
+
+Sub AddButton(btnID As String, btnText As String, btnIcon As String, btnColor As String, btnValue As String, btnToolTip As String)
+	Dim btn As VMButton
+	btn.Initialize(vue, btnID, Module)
+	btn.SetStatic(bStatic)
+	btn.SetDesignMode(DesignMode)
+	btn.SetColor(btnColor)
+	
+	If btnText = "" Then
+		btn.SetLabel(btnText)
+		btn.AddIcon(btnIcon, "left", "")
+	Else
+		btn.SetLabel(btnText)
+		btn.AddIcon(btnIcon, "right", "")
+	End If
+	btn.SetTooltip(btnToolTip)
+	If btnValue <> "" Then
+		btn.SetAttrSingle("value", btnValue)
+	End If
+	AddComponent(btn.ToString)
+End Sub
+
+'selValue
+Sub SetOnChange(eventHandler As Object,methodName As String) As VMButtonToggle
+	methodName = methodName.tolowercase
+	If SubExists(eventHandler, methodName) = False Then Return Me
+	Dim items As List
+	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, Array(items))
+	SetAttr(CreateMap("@change": methodName))
+	'add to methods
+	vue.SetCallBack(methodName, cb)
 	Return Me
 End Sub
 
 'get component
 Sub ToString As String
+	If vue.ShowWarnings Then
+	Dim eName As String = $"${ID}_change"$
+	If SubExists(Module, eName) = False Then
+		Log($"VMBottomToggle.${eName} event has not been defined!"$)
+	End If
+	End If
 	Return ButtonToggle.ToString
 End Sub
 
@@ -35,12 +105,12 @@ Sub SetVModel(k As String) As VMButtonToggle
 	Return Me
 End Sub
 
-Sub SetVIf(vif As Object) As VMButtonToggle
+Sub SetVIf(vif As String) As VMButtonToggle
 	ButtonToggle.SetVIf(vif)
 	Return Me
 End Sub
 
-Sub SetVShow(vif As Object) As VMButtonToggle
+Sub SetVShow(vif As String) As VMButtonToggle
 	ButtonToggle.SetVShow(vif)
 	Return Me
 End Sub
@@ -57,12 +127,6 @@ Sub AddChild(child As VMElement) As VMButtonToggle
 	Return Me
 End Sub
 
-'set text
-Sub SetText(t As Object) As VMButtonToggle
-	ButtonToggle.SetText(t)
-	Return Me
-End Sub
-
 'add to parent
 Sub Pop(p As VMElement)
 	p.SetText(ToString)
@@ -75,7 +139,7 @@ Sub AddClass(c As String) As VMButtonToggle
 End Sub
 
 'set an attribute
-Sub SetAttr(attr as map) As VMButtonToggle
+Sub SetAttr(attr As Map) As VMButtonToggle
 	ButtonToggle.SetAttr(attr)
 	Return Me
 End Sub
@@ -94,7 +158,12 @@ Sub AddChildren(children As List)
 End Sub
 
 'set active-class
-Sub SetActiveClass(varActiveClass As Object) As VMButtonToggle
+Sub SetActiveClass(varActiveClass As String) As VMButtonToggle
+	If varActiveClass = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("active-class", varActiveClass)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}ActiveClass"$
 	vue.SetStateSingle(pp, varActiveClass)
 	ButtonToggle.Bind(":active-class", pp)
@@ -102,31 +171,92 @@ Sub SetActiveClass(varActiveClass As Object) As VMButtonToggle
 End Sub
 
 'set background-color
-Sub SetBackgroundColor(varBackgroundColor As Object) As VMButtonToggle
+Sub SetBackgroundColor(varBackgroundColor As String) As VMButtonToggle
+	If varBackgroundColor = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("background-color", varBackgroundColor)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}BackgroundColor"$
 	vue.SetStateSingle(pp, varBackgroundColor)
 	ButtonToggle.Bind(":background-color", pp)
 	Return Me
 End Sub
 
-'set borderless
-Sub SetBorderless(varBorderless As Object) As VMButtonToggle
-	Dim pp As String = $"${ID}Borderless"$
-	vue.SetStateSingle(pp, varBorderless)
-	ButtonToggle.Bind(":borderless", pp)
+
+'set color intensity
+Sub SetBackgroundColorIntensity(color As String, intensity As String) As VMButtonToggle
+	If color = "" Then Return Me
+	Dim scolor As String = $"${color} ${intensity}"$
+	If bStatic Then
+		SetAttrSingle("background-color", scolor)
+		Return Me
+	End If
+	Dim pp As String = $"${ID}backgroundcolor"$
+	vue.SetStateSingle(pp, scolor)
+	ButtonToggle.Bind(":background-color", pp)
 	Return Me
 End Sub
 
 'set color
-Sub SetColor(varColor As Object) As VMButtonToggle
+Sub SetColor(varColor As String) As VMButtonToggle
+	If varColor = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("color", varColor)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Color"$
 	vue.SetStateSingle(pp, varColor)
 	ButtonToggle.Bind(":color", pp)
 	Return Me
 End Sub
 
+'set max
+Sub SetMax(varMax As String) As VMButtonToggle
+	If varMax = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("max", varMax)
+		Return Me
+	End If
+	Dim pp As String = $"${ID}Max"$
+	vue.SetStateSingle(pp, varMax)
+	ButtonToggle.Bind(":max", pp)
+	Return Me
+End Sub
+
+'set value
+Sub SetValue(varValue As String) As VMButtonToggle
+	If varValue = "" Then Return Me
+	If bStatic Then
+		SetAttrSingle("value", varValue)
+		Return Me
+	End If
+	Dim pp As String = $"${ID}Value"$
+	vue.SetStateSingle(pp, varValue)
+	ButtonToggle.Bind(":value", pp)
+	Return Me
+End Sub
+
+'set borderless
+Sub SetBorderless(varBorderless As Boolean) As VMButtonToggle
+	If varBorderless = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("borderless", varBorderless)
+		Return Me
+	End If
+	Dim pp As String = $"${ID}Borderless"$
+	vue.SetStateSingle(pp, varBorderless)
+	ButtonToggle.Bind(":borderless", pp)
+	Return Me
+End Sub
+
 'set dark
-Sub SetDark(varDark As Object) As VMButtonToggle
+Sub SetDark(varDark As Boolean) As VMButtonToggle
+	If varDark = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("dark", varDark)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Dark"$
 	vue.SetStateSingle(pp, varDark)
 	ButtonToggle.Bind(":dark", pp)
@@ -134,7 +264,12 @@ Sub SetDark(varDark As Object) As VMButtonToggle
 End Sub
 
 'set dense
-Sub SetDense(varDense As Object) As VMButtonToggle
+Sub SetDense(varDense As Boolean) As VMButtonToggle
+	If varDense = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("dense", varDense)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Dense"$
 	vue.SetStateSingle(pp, varDense)
 	ButtonToggle.Bind(":dense", pp)
@@ -142,7 +277,12 @@ Sub SetDense(varDense As Object) As VMButtonToggle
 End Sub
 
 'set group
-Sub SetGroup(varGroup As Object) As VMButtonToggle
+Sub SetGroup(varGroup As Boolean) As VMButtonToggle
+	If varGroup = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("group", varGroup)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Group"$
 	vue.SetStateSingle(pp, varGroup)
 	ButtonToggle.Bind(":group", pp)
@@ -150,7 +290,12 @@ Sub SetGroup(varGroup As Object) As VMButtonToggle
 End Sub
 
 'set light
-Sub SetLight(varLight As Object) As VMButtonToggle
+Sub SetLight(varLight As Boolean) As VMButtonToggle
+	If varLight = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("light", varLight)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Light"$
 	vue.SetStateSingle(pp, varLight)
 	ButtonToggle.Bind(":light", pp)
@@ -158,23 +303,25 @@ Sub SetLight(varLight As Object) As VMButtonToggle
 End Sub
 
 'set mandatory
-Sub SetMandatory(varMandatory As Object) As VMButtonToggle
+Sub SetMandatory(varMandatory As Boolean) As VMButtonToggle
+	If varMandatory = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("mandatory", varMandatory)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Mandatory"$
 	vue.SetStateSingle(pp, varMandatory)
 	ButtonToggle.Bind(":mandatory", pp)
 	Return Me
 End Sub
 
-'set max
-Sub SetMax(varMax As Object) As VMButtonToggle
-	Dim pp As String = $"${ID}Max"$
-	vue.SetStateSingle(pp, varMax)
-	ButtonToggle.Bind(":max", pp)
-	Return Me
-End Sub
-
 'set multiple
-Sub SetMultiple(varMultiple As Object) As VMButtonToggle
+Sub SetMultiple(varMultiple As Boolean) As VMButtonToggle
+	If varMultiple = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("multiple", varMultiple)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Multiple"$
 	vue.SetStateSingle(pp, varMultiple)
 	ButtonToggle.Bind(":multiple", pp)
@@ -182,7 +329,12 @@ Sub SetMultiple(varMultiple As Object) As VMButtonToggle
 End Sub
 
 'set rounded
-Sub SetRounded(varRounded As Object) As VMButtonToggle
+Sub SetRounded(varRounded As Boolean) As VMButtonToggle
+	If varRounded = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("rounded", varRounded)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Rounded"$
 	vue.SetStateSingle(pp, varRounded)
 	ButtonToggle.Bind(":rounded", pp)
@@ -190,7 +342,12 @@ Sub SetRounded(varRounded As Object) As VMButtonToggle
 End Sub
 
 'set shaped
-Sub SetShaped(varShaped As Object) As VMButtonToggle
+Sub SetShaped(varShaped As Boolean) As VMButtonToggle
+	If varShaped = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("shaped", varShaped)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Shaped"$
 	vue.SetStateSingle(pp, varShaped)
 	ButtonToggle.Bind(":shaped", pp)
@@ -198,28 +355,15 @@ Sub SetShaped(varShaped As Object) As VMButtonToggle
 End Sub
 
 'set tile
-Sub SetTile(varTile As Object) As VMButtonToggle
+Sub SetTile(varTitle As Boolean) As VMButtonToggle
+	If varTitle = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("tile", varTitle)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Tile"$
-	vue.SetStateSingle(pp, varTile)
+	vue.SetStateSingle(pp, varTitle)
 	ButtonToggle.Bind(":tile", pp)
-	Return Me
-End Sub
-
-'set value
-Sub SetValue(varValue As Object) As VMButtonToggle
-	SetAttrSingle("value", varValue)
-	Return Me
-End Sub
-
-'
-Sub SetOnChange(eventHandler As Object,methodName As String) As VMButtonToggle
-	methodName = methodName.tolowercase
-	If SubExists(eventHandler, methodName) = False Then Return Me
-	Dim e As BANanoEvent
-	Dim cb As BANanoObject = BANano.CallBack(eventHandler, methodName, e)
-	SetAttr(CreateMap("v-on:change": methodName))
-	'add to methods
-	vue.SetCallBack(methodName, cb)
 	Return Me
 End Sub
 
@@ -244,7 +388,7 @@ End Sub
 
 'disable the component
 Sub Disable As VMButtonToggle
-	ButtonToggle.Disable(True)
+	ButtonToggle.Enable(False)
 	Return Me
 End Sub
 
@@ -275,9 +419,14 @@ End Sub
 
 
 'set color intensity
-Sub SetColorIntensity(varColor As String, varIntensity As String) As VMButtonToggle
+Sub SetColorIntensity(color As String, intensity As String) As VMButtonToggle
+	If color = "" Then Return Me
+	Dim scolor As String = $"${color} ${intensity}"$
+	If bStatic Then
+		SetAttrSingle("color", scolor)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}Color"$
-	Dim scolor As String = $"${varColor} ${varIntensity}"$
 	vue.SetStateSingle(pp, scolor)
 	ButtonToggle.Bind(":color", pp)
 	Return Me
@@ -308,6 +457,13 @@ Sub SetDesignMode(b As Boolean) As VMButtonToggle
 	Return Me
 End Sub
 
+'set static
+Sub SetStatic(b As Boolean) As VMButtonToggle
+	ButtonToggle.SetStatic(b)
+	bStatic = b
+	Return Me
+End Sub
+
 'set tab index
 Sub SetTabIndex(ti As String) As VMButtonToggle
 	ButtonToggle.SetTabIndex(ti)
@@ -315,7 +471,7 @@ Sub SetTabIndex(ti As String) As VMButtonToggle
 End Sub
 
 'The Select name. Similar To HTML5 name attribute.
-Sub SetName(varName As Object, bbind As Boolean) As VMButtonToggle
+Sub SetName(varName As String, bbind As Boolean) As VMButtonToggle
 	ButtonToggle.SetName(varName, bbind)
 	Return Me
 End Sub
@@ -407,37 +563,19 @@ Sub AddComponent(comp As String) As VMButtonToggle
 	Return Me
 End Sub
 
-
-Sub SetTextCenter As VMButtonToggle
-	ButtonToggle.AddClass("text-center")
-	Return Me
-End Sub
-
 Sub AddToContainer(pCont As VMContainer, rowPos As Int, colPos As Int)
 	pCont.AddComponent(rowPos, colPos, ToString)
 End Sub
 
+
 Sub BuildModel(mprops As Map, mstyles As Map, lclasses As List, loose As List) As VMButtonToggle
-ButtonToggle.BuildModel(mprops, mstyles, lclasses, loose)
-Return Me
+	ButtonToggle.BuildModel(mprops, mstyles, lclasses, loose)
+	Return Me
 End Sub
+
+
 Sub SetVisible(b As Boolean) As VMButtonToggle
-ButtonToggle.SetVisible(b)
-Return Me
-End Sub
-
-'set color intensity
-Sub SetTextColor(varColor As String) As VMButtonToggle
-	Dim sColor As String = $"${varColor}--text"$
-	AddClass(sColor)
+	ButtonToggle.SetVisible(b)
 	Return Me
 End Sub
 
-'set color intensity
-Sub SetTextColorIntensity(varColor As String, varIntensity As String) As VMButtonToggle
-	Dim sColor As String = $"${varColor}--text"$
-	Dim sIntensity As String = $"text--${varIntensity}"$
-	Dim mcolor As String = $"${sColor} ${sIntensity}"$
-	AddClass(mcolor)
-	Return Me
-End Sub

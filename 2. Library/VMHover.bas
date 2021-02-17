@@ -10,8 +10,9 @@ Sub Class_Globals
 	Public ID As String
 	Private vue As BANanoVue
 	Private BANano As BANano  'ignore
-	Private DesignMode As Boolean
-	Private Module As Object
+	Private DesignMode As Boolean   'ignore
+	Private Module As Object   'ignore
+	Private bStatic As Boolean   'ignore
 End Sub
 
 'initialize the Hover
@@ -19,11 +20,32 @@ Public Sub Initialize(v As BANanoVue, sid As String, eventHandler As Object) As 
 	ID = sid.tolowercase
 	Hover.Initialize(v, ID)
 	Hover.SetTag("v-hover")
+	vue = v
 	DesignMode = False
 	Module = eventHandler
-	vue = v
+	bStatic = False
+	Hover.SetAttrSingle("v-slot:default", "{ hover }")
 	Return Me
 End Sub
+
+
+
+'add an element to the page content
+Sub AddElement(elm As VMElement)
+	Hover.SetText(elm.ToString)
+End Sub
+
+'add a child element
+Sub SetText(child As String)
+	Hover.SetText(child)
+End Sub
+
+Sub SetData(xprop As String, xValue As Object) As VMHover
+	vue.SetData(xprop, xValue)
+	Return Me
+End Sub
+
+
 
 'get component
 Sub ToString As String
@@ -35,12 +57,12 @@ Sub SetVModel(k As String) As VMHover
 	Return Me
 End Sub
 
-Sub SetVIf(vif As Object) As VMHover
+Sub SetVIf(vif As String) As VMHover
 	Hover.SetVIf(vif)
 	Return Me
 End Sub
 
-Sub SetVShow(vif As Object) As VMHover
+Sub SetVShow(vif As String) As VMHover
 	Hover.SetVShow(vif)
 	Return Me
 End Sub
@@ -54,12 +76,6 @@ End Sub
 Sub AddChild(child As VMElement) As VMHover
 	Dim childHTML As String = child.ToString
 	Hover.SetText(childHTML)
-	Return Me
-End Sub
-
-'set text
-Sub SetText(t As Object) As VMHover
-	Hover.SetText(t)
 	Return Me
 End Sub
 
@@ -94,32 +110,56 @@ Sub AddChildren(children As List)
 End Sub
 
 'set close-delay
-Sub SetCloseDelay(varCloseDelay As Object) As VMHover
+Sub SetCloseDelay(varCloseDelay As String) As VMHover
+	If varCloseDelay = "" Then Return Me
+	If varCloseDelay = "0" Then Return Me
+	If bStatic Then
+		SetAttrSingle("close-delay", varCloseDelay)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}CloseDelay"$
 	vue.SetStateSingle(pp, varCloseDelay)
 	Hover.Bind(":close-delay", pp)
 	Return Me
 End Sub
 
-'set disabled
-Sub SetDisabled(varDisabled As Object) As VMHover
-	Dim pp As String = $"${ID}Disabled"$
-	vue.SetStateSingle(pp, varDisabled)
-	Hover.Bind(":disabled", pp)
-	Return Me
-End Sub
-
 'set open-delay
-Sub SetOpenDelay(varOpenDelay As Object) As VMHover
+Sub SetOpenDelay(varOpenDelay As String) As VMHover
+	If varOpenDelay = "" Then Return Me
+	If varOpenDelay = "0" Then Return Me
+	If bStatic Then
+		SetAttrSingle("open-delay", varOpenDelay)
+		Return Me
+	End If
 	Dim pp As String = $"${ID}OpenDelay"$
 	vue.SetStateSingle(pp, varOpenDelay)
 	Hover.Bind(":open-delay", pp)
 	Return Me
 End Sub
 
+'set disabled
+Sub SetDisabled(varDisabled As Boolean) As VMHover
+	If varDisabled = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("disabled", varDisabled)
+		Return Me
+	End If
+	Dim pp As String = $"${ID}Disabled"$
+	vue.SetStateSingle(pp, varDisabled)
+	Hover.Bind(":disabled", pp)
+	Return Me
+End Sub
+
 'set value
-Sub SetValue(varValue As Object) As VMHover
-	SetAttrSingle("value", varValue)
+Sub SetValue(varValue As Boolean) As VMHover
+	If varValue = False Then Return Me
+	If bStatic Then
+		SetAttrSingle("value", varValue)
+		Return Me
+	End If
+	Dim pp As String = $"${ID}Value"$
+	vue.SetStateSingle(pp, varValue)
+	Hover.Bind(":value", pp)
 	Return Me
 End Sub
 
@@ -174,15 +214,6 @@ Sub UseTheme(themeName As String) As VMHover
 End Sub
 
 
-'set color intensity
-Sub SetColorIntensity(varColor As String, varIntensity As String) As VMHover
-	Dim pp As String = $"${ID}Color"$
-	Dim scolor As String = $"${varColor} ${varIntensity}"$
-	vue.SetStateSingle(pp, scolor)
-	Hover.Bind(":color", pp)
-	Return Me
-End Sub
-
 'remove an attribute
 public Sub RemoveAttr(sName As String) As VMHover
 	Hover.RemoveAttr(sName)
@@ -208,14 +239,15 @@ Sub SetDesignMode(b As Boolean) As VMHover
 	Return Me
 End Sub
 
-'set tab index
-Sub SetTabIndex(ti As String) As VMHover
-	Hover.SetTabIndex(ti)
+'set static
+Sub SetStatic(b As Boolean) As VMHover
+	Hover.SetStatic(b)
+	bStatic = b
 	Return Me
 End Sub
 
 'The Select name. Similar To HTML5 name attribute.
-Sub SetName(varName As Object, bbind As Boolean) As VMHover
+Sub SetName(varName As String, bbind As Boolean) As VMHover
 	Hover.SetName(varName, bbind)
 	Return Me
 End Sub
@@ -275,27 +307,56 @@ Sub SetKey(k As String) As VMHover
 	Return Me
 End Sub
 
-Sub BuildModel(mprops As Map, mstyles As Map, lclasses As List, loose As List) As VMHover
-Hover.BuildModel(mprops, mstyles, lclasses, loose)
-Return Me
-End Sub
-Sub SetVisible(b As Boolean) As VMHover
-Hover.SetVisible(b)
-Return Me
-End Sub
-
-'set color intensity
-Sub SetTextColor(varColor As String) As VMHover
-	Dim sColor As String = $"${varColor}--text"$
-	AddClass(sColor)
+'set the row and column position
+Sub SetRC(sRow As String, sCol As String) As VMHover
+	Hover.SetRC(sRow, sCol)
 	Return Me
 End Sub
 
-'set color intensity
-Sub SetTextColorIntensity(varColor As String, varIntensity As String) As VMHover
-	Dim sColor As String = $"${varColor}--text"$
-	Dim sIntensity As String = $"text--${varIntensity}"$
-	Dim mcolor As String = $"${sColor} ${sIntensity}"$
-	AddClass(mcolor)
+'set the offsets for this item
+Sub SetDeviceOffsets(OS As String, OM As String,OL As String,OX As String) As VMHover
+	Hover.SetDeviceOffsets(OS, OM, OL, OX)
+	Return Me
+End Sub
+
+
+'set the position: row and column and sizes
+Sub SetDevicePositions(srow As String, scell As String, small As String, medium As String, large As String, xlarge As String) As VMHover
+	SetRC(srow, scell)
+	SetDeviceSizes(small,medium, large, xlarge)
+	Return Me
+End Sub
+
+'set the sizes for this item
+Sub SetDeviceSizes(SS As String, SM As String, SL As String, SX As String) As VMHover
+	Hover.SetDeviceSizes(SS, SM, SL, SX)
+	Return Me
+End Sub
+
+
+Sub AddComponent(comp As String) As VMHover
+	Hover.SetText(comp)
+	Return Me
+End Sub
+
+
+Sub SetTextCenter As VMHover
+	Hover.AddClass("text-center")
+	Return Me
+End Sub
+
+Sub AddToContainer(pCont As VMContainer, rowPos As Int, colPos As Int)
+	pCont.AddComponent(rowPos, colPos, ToString)
+End Sub
+
+
+Sub BuildModel(mprops As Map, mstyles As Map, lclasses As List, loose As List) As VMHover
+	Hover.BuildModel(mprops, mstyles, lclasses, loose)
+	Return Me
+End Sub
+
+
+Sub SetVisible(b As Boolean) As VMHover
+	Hover.SetVisible(b)
 	Return Me
 End Sub
